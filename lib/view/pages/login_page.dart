@@ -11,8 +11,8 @@ class LoginPage extends StatelessWidget {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('../assets/logo_bora_ne.png'),
-                fit: BoxFit.contain,
+                image: AssetImage('../assets/background.jpeg'),
+                fit: BoxFit.cover,
               ),
             ),
           ),
@@ -58,7 +58,7 @@ class LoginPage extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: (){},
+                    onPressed: () {},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromRGBO(
                         245,
@@ -75,7 +75,7 @@ class LoginPage extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset('../assets/logo_google.webp', height: 24.0 ),
+                        Image.asset('../assets/logo_google.webp', height: 24.0),
                         const SizedBox(width: 12),
                         const Text(
                           "Entrar com Google",
