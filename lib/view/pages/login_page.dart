@@ -11,8 +11,8 @@ class LoginPage extends StatelessWidget {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('../assets/background.jpeg'),
-                fit: BoxFit.cover,
+                image: AssetImage('../assets/logo_bora_ne.png'),
+                fit: BoxFit.contain,
               ),
             ),
           ),
@@ -55,60 +55,35 @@ class LoginPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 40),
 
-                Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: (){},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset('../assets/logo_google.webp', height: 24.0 ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              "Entrar com Google",
-                              style: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: (){},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromRGBO(
+                        245,
+                        183,
+                        10,
+                        0.961,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
                       ),
                     ),
-                    SizedBox(height: 25),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: (){},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color.fromRGBO(24, 119, 242, 1),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset('../assets/logo_google.webp', height: 24.0 ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          "Entrar com Google",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset('../assets/logo_facebook.png', height: 24.0 ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              "Entrar com Facebook",
-                              style: TextStyle(fontSize: 16, color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
 
                 const SizedBox(height: 20),
