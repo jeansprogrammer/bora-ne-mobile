@@ -46,8 +46,15 @@ class LoginScreen extends StatelessWidget {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute<void>(
-                    builder: (BuildContext context) =>
-                        const CategoryWidget(imagePath: ''),
+                    builder: (BuildContext context) => CategoryWidget(
+                      imagePath: '../assets/logo_google.webp',
+                      title: "Due Fratelli",
+                      rating: 4.7,
+                      category: "Pizzaria",
+                      distance: "0.4 km",
+                      time: "25-35 min",
+                      deliveryPrice: "R\$ 80,99",
+                    ),
                   ),
                 ),
               ),
