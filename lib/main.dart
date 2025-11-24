@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
 
@@ -18,7 +19,7 @@ class BoraNE extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         fontFamily: 'Poppins',
       ),
-      home: const HomePage(),
+      home: const LoginScreen(),
     );
   }
 }
