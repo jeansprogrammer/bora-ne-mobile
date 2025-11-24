@@ -53,20 +53,25 @@ class CategoryWidget extends StatelessWidget {
                 children: [
                   const Icon(Icons.star, size: 16, color: Colors.orange),
                   const SizedBox(width: 4),
+
                   Text(
-                    rating.toString(),
+                    rating.toStringAsFixed(1),
                     style: const TextStyle(fontSize: 13),
                   ),
+
                   const SizedBox(width: 6),
                   const Text("·", style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 6),
+
                   Text(
                     category,
                     style: const TextStyle(fontSize: 13),
                   ),
+
                   const SizedBox(width: 6),
                   const Text("·", style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 6),
+
                   Text(
                     distance,
                     style: const TextStyle(fontSize: 13),
@@ -80,12 +85,18 @@ class CategoryWidget extends StatelessWidget {
                 children: [
                   Text(
                     time,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     deliveryPrice,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
                   ),
                 ],
               ),
