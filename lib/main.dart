@@ -1,6 +1,5 @@
 import 'package:boranemobile/view/pages/login_page.dart';
 import 'package:flutter/material.dart';
-import 'package:boranemobile/view/pages/home_page.dart';
 
 void main() {
   runApp(const BoraNE());

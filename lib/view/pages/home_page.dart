@@ -1,5 +1,4 @@
 import 'package:boranemobile/view/pages/categories_page.dart';
-import 'package:boranemobile/view/pages/login_page.dart';
 import 'package:boranemobile/view/widgets/see_all_button.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/widgets/category_list.dart';
