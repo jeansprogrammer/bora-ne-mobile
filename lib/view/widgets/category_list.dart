@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/routes_page.dart';
 import 'package:flutter/material.dart';
 
 class CategoryList extends StatefulWidget {
@@ -46,6 +47,10 @@ class _CategoryListState extends State<CategoryList> {
 
           return GestureDetector(
             onTap: () {
+              Navigator.push(
+                          context,
+                           MaterialPageRoute(builder: (_) => RoutesPage()),
+                        );
               setState(() => selectedIndex = index);
             },
             child: Container(

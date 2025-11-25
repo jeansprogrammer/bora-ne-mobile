@@ -1,4 +1,4 @@
-import 'package:boranemobile/view/pages/splash.dart';
+import 'package:boranemobile/view/pages/login_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -13,7 +13,13 @@ class BoraNE extends StatelessWidget {
     return MaterialApp(
       title: 'Bora NE',
       debugShowCheckedModeBanner: false,
-      home: const SplashScreen(),
+      theme: ThemeData(
+        primarySwatch: Colors.orange,
+        scaffoldBackgroundColor: Colors.white,
+        fontFamily: 'Poppins',
+      ),
+      home: const LoginScreen(),
+      
     );
   }
 }

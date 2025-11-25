@@ -1,8 +1,8 @@
-import 'package:boranemobile/view/pages/login_page.dart';
+import 'package:boranemobile/view/pages/categories_page.dart';
+import 'package:boranemobile/view/widgets/see_all_button.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/widgets/category_list.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
-
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -13,7 +13,7 @@ class HomePage extends StatelessWidget {
       backgroundColor: Color.fromRGBO(245, 245, 245, 1),
 
       bottomNavigationBar: const CustomBottomNav(),
-      
+
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -92,28 +92,21 @@ class HomePage extends StatelessWidget {
                 // Categorias
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
+                  children: [
+                    const Text(
                       'Categorias',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Row(
-                      children: [
-                        Text(
-                          'Ver todas',
-                          style: TextStyle(
-                            color: Colors.orange,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Icon(
-                          Icons.arrow_circle_right_sharp,
-                          color: Colors.orange,
-                        ),
-                      ],
+                    SeeAllButton(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => CategoriesPage()),
+                        );
+                      },
                     ),
                   ],
                 ),
