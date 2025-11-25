@@ -27,8 +27,8 @@ class Onboard3 extends StatelessWidget {
 
             const SizedBox(height: 40),
 
-            // COLOQUE A IMAGEM AQUI
-            Image.asset("assets/onboard3.png", height: 280),
+
+            Image.asset("../assets/images/casal-viagem.png", height: 400),
 
             const Spacer(),
 

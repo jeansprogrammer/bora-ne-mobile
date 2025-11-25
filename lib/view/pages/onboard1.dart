@@ -51,7 +51,7 @@ class Onboard1 extends StatelessWidget {
 
             const SizedBox(height: 40),
 
-            // COLOQUE A IMAGEM AQUI
+
             Image.asset("../assets/images/menina-dancado.png", height: 400),
 
             const Spacer(),
