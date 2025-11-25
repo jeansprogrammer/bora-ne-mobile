@@ -15,7 +15,7 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('../assets/logo_bora_ne.png', width: 80, height: 80),
+              Image.asset('../assets/images/logo_bora_ne.png', width: 80, height: 80),
               const SizedBox(height: 20),
 
               Text(
