@@ -1,3 +1,5 @@
+import 'package:boranemobile/main.dart';
+import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:boranemobile/view/widgets/category_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -45,16 +47,8 @@ class LoginScreen extends StatelessWidget {
                 icon: FontAwesomeIcons.facebookF,
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) => CategoryWidget(
-                      imagePath: '../assets/logo_google.webp',
-                      title: "Due Fratelli",
-                      rating: 4.7,
-                      category: "Pizzaria",
-                      distance: "0.4 km",
-                      time: "25-35 min",
-                      deliveryPrice: "R\$ 80,99",
-                    ),
+                  MaterialPageRoute(
+                    builder: (_) => HomePage()
                   ),
                 ),
               ),
