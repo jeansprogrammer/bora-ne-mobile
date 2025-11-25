@@ -20,6 +20,7 @@ class BoraNE extends StatelessWidget {
         fontFamily: 'Poppins',
       ),
       home: const LoginScreen(),
+      
     );
   }
 }
