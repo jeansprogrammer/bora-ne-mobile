@@ -1,4 +1,4 @@
-import 'package:boranemobile/view/pages/login_page.dart';
+import 'package:boranemobile/view/pages/splash.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -18,7 +18,7 @@ class BoraNE extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         fontFamily: 'Poppins',
       ),
-      home: const LoginScreen(),
+      home: const SplashScreen(),
       
     );
   }
