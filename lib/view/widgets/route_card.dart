@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/mapa_page.dart';
 import 'package:flutter/material.dart';
 
 class RouteCard extends StatelessWidget {
@@ -33,7 +34,7 @@ class RouteCard extends StatelessWidget {
             BoxShadow(
               color: Colors.black.withOpacity(0.12),
               blurRadius: 8,
-              offset: Offset(0, 3),
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -47,8 +48,10 @@ class RouteCard extends StatelessWidget {
                 children: [
                   // Nome da rota
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.35),
                       borderRadius: BorderRadius.circular(20),
@@ -63,27 +66,40 @@ class RouteCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Ver mais (sem rota definida)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.35),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: const [
-                        Text(
-                          "Ver mais",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
+                  // Ver mais (funcionando)
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TelaMapa(),
                         ),
-                        SizedBox(width: 4),
-                        Icon(Icons.arrow_forward, color: Colors.white),
-                      ],
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.35),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: const [
+                          Text(
+                            "Ver mais",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.arrow_forward, color: Colors.white),
+                        ],
+                      ),
                     ),
                   ),
                 ],
