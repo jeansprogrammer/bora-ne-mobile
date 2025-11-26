@@ -6,11 +6,31 @@ class CategoriesPage extends StatelessWidget {
   CategoriesPage({super.key});
 
   final List<CategoryModel> categories = [
-    CategoryModel(title: "Religioso", image: "../assets/images/bible.png"),
-    CategoryModel(title: "Gastronômico", image: "../assets/images/burger.png"),
-    CategoryModel(title: "Histórico", image: "../assets/images/hieroglyph.png"),
-    CategoryModel(title: "Aventuras", image: "../assets/images/tent.png"),
-    CategoryModel(title: "Outros", image: "../assets/images/searching.png"),
+    CategoryModel(
+      title: "Religioso",
+      image: "../assets/images/bible.png",
+      route: "/religioso",
+    ),
+    CategoryModel(
+      title: "Gastronômico",
+      image: "../assets/images/burger.png",
+      route: "/gastronomico",
+    ),
+    CategoryModel(
+      title: "Histórico",
+      image: "../assets/images/hieroglyph.png",
+      route: "/historico",
+    ),
+    CategoryModel(
+      title: "Aventuras",
+      image: "../assets/images/tent.png",
+      route: "/aventuras",
+    ),
+    CategoryModel(
+      title: "Outros",
+      image: "../assets/images/searching.png",
+      route: "/outros",
+    ),
   ];
 
   @override
