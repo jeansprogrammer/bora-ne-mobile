@@ -1,8 +1,11 @@
 import 'package:boranemobile/view/pages/categories_page.dart';
+import 'package:boranemobile/view/widgets/route_carousel.dart';
 import 'package:boranemobile/view/widgets/see_all_button.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/widgets/category_list.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
+import '../widgets/route_carousel.dart';
+
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -48,44 +51,9 @@ class HomePage extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // Card principal
-                Container(
-                  height: 400,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    image: const DecorationImage(
-                      image: AssetImage('../assets/images/seminario.jpg'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.black.withOpacity(0.1),
-                          Colors.black.withOpacity(0.6),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    alignment: Alignment.bottomLeft,
-                    child: Row(
-                      children: [
-                        const Text(
-                          'Pontos turísticos religiosos em Garanhuns',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+
+                const RouteCarousel(),
+
 
                 const SizedBox(height: 20),
 

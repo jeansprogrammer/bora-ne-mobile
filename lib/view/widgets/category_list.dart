@@ -1,3 +1,4 @@
+import 'package:boranemobile/controllers/category_controller.dart';
 import 'package:boranemobile/view/pages/routes_page.dart';
 import 'package:flutter/material.dart';
 
@@ -11,28 +12,7 @@ class CategoryList extends StatefulWidget {
 class _CategoryListState extends State<CategoryList> {
   int selectedIndex = 0;
 
-  final List<Map<String, String>> categories = [
-    {
-      "title": "Religioso",
-      "image": "../../assets/images/bible.png",
-    },
-    {
-      "title": "Gastronômico",
-      "image": "../../assets/images/burger.png",
-    },
-    {
-      "title": "Histórico",
-      "image": "../../assets/images/hieroglyph.png",
-    },
-    {
-      "title": "Aventuras",
-      "image": "../../assets/images/tent.png",
-    },
-    {
-      "title": "Outros",
-      "image": "../../assets/images/searching.png",
-    },
-  ];
+  final controller = CategoryController();
 
   @override
   Widget build(BuildContext context) {
@@ -40,17 +20,21 @@ class _CategoryListState extends State<CategoryList> {
       height: 130,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
+
+        /// 🔹 AGORA BUSCA DO CONTROLLER
+        itemCount: controller.categories.length,
         padding: const EdgeInsets.symmetric(horizontal: 8),
+
         itemBuilder: (context, index) {
-          final category = categories[index];
+          final category = controller.categories[index];
 
           return GestureDetector(
             onTap: () {
               Navigator.push(
-                          context,
-                           MaterialPageRoute(builder: (_) => RoutesPage()),
-                        );
+                context,
+                MaterialPageRoute(builder: (_) => RoutesPage()),
+              );
+
               setState(() => selectedIndex = index);
             },
             child: Container(
@@ -74,14 +58,14 @@ class _CategoryListState extends State<CategoryList> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.asset(
-                        category["image"]!,
+                        category.image, // 🔹 agora vem do model
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    category["title"]!,
+                    category.title, // 🔹 agora vem do model
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
