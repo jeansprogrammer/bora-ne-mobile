@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../models/route_model.dart';
+import 'models/route_model.dart';
 
 class RouteCarousel extends StatefulWidget {
   const RouteCarousel({super.key});

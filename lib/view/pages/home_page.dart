@@ -4,7 +4,7 @@ import 'package:boranemobile/view/widgets/see_all_button.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/widgets/category_list.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
-import '../widgets/route_carousel.dart';
+import 'widgets/route_carousel.dart';
 
 
 class HomePage extends StatelessWidget {
