@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'package:boranemobile/models/route_model.dart';
 import 'package:boranemobile/view/pages/mapa_page.dart';
 import 'package:flutter/material.dart';
-import 'models/route_model.dart';
+
 
 class RouteCarousel extends StatefulWidget {
   const RouteCarousel({super.key});
