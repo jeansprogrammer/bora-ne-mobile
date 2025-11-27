@@ -4,7 +4,6 @@ import 'package:boranemobile/view/widgets/see_all_button.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/widgets/category_list.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
-import 'widgets/route_carousel.dart';
 
 
 class HomePage extends StatelessWidget {
@@ -20,12 +19,12 @@ class HomePage extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Cabeçalho
-                Row(
+                Column(
                   children: [
                     Container(
                       alignment: AlignmentDirectional(-0.8, 0.1),
@@ -58,25 +57,28 @@ class HomePage extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 // Categorias
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Categorias',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Categorias',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    SeeAllButton(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => CategoriesPage()),
-                        );
-                      },
-                    ),
-                  ],
+                      SeeAllButton(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => CategoriesPage()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 10),
@@ -87,47 +89,53 @@ class HomePage extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 // Favoritos
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'Favoritos',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      Text(
+                        'Favoritos',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          'Ver todas',
-                          style: TextStyle(
-                            color: Colors.orange,
-                            fontWeight: FontWeight.w500,
+                      Row(
+                        children: [
+                          Text(
+                            'Ver todas',
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
-                        Icon(
-                          Icons.arrow_circle_right_sharp,
-                          color: Colors.orange,
-                        ),
-                      ],
-                    ),
-                  ],
+                          Icon(
+                            Icons.arrow_circle_right_sharp,
+                            color: Colors.orange,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 10),
 
                 // Placeholder de favoritos
-                Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Nenhum local favorito ainda',
-                      style: TextStyle(color: Colors.grey),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Nenhum local favorito ainda',
+                        style: TextStyle(color: Colors.grey),
+                      ),
                     ),
                   ),
                 ),

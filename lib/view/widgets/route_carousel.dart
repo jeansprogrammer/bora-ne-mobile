@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:boranemobile/view/pages/mapa_page.dart';
 import 'package:flutter/material.dart';
 import 'models/route_model.dart';
 
@@ -17,19 +18,19 @@ class _RouteCarouselState extends State<RouteCarousel> {
 
   final List<RouteModel> _routes = [
     RouteModel(
-      title: "Rota Religiosa",
-      subtitle: "Pontos de fé",
-      image: "assets/images/seminario.jpg",
+      title: "Lugares Religiosos em Garanhuns",
+      subtitle: "Maria Eduarda",
+      image: "../../assets/images/cristo-do-magano.png",
     ),
     RouteModel(
-      title: "Rota Gastronômica",
-      subtitle: "Sabores locais",
-      image: "assets/images/gastronomia.jpg",
+      title: "Aventuras em Bonito",
+      subtitle: "Jean Mendes",
+      image: "../../assets/images/restaurante.png",
     ),
     RouteModel(
-      title: "Rota Cultural",
-      subtitle: "Museus e arte",
-      image: "assets/images/cultura.jpg",
+      title: "Rota Cultura Popular",
+      subtitle: "Bruna Sousa",
+      image: "../../assets/images/marco-zero.png",
     ),
   ];
 
@@ -77,13 +78,6 @@ class _RouteCarouselState extends State<RouteCarousel> {
                 image: AssetImage(route.image),
                 fit: BoxFit.cover,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
             ),
             child: Container(
               decoration: BoxDecoration(
@@ -127,11 +121,14 @@ class _RouteCarouselState extends State<RouteCarousel> {
 
                     ElevatedButton(
                       onPressed: () {
-                        // você define a rota depois
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => TelaMapa()),
+                          );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black87,
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
@@ -139,7 +136,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
                       child: const Padding(
                         padding:
                             EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-                        child: Text("Ver rota"),
+                        child: Text("Ver rota", style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     )
                   ],
