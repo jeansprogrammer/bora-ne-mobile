@@ -28,7 +28,7 @@ class Onboard2 extends StatelessWidget {
             const SizedBox(height: 40),
 
 
-            Image.asset("../assets/images/garoto-celular.png", height: 400),
+            Image.asset("assets/images/garoto-celular.png", height: 400),
 
             const Spacer(),
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:boranemobile/view/widgets/category_list.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
