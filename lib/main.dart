@@ -1,8 +1,19 @@
-import 'package:boranemobile/view/pages/splash.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'controllers/route_creation_controller.dart';
+import 'view/pages/splash.dart';
 
 void main() {
-  runApp(const BoraNE());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => RouteCreationController(),
+        ),
+      ],
+      child: const BoraNE(),
+    ),
+  );
 }
 
 class BoraNE extends StatelessWidget {
@@ -19,7 +30,6 @@ class BoraNE extends StatelessWidget {
         fontFamily: 'Poppins',
       ),
       home: const SplashScreen(),
-      
     );
   }
 }

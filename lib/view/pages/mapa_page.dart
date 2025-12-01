@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -21,6 +22,9 @@ class _TelaMapaState extends State<TelaMapa> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
+      bottomNavigationBar: const CustomBottomNav(),
+
       body: Column(
         children: [
           Expanded(
@@ -44,8 +48,11 @@ class _TelaMapaState extends State<TelaMapa> {
                           width: 40,
                           height: 40,
                           point: garanhuns,
-                          child: const Icon(Icons.location_pin,
-                              color: Colors.red, size: 38),
+                          child: const Icon(
+                            Icons.location_pin,
+                            color: Colors.red,
+                            size: 38,
+                          ),
                         ),
                       ],
                     ),
@@ -65,7 +72,7 @@ class _TelaMapaState extends State<TelaMapa> {
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
                           blurRadius: 8,
-                        )
+                        ),
                       ],
                     ),
                     child: Row(
@@ -108,7 +115,9 @@ class _TelaMapaState extends State<TelaMapa> {
                       Text(
                         "Relógio das Flores",
                         style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w600),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       Row(
                         children: [
@@ -116,10 +125,9 @@ class _TelaMapaState extends State<TelaMapa> {
                           Icon(Icons.star, color: Colors.orange, size: 20),
                           Icon(Icons.star, color: Colors.orange, size: 20),
                           Icon(Icons.star, color: Colors.orange, size: 20),
-                          Icon(Icons.star_half,
-                              color: Colors.orange, size: 20),
+                          Icon(Icons.star_half, color: Colors.orange, size: 20),
                         ],
-                      )
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -158,40 +166,6 @@ class _TelaMapaState extends State<TelaMapa> {
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(25),
-            topRight: Radius.circular(25),
-          ),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [Icon(Icons.home, size: 28), Text("Início")],
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [Icon(Icons.favorite_border, size: 28), Text("Favoritos")],
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.notifications_none, size: 28),
-                Text("Notificações")
-              ],
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [Icon(Icons.person_outline, size: 28), Text("Perfil")],
-            ),
-          ],
-        ),
       ),
     );
   }

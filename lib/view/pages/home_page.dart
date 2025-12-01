@@ -1,13 +1,20 @@
 import 'package:boranemobile/view/pages/categories_page.dart';
 import 'package:boranemobile/view/widgets/route_carousel.dart';
 import 'package:boranemobile/view/widgets/see_all_button.dart';
+import 'package:boranemobile/view/widgets/speed_dial_button.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/widgets/category_list.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 
-
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final TextEditingController searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +22,9 @@ class HomePage extends StatelessWidget {
       backgroundColor: Color.fromRGBO(245, 245, 245, 1),
 
       bottomNavigationBar: const CustomBottomNav(),
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: const SpeedDialButton(),
 
       body: SafeArea(
         child: SingleChildScrollView(
@@ -37,11 +47,19 @@ class HomePage extends StatelessWidget {
 
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'O que você está procurando?',
-                            border: InputBorder.none,
-                          ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: searchController,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  hintText: "O que você está procurando?",
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.search, size: 22),
+                          ],
                         ),
                       ),
                     ),
@@ -50,9 +68,7 @@ class HomePage extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-
                 const RouteCarousel(),
-
 
                 const SizedBox(height: 20),
 

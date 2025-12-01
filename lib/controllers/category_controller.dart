@@ -1,7 +1,7 @@
 import 'package:boranemobile/models/category_model.dart';
 import 'package:flutter/material.dart';
 
-class CategoryController {
+class CategoryController extends ChangeNotifier {
   final List<CategoryModel> categories = [
     CategoryModel(
       title: "Religioso",

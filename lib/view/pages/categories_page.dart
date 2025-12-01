@@ -50,8 +50,14 @@ class CategoriesPage extends StatelessWidget {
 
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: ListView.builder(
+        child: GridView.builder(
           itemCount: categories.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 0,
+            childAspectRatio: 1,
+          ),
           itemBuilder: (context, index) {
             return CategoryItem(category: categories[index]);
           },
