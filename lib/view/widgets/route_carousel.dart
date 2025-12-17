@@ -21,17 +21,17 @@ class _RouteCarouselState extends State<RouteCarousel> {
     RouteModel(
       title: "Lugares Religiosos em Garanhuns",
       subtitle: "Maria Eduarda",
-      image: "../../assets/images/cristo-do-magano.png",
+      image: "assets/images/cristo-do-magano.png",
     ),
     RouteModel(
       title: "Aventuras em Bonito",
       subtitle: "Jean Mendes",
-      image: "../../assets/images/restaurante.png",
+      image: "assets/images/restaurante.png",
     ),
     RouteModel(
       title: "Rota Cultura Popular",
       subtitle: "Bruna Sousa",
-      image: "../../assets/images/marco-zero.png",
+      image: "assets/images/marco-zero.png",
     ),
   ];
 
