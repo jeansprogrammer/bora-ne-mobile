@@ -12,7 +12,7 @@ class RouteController extends ChangeNotifier {
     RouteModel(
       title: "Rota Religiosa",
       subtitle: "Conheça os principais pontos de fé de Garanhuns",
-      image: "../../assets/images/cristo-do-magano.png",
+      image: "assets/images/cristo-do-magano.png",
     ),
     RouteModel(
       title: "Rota Gastronômica",
