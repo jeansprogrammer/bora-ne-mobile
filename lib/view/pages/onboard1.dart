@@ -1,32 +1,9 @@
-import 'package:boranemobile/view/pages/onboard3.dart';
 import 'package:flutter/material.dart';
-import 'onboard2.dart';
-
-class Onboarding extends StatefulWidget {
-  const Onboarding({super.key});
-
-  @override
-  State<Onboarding> createState() => _OnboardingState();
-}
-
-class _OnboardingState extends State<Onboarding> {
-  final PageController controller = PageController();
-
-  @override
-  Widget build(BuildContext context) {
-    return PageView(
-      controller: controller,
-      children: const [
-        Onboard1(),
-        Onboard2(),
-        Onboard3(),
-      ],
-    );
-  }
-}
 
 class Onboard1 extends StatelessWidget {
-  const Onboard1({super.key});
+  final VoidCallback onNext;
+
+  const Onboard1({super.key, required this.onNext});
 
   @override
   Widget build(BuildContext context) {
@@ -36,12 +13,11 @@ class Onboard1 extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: SafeArea(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Planeje.\nExplore. Viva\nPernambuco.",
+                  "Seja bem-vindo ao\nBoraNE.",
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -49,30 +25,19 @@ class Onboard1 extends StatelessWidget {
                   ),
                 ),
               ),
-          
               const SizedBox(height: 40),
-          
-          
-              Image.asset("assets/images/menina-dancado.png", height: 400),
-          
+              Image.asset(
+                "assets/images/menina-dancado.png",
+                height: 400,
+              ),
               const Spacer(),
-          
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const Onboard2()),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFFEBB22F),
-                  ),
-                  child: const Icon(Icons.arrow_right_alt_rounded, size: 32),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: GestureDetector(
+                  onTap: onNext,
+                  child: _arrowButton(Icons.arrow_right_alt_rounded),
                 ),
               ),
-          
               const SizedBox(height: 40),
             ],
           ),
@@ -80,4 +45,15 @@ class Onboard1 extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _arrowButton(IconData icon) {
+  return Container(
+    padding: const EdgeInsets.all(18),
+    decoration: const BoxDecoration(
+      shape: BoxShape.circle,
+      color: Color(0xFFEBB22F),
+    ),
+    child: Icon(icon, size: 32),
+  );
 }
