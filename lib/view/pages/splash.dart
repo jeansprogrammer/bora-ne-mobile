@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'onboard1.dart';
+import 'package:boranemobile/view/pages/onboarding.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,17 +15,26 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const Onboarding()),
+        MaterialPageRoute(
+          builder: (context) => Onboarding(),
+        ),
       );
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
+    return const Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
-        child: Image.asset("assets/images/borane-semfundo.png", width: 300),
+        child: Text(
+          "BoraNE",
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFEBB22F),
+          ),
+        ),
       ),
     );
   }

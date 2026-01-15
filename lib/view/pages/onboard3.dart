@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
 
 class Onboard3 extends StatelessWidget {
-  const Onboard3({super.key});
+  final VoidCallback onNext;
+  final VoidCallback onBack;
+
+  const Onboard3({
+    super.key,
+    required this.onNext,
+    required this.onBack,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -12,12 +18,11 @@ class Onboard3 extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: SafeArea(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Mais que viagem\né vivência.",
+                  "Explore Pernambuco\ncomo nunca antes e viva\nexperiências inesquecíveis.",
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -25,31 +30,25 @@ class Onboard3 extends StatelessWidget {
                   ),
                 ),
               ),
-          
               const SizedBox(height: 40),
-          
-          
-              Image.asset("assets/images/casal-viagem.png", height: 400),
-          
-              const Spacer(),
-          
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFFEBB22F),
-                  ),
-                  child: const Icon(Icons.check, size: 32),
-                ),
+              Image.asset(
+                "assets/images/casal-viagem.png",
+                height: 400,
               ),
-          
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: onBack,
+                    child: _arrowButton(Icons.arrow_back),
+                  ),
+                  GestureDetector(
+                    onTap: onNext,
+                    child: _arrowButton(Icons.arrow_right_alt_rounded),
+                  ),
+                ],
+              ),
               const SizedBox(height: 40),
             ],
           ),
@@ -57,4 +56,15 @@ class Onboard3 extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _arrowButton(IconData icon) {
+  return Container(
+    padding: const EdgeInsets.all(18),
+    decoration: const BoxDecoration(
+      shape: BoxShape.circle,
+      color: Color(0xFFEBB22F),
+    ),
+    child: Icon(icon, size: 32),
+  );
 }
