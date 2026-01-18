@@ -40,13 +40,10 @@ class Onboard4 extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const HomePage()),
-                      (route) => false,
-                    );
+                 onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/login1');
                   },
+
                   child: const Text(
                     "Começar",
                     style: TextStyle(
