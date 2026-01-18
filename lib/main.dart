@@ -33,3 +33,27 @@ class BoraNE extends StatelessWidget {
     );
   }
 }
+
+class BoraNE extends StatelessWidget {
+  const BoraNE({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Bora NE',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.orange,
+        scaffoldBackgroundColor: Colors.white,
+        fontFamily: 'Poppins',
+      ),
+
+      home: const SplashScreen(),
+
+      routes: {
+        '/login1': (context) => const Login1Screen(),
+        '/login2': (context) => const Login2Screen(),
+      },
+    );
+  }
+}
