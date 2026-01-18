@@ -5,7 +5,7 @@ class AppImages {
   static const String _basePath = 'assets/images/';
 
   // Logos
-  static const String logoSemFundo = '${_basePath}bora-semfundo.png';
+  static const String logoSemFundo = '${_basePath}borane-semfundo.png';
   static const String logoBoraNeBranco = '${_basePath}bora-ne-branco.png';
   
   // Backgrounds
