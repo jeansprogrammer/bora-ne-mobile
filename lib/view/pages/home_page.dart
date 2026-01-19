@@ -5,6 +5,7 @@ import 'package:boranemobile/view/widgets/speed_dial_button.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/widgets/category_list.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
+import 'package:boranemobile/view/pages/favorites_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -109,28 +110,39 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text(
+                    children: [
+                      const Text(
                         'Favoritos',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Row(
-                        children: [
-                          Text(
-                            'Ver todas',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontWeight: FontWeight.w500,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const FavoritesPage(),
                             ),
-                          ),
-                          Icon(
-                            Icons.arrow_circle_right_sharp,
-                            color: Colors.orange,
-                          ),
-                        ],
+                          );
+                        },
+                        child: Row(
+                          children: const [
+                            Text(
+                              'Ver todas',
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_circle_right_sharp,
+                              color: Colors.orange,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
