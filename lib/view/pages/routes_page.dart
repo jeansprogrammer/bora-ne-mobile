@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/detalhe_local_sheet.dart';
 
 class ListaReligiososPage extends StatelessWidget {
   const ListaReligiososPage({super.key});
@@ -18,17 +19,17 @@ class ListaReligiososPage extends StatelessWidget {
       },
       {
         "titulo": "Santuário Mãe Rainha",
-        "img": "assets/santuario.jpg", 
+        "img": "assets/santuario.jpg",
         "nota": 5,
       },
       {
         "titulo": "Mosteiro de São Bento",
-        "img": "assets/mosteiro.jpg", 
+        "img": "assets/mosteiro.jpg",
         "nota": 4,
       },
       {
         "titulo": "Mirante Cristo do Magano",
-        "img": "assets/magano.jpg", 
+        "img": "assets/magano.jpg",
         "nota": 5,
       },
     ];
@@ -78,11 +79,7 @@ class ListaReligiososPage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
         ],
       ),
       child: Padding(
@@ -112,13 +109,16 @@ class ListaReligiososPage extends StatelessWidget {
   }) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DetalheLocalPage(titulo: titulo),
-          ),
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) {
+            return DetalheLocalSheet(titulo: titulo, img: img, nota: nota);
+          },
         );
       },
+
       child: Container(
         margin: const EdgeInsets.only(bottom: 15),
         height: 95,
@@ -130,7 +130,7 @@ class ListaReligiososPage extends StatelessWidget {
               color: Colors.black12,
               blurRadius: 5,
               offset: Offset(0, 3),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -205,7 +205,7 @@ class ListaReligiososPage extends StatelessWidget {
             color: Colors.black12,
             blurRadius: 8,
             offset: Offset(0, -2),
-          )
+          ),
         ],
       ),
       child: Row(
@@ -249,10 +249,7 @@ class DetalheLocalPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(titulo)),
       body: Center(
-        child: Text(
-          "Página do local: $titulo",
-          style: TextStyle(fontSize: 20),
-        ),
+        child: Text("Página do local: $titulo", style: TextStyle(fontSize: 20)),
       ),
     );
   }
