@@ -25,7 +25,7 @@ class Onboard4 extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
-              Image.asset("assets/images/boas-vindas.png", height: 400),
+              Image.asset("assets/images/Diving-rafiki 1.png", height: 400),
               const Spacer(),
               Align(
                 alignment: Alignment.bottomRight,
