@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:boranemobile/utils/app_colors.dart';
-import 'package:boranemobile/utils/app_images.dart';
-import 'package:boranemobile/utils/app_routes.dart';
+import 'package:bora_ne_mobile/utils/app_colors.dart';
+import 'package:bora_ne_mobile/utils/app_images.dart';
+import 'package:bora_ne_mobile/utils/app_routes.dart';
 
 /// Tela inicial de splash com a logo do Bora Né
 /// Exibe a logo por 3 segundos antes de navegar para login2
