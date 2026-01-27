@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:boranemobile/view/pages/favorites_page.dart';
@@ -65,7 +66,9 @@ class CustomBottomNav extends StatelessWidget {
             icon: Icons.person_outline,
             label: 'Perfil',
             onTap: () {
-              // depois você cria a ProfilePage
+              Navigator.push(context,
+               MaterialPageRoute(builder: (_) => const UserProfilePage()),
+              );
             },
           ),
         ],
