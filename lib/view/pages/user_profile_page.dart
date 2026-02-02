@@ -18,7 +18,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white, 
       bottomNavigationBar: const CustomBottomNav(),
       body: SafeArea(
         child: SingleChildScrollView(

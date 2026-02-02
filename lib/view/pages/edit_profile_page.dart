@@ -15,7 +15,7 @@ class EditProfilePage extends StatelessWidget {
           children: [
             const Center(
               child: Column(
-                children: [
+                children: [ 
                   Text(
                     'Editar Perfil',
                     style: TextStyle(
