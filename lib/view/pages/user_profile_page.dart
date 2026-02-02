@@ -10,6 +10,9 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> {
   bool temaClaro = true;
+  bool notificacoes = true;
+  bool sons = true;
+  bool vibracoes = true;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +23,44 @@ class _UserProfilePageState extends State<UserProfilePage> {
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [header(), sectionTitle('PREFERÊNCIAS')],
+            children: [
+              header(),
+              sectionTitle('PREFERÊNCIAS'),
+              switchTile('Tema Claro', temaClaro, (v) {
+                setState(() {
+                  temaClaro = v;
+                });
+              }),
+              switchTile('Notificações Push', notificacoes, (v) {
+                setState(() => notificacoes = v);
+              }),
+              switchTile('Sons', sons, (v) {
+                setState(() => sons = v);
+              }),
+              switchTile('Vibrações', vibracoes, (v) {
+                setState(() => vibracoes = v);
+              }),
+              sectionTitle('PRIVACIDADE E SEGURANÇA'),
+              navigationTile('Gerenciamento de dados pessoais'),
+              sectionTitle('INFORMAÇÕES DO APLICATIVO'),
+              navigationTile('Termos de Uso e Política de Privacidade'),
+              navigationTile('Perguntas Frequentes'),
+              navigationTile(
+                'Sair da conta',
+                showIcon: false,
+                textColor: Colors.grey,
+              ),
+              navigationTile(
+                'Versão do aplicativo: 0.0.1',
+                showIcon: false,
+                textColor: Colors.grey,
+              ),
+              navigationTile(
+                'Excluir conta',
+                showIcon: false,
+                textColor: Colors.red,
+              ),
+            ],
           ),
         ),
       ),
@@ -65,5 +105,28 @@ Widget header() {
 Widget sectionTitle(String title) {
   return Container(
     width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    color: Colors.grey.shade200,
+    child: Text(
+      title,
+      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+    ),
+  );
+}
+
+Widget switchTile(String title, bool value, ValueChanged<bool> onChanged) {
+  return SwitchListTile(
+    title: Text(title),
+    value: value,
+    onChanged: onChanged,
+    activeThumbColor: Colors.amber,
+  );
+}
+
+Widget navigationTile(String title, {Color? textColor, bool showIcon = true}) {
+  return ListTile(
+    title: Text(title, style: TextStyle(color: textColor ?? Colors.black)),
+    trailing: showIcon ? const Icon(Icons.chevron_right) : null,
+    onTap: () {},
   );
 }
