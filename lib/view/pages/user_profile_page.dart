@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/edit_profile_page.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +25,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              header(),
+              header(context),
               sectionTitle('PREFERÊNCIAS'),
               switchTile('Tema Claro', temaClaro, (v) {
                 setState(() {
@@ -68,7 +69,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 }
 
-Widget header() {
+Widget header(BuildContext context) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 24),
     child: Column(
@@ -87,7 +88,12 @@ Widget header() {
         const Text('Garanhuns - PE', style: TextStyle(color: Colors.grey)),
         const SizedBox(height: 16),
         ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EditProfilePage()),
+              );
+            },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.amber,
             foregroundColor: Colors.black,
