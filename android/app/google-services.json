@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "706506597068",
+    "project_id": "borane-a6ce6",
+    "storage_bucket": "borane-a6ce6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:706506597068:android:711aa4ec391647edab1869",
+        "android_client_info": {
+          "package_name": "com.example.boranemobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxoLRzAkq2-VfcclnuHqNfBWkaBLM--Ng"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
