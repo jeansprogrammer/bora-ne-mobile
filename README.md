@@ -16,7 +16,7 @@
 Clone o repositório
 
 ```
-    git clone https://github.com/jeansprogrammer/boranemobile.git 
+    git clone https://github.com/jeansprogrammer/bora-ne-mobile.git
     cd boranemobile
 ```
 
