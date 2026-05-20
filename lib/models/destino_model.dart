@@ -1,18 +1,10 @@
-enum CategoriaDestino {
-  religioso,
-  lazer,
-  gastronomia,
-  aventura,
-  musicaEventos
-
-}
-
 class DestinoModel {
   String nome;
-  List<String> categorias; // Firestore armazena listas como List<dynamic> ou List<String>
+  List<String> categorias;
   String descricao;
   String imagem;
   String local;
+  String cidade; // 1. Novo campo aqui
 
   DestinoModel({
     required this.nome,
@@ -20,9 +12,9 @@ class DestinoModel {
     required this.descricao,
     required this.imagem,
     required this.local,
+    required this.cidade, // 2. Adicione ao construtor
   });
 
-  // Converte um documento do Firestore (Map) para o Objeto DestinoModel
   factory DestinoModel.fromMap(Map<String, dynamic> data) {
     return DestinoModel(
       nome: data['nome'] ?? '',
@@ -30,10 +22,10 @@ class DestinoModel {
       descricao: data['descricao'] ?? '',
       imagem: data['imagem'] ?? '',
       local: data['local'] ?? '',
+      cidade: data['cidade'] ?? '', // 3. Mapeie do JSON/Firestore
     );
   }
 
-  // Converte o Objeto DestinoModel para um Map para salvar no Firestore
   Map<String, dynamic> toMap() {
     return {
       'nome': nome,
@@ -41,6 +33,7 @@ class DestinoModel {
       'descricao': descricao,
       'imagem': imagem,
       'local': local,
+      'cidade': cidade, // 4. Mapeie para o Firestore
     };
   }
 }
