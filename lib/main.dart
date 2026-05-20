@@ -5,6 +5,7 @@ import 'controllers/destino_controller.dart'; // Importe o novo controller
 import 'view/pages/splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'services/carga_dados_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +13,9 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // EXECUTE APENAS UMA VEZ E DEPOIS COMENTE A LINHA ABAIXO
+  await CargaDadosService().executarCarga();
 
   runApp(
     MultiProvider(
