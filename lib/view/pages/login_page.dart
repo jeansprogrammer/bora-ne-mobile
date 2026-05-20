@@ -15,6 +15,7 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Verifique se o caminho da imagem está correto no seu pubspec.yaml
               Image.asset('assets/images/logo_bora_ne.png', width: 80, height: 80),
               const SizedBox(height: 20),
 
@@ -33,7 +34,9 @@ class LoginScreen extends StatelessWidget {
                 color: Colors.white,
                 textColor: Colors.black87,
                 icon: FontAwesomeIcons.google,
-                onPressed: () {},
+                onPressed: () {
+                  // Lógica de login Google futura
+                },
               ),
 
               const SizedBox(height: 16),
@@ -46,7 +49,7 @@ class LoginScreen extends StatelessWidget {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => HomePage()
+                    builder: (_) => const HomePage()
                   ),
                 ),
               ),
@@ -62,7 +65,8 @@ class SocialButton extends StatelessWidget {
   final String text;
   final Color color;
   final Color textColor;
-  final IconData icon;
+  // MUDANÇA AQUI: Usamos dynamic para aceitar tanto IconData quanto FaIconData
+  final dynamic icon; 
   final VoidCallback onPressed;
 
   const SocialButton({
@@ -80,6 +84,7 @@ class SocialButton extends StatelessWidget {
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: onPressed,
+        // O FaIcon é o widget correto para renderizar ícones do FontAwesome
         icon: FaIcon(icon, color: textColor, size: 20),
         label: Text(text, style: TextStyle(color: textColor, fontSize: 16)),
         style: ElevatedButton.styleFrom(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../controllers/route_creation_controller.dart';
-import '../../../models/route_creation_model.dart';
 
 class NewRoutePage extends StatefulWidget {
   const NewRoutePage({super.key});
@@ -14,173 +13,190 @@ class _NewRoutePageState extends State<NewRoutePage> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> searchResults = [];
 
+  // Estilo padrão para os campos de entrada conforme a imagem
+  InputDecoration _inputStyle(String hint, IconData icon) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+      prefixIcon: Icon(icon, color: Colors.orangeAccent, size: 22),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.grey, width: 0.5),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.black12, width: 1),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<RouteCreationController>(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Criar nova rota"),
-        backgroundColor: Colors.orange,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Center(
+          child: Image.asset('assets/images/logo_bora_ne.png', height: 40), // Substitua pelo seu asset de logo
+        ),
+        actions: [const SizedBox(width: 48)], // Para centralizar a logo
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Fotos
-            const Text("Fotos da rota"),
-            const SizedBox(height: 6),
+            const SizedBox(height: 10),
+            // ÁREA DE UPLOAD DE FOTOS
             Container(
-              height: 120,
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: const Color(0xFFFFF9E7),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orangeAccent.withOpacity(0.5), style: BorderStyle.solid),
               ),
-              child: const Center(
-                child: Text("Upload de fotos (placeholder)"),
+              child: Column(
+                children: [
+                  const Icon(Icons.add_photo_alternate_outlined, size: 48, color: Colors.orangeAccent),
+                  const SizedBox(height: 12),
+                  const Text("Adicionar fotos da rota", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 4),
+                  const Text("Toque para fazer upload", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                ],
               ),
             ),
+            const SizedBox(height: 24),
 
-            const SizedBox(height: 20),
-
-            // Nome
-            const Text("Nome da rota"),
+            // NOME DA ROTA
+            const Text("Nome da rota", style: TextStyle(fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
             TextField(
               onChanged: controller.setName,
-              decoration: const InputDecoration(
-                hintText: "Ex: Rota Gastronômica",
-              ),
+              decoration: _inputStyle("Ex: Rota Gastronômica", Icons.location_on_outlined),
             ),
-
             const SizedBox(height: 20),
 
-            // Categoria
-            const Text("Categoria"),
+            // CATEGORIA
+            const Text("Category", style: TextStyle(fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: controller.newRoute.category.isEmpty
-                  ? null
-                  : controller.newRoute.category,
-              items: const [
-                DropdownMenuItem(value: "Religioso", child: Text("Religioso")),
-                DropdownMenuItem(value: "Gastronômico", child: Text("Gastronômico")),
-                DropdownMenuItem(value: "Histórico", child: Text("Histórico")),
-                DropdownMenuItem(value: "Aventura", child: Text("Aventura")),
-              ],
-              onChanged: (value) => controller.setCategory(value!),
-              decoration: const InputDecoration(hintText: "Selecione a categoria"),
+              decoration: _inputStyle("Selecione a categoria", Icons.grid_view_rounded),
+              icon: const Icon(Icons.arrow_drop_down),
+              items: ["Religioso", "Lazer", "Gastronomia", "Aventura"]
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+              onChanged: (v) => controller.setCategory(v!),
             ),
-
             const SizedBox(height: 20),
 
-            // Descrição
-            const Text("Descrição"),
+            // DESCRIÇÃO
+            const Text("Descrição", style: TextStyle(fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
             TextField(
               onChanged: controller.setDescription,
               maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: "Descreva sua rota...",
-              ),
+              maxLength: 500,
+              decoration: _inputStyle("Descreva sua rota...", Icons.edit_outlined),
             ),
+            
+            const Divider(height: 32),
 
-            const SizedBox(height: 25),
-
-            // Buscar local
-            const Text("Adicionar locais (máx. 10)"),
-            const SizedBox(height: 6),
-
+            // BUSCAR LOCAL
+            const Text("Adicionar locais (máx. 10)", style: TextStyle(fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
             TextField(
               controller: _searchController,
-              decoration: InputDecoration(
-                hintText: "Buscar local...",
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () async {
-                    final results = await controller.searchPlace(_searchController.text);
-                    setState(() => searchResults = results);
-                  },
-                ),
-              ),
+              decoration: _inputStyle("Buscar local...", Icons.location_on_outlined),
+              onChanged: (val) {
+                // Simulação de busca para preencher a lista
+                if (val.length > 2) {
+                  setState(() {
+                    searchResults = [
+                      {"name": "Pelourinho, Salvador", "lat": -12.97, "lon": -38.51},
+                      {"name": "Marco Zero, Recife", "lat": -8.06, "lon": -34.87},
+                    ];
+                  });
+                }
+              },
             ),
+            const SizedBox(height: 8),
+            const Text("ⓘ Adicione até 10 locais para compor sua rota.", 
+              style: TextStyle(color: Colors.grey, fontSize: 11)),
 
-            const SizedBox(height: 10),
-
-            // Lista de resultados
-            ...searchResults.map((place) {
-              return ListTile(
-                title: Text(place["name"]),
-                trailing: controller.canAddMorePlaces
-                    ? const Icon(Icons.add)
-                    : const Icon(Icons.block, color: Colors.red),
-                onTap: () {
-                  if (!controller.canAddMorePlaces) return;
-
-                  controller.addPlace(
-                    PlaceModel(
-                      name: place["name"],
-                      position: controller.geoapify.convertToLatLng(
-                        place["lat"],
-                        place["lon"],
-                      ),
-                    ),
-                  );
-
-                  _searchController.clear();
-                  setState(() => searchResults.clear());
-                },
-              );
-            }),
-
-            const SizedBox(height: 20),
-
-            // Locais adicionados
-            if (controller.newRoute.places.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Locais adicionados:"),
-                  const SizedBox(height: 10),
-
-                  ...controller.newRoute.places.asMap().entries.map(
-                    (entry) {
-                      final index = entry.key;
-                      final place = entry.value;
-
-                      return Card(
-                        child: ListTile(
-                          title: Text(place.name),
-                          subtitle: Text(
-                              "Lat: ${place.position.latitude}, Lon: ${place.position.longitude}"),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => controller.removePlace(index),
-                          ),
-                        ),
-                      );
+            // RESULTADOS DA BUSCA (Aparecem flutuando ou abaixo)
+            if (searchResults.isNotEmpty)
+              Container(
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [const BoxShadow(blurRadius: 4, color: Colors.black12)]),
+                child: Column(
+                  children: searchResults.map((place) => ListTile(
+                    title: Text(place["name"]),
+                    onTap: () {
+                      controller.addPlace(place["name"], place["lat"], place["lon"]);
+                      _searchController.clear();
+                      setState(() => searchResults = []);
                     },
-                  ),
-                ],
+                  )).toList(),
+                ),
               ),
 
-            const SizedBox(height: 40),
-
-            // Botões finais
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancelar"),
+            // LISTA DE ITINERÁRIO (Locais já adicionados)
+            ...controller.newRoute.places.asMap().entries.map((entry) => Card(
+              margin: const EdgeInsets.only(top: 10),
+              child: ListTile(
+                leading: const Icon(Icons.drag_indicator, color: Colors.grey),
+                title: Text(entry.value.name),
+                trailing: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.red, size: 20),
+                  onPressed: () => controller.removePlace(entry.key),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    controller.saveRoute();
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Salvar rota"),
+              ),
+            )),
+
+            const SizedBox(height: 30),
+
+            // BOTÕES DE AÇÃO (CANCELAR / SALVAR)
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: const BorderSide(color: Colors.black45),
+                    ),
+                    child: const Text("Cancelar", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.map_outlined, color: Colors.black),
+                    label: const Text("Salvar rota", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                    onPressed: (controller.isSaving || !controller.isValid) ? null : () async {
+                      if (await controller.saveRoute()) Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orangeAccent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                  ),
                 ),
               ],
             ),
+            const SizedBox(height: 80), // Espaço para a BottomNavigationBar
           ],
         ),
       ),
