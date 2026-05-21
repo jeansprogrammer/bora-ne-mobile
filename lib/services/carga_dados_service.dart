@@ -1,9 +1,9 @@
-import '../services/firestore_service.dart';
+import 'destino_service.dart';
 import '../models/destino_model.dart';
 import '../data/destinos_seeds.dart';
 
 class CargaDadosService {
-  final FirestoreService _firestoreService = FirestoreService();
+  final DestinoService _destinoService = DestinoService();
 
   Future<void> executarCarga() async {
     print("🚀 Iniciando importação de ${destinosIniciais.length} destinos...");
@@ -14,7 +14,7 @@ class CargaDadosService {
         // para ler o campo 'cidade' do seu JSON.
         DestinoModel destino = DestinoModel.fromMap(item);
         
-        await _firestoreService.addDestino(destino);
+        await _destinoService.addDestino(destino);
         print("✅ Sucesso: ${destino.nome} (${destino.cidade})");
       } catch (e) {
         // Se der erro aqui, verifique se o 'cidade' no JSON está escrito 

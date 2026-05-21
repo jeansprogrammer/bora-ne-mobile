@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/destino_model.dart';
-import '../services/firestore_service.dart';
+import '../services/destino_service.dart';
 
 class DestinoController extends ChangeNotifier {
   // Instância do serviço que criamos anteriormente
-  final FirestoreService _firestoreService = FirestoreService();
+  final DestinoService _destinoService = DestinoService();
 
   // Lista privada que armazenará os destinos vindos do banco
   List<DestinoModel> _destinos = [];
@@ -22,7 +22,7 @@ class DestinoController extends ChangeNotifier {
     notifyListeners(); // Avisa a View para mostrar um ícone de carregamento
 
     // Chamamos o Stream do Service
-    _firestoreService.getDestinos().listen((listaDeDestinos) {
+    _destinoService.getDestinos().listen((listaDeDestinos) {
       _destinos = listaDeDestinos;
       _estaCarregando = false;
       
@@ -39,7 +39,7 @@ class DestinoController extends ChangeNotifier {
   // Função para adicionar um novo destino através da interface
   Future<void> adicionarNovoDestino(DestinoModel novoDestino) async {
     try {
-      await _firestoreService.addDestino(novoDestino);
+      await _destinoService.addDestino(novoDestino);
       // Não precisamos atualizar a lista manualmente aqui, 
       // pois o Stream no carregarDestinos() fará isso automaticamente!
     } catch (e) {
