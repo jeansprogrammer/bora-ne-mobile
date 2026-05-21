@@ -12,6 +12,8 @@ class RouteCreationController extends ChangeNotifier {
 
   RouteCreationModel newRoute = RouteCreationModel();
   
+
+  
   // Estados de Controle
   bool _isSaving = false;
   bool _isSearching = false; // Novo: controla o loading da busca
