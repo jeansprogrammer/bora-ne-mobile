@@ -1,30 +1,60 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:latlong2/latlong.dart';
 
 class GeoapifyService {
-  final String apiKey = "SUA_API_KEY_AQUI";
+  static const String _apiKey = '619ba71eaac1450e9b434f7720cc4150';
 
-  Future<List<Map<String, dynamic>>> searchPlaces(String query) async {
-    final url =
-        "https://api.geoapify.com/v1/geocode/autocomplete?text=$query&apiKey=$apiKey";
+  // Busca locais pelo nome (para criação de rota)
+  Future<List<Map<String, dynamic>>> buscarLocaisPorNome(String query) async {
+    final url = Uri.parse(
+      'https://api.geoapify.com/v1/geocode/search'
+      '?text=${Uri.encodeComponent(query)}'
+      '&filter=countrycode:br'
+      '&bias=proximity:-37.5,-8.5'
+      '&lang=pt'
+      '&limit=5'
+      '&apiKey=$_apiKey',
+    );
 
-    final response = await http.get(Uri.parse(url));
-
+    final response = await http.get(url);
     if (response.statusCode != 200) return [];
 
     final data = jsonDecode(response.body);
+    final features = data['features'] as List;
 
-    return List<Map<String, dynamic>>.from(
-      data["features"].map((f) => {
-            "name": f["properties"]["formatted"],
-            "lat": f["properties"]["lat"],
-            "lon": f["properties"]["lon"],
-          }),
-    );
+    return features.map((f) {
+      final props = f['properties'];
+      return {
+        "name": props['name'] ?? props['formatted'] ?? query,
+        "lat": (props['lat'] as num).toDouble(),
+        "lon": (props['lon'] as num).toDouble(),
+        "endereco": props['formatted'] ?? '',
+      };
+    }).toList();
   }
 
-  LatLng convertToLatLng(double lat, double lon) {
-    return LatLng(lat, lon);
+  // Geocodifica endereço completo → retorna lat/lon
+  Future<Map<String, double>?> geocodificarEndereco(String endereco) async {
+    final url = Uri.parse(
+      'https://api.geoapify.com/v1/geocode/search'
+      '?text=${Uri.encodeComponent(endereco)}'
+      '&filter=countrycode:br'
+      '&lang=pt'
+      '&limit=1'
+      '&apiKey=$_apiKey',
+    );
+
+    final response = await http.get(url);
+    if (response.statusCode != 200) return null;
+
+    final data = jsonDecode(response.body);
+    final features = data['features'] as List;
+    if (features.isEmpty) return null;
+
+    final props = features[0]['properties'];
+    return {
+      'lat': (props['lat'] as num).toDouble(),
+      'lon': (props['lon'] as num).toDouble(),
+    };
   }
 }
