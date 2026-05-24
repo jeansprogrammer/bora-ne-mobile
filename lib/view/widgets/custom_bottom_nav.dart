@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:boranemobile/view/pages/favorites_page.dart';
 import 'package:boranemobile/view/pages/mapa_page.dart';
+import 'package:boranemobile/view/pages/login_page.dart';
+import 'package:boranemobile/view/pages/profile_page.dart';
+import 'package:boranemobile/controllers/auth_controller.dart';
 
 class CustomBottomNav extends StatelessWidget {
   const CustomBottomNav({super.key});
@@ -65,7 +69,18 @@ class CustomBottomNav extends StatelessWidget {
             icon: Icons.person_outline,
             label: 'Perfil',
             onTap: () {
-              // depois você cria a ProfilePage
+              final auth = Provider.of<AuthController>(context, listen: false);
+              if (auth.isLoggedIn) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfilePage()),
+                );
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                );
+              }
             },
           ),
         ],

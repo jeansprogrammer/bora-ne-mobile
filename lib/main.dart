@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'controllers/route_creation_controller.dart';
 import 'controllers/destino_controller.dart'; // Importe o novo controller
+import 'controllers/auth_controller.dart';
 import 'view/pages/splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -26,6 +27,9 @@ Future<void> main() async {
         // Adicionamos o DestinoController aqui para o app todo ter acesso
         ChangeNotifierProvider(
           create: (_) => DestinoController(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AuthController(),
         ),
       ],
       child: const BoraNE(),

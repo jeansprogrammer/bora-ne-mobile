@@ -1,12 +1,17 @@
-import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:boranemobile/controllers/auth_controller.dart';
+import 'package:boranemobile/view/pages/home_page.dart';
+import 'package:boranemobile/view/pages/profile_page.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthController>(context);
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
@@ -15,7 +20,6 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Verifique se o caminho da imagem está correto no seu pubspec.yaml
               Image.asset('assets/images/logo_bora_ne.png', width: 80, height: 80),
               const SizedBox(height: 20),
 
@@ -30,27 +34,37 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 30),
 
               SocialButton(
-                text: "Entrar com Google",
+                text: 'Entrar com Google',
                 color: Colors.white,
                 textColor: Colors.black87,
                 icon: FontAwesomeIcons.google,
-                onPressed: () {
-                  // Lógica de login Google futura
+                onPressed: () async {
+                  try {
+                    final res = await auth.signInWithGoogle();
+                    if (res != null) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ProfilePage()),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erro no login: $e')),
+                    );
+                  }
                 },
               ),
 
               const SizedBox(height: 16),
 
               SocialButton(
-                text: "Entrar com Facebook",
+                text: 'Entrar com Facebook',
                 color: const Color(0xFF1877F2),
                 textColor: Colors.white,
                 icon: FontAwesomeIcons.facebookF,
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const HomePage()
-                  ),
+                  MaterialPageRoute(builder: (_) => const HomePage()),
                 ),
               ),
             ],
@@ -61,12 +75,12 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
+
 class SocialButton extends StatelessWidget {
   final String text;
   final Color color;
   final Color textColor;
-  // MUDANÇA AQUI: Usamos dynamic para aceitar tanto IconData quanto FaIconData
-  final dynamic icon; 
+  final dynamic icon;
   final VoidCallback onPressed;
 
   const SocialButton({
@@ -80,12 +94,20 @@ class SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Widget leading;
+    if (icon is FaIconData) {
+      leading = FaIcon(icon, color: textColor, size: 20);
+    } else if (icon is IconData) {
+      leading = Icon(icon, color: textColor, size: 20);
+    } else {
+      leading = const SizedBox.shrink();
+    }
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: onPressed,
-        // O FaIcon é o widget correto para renderizar ícones do FontAwesome
-        icon: FaIcon(icon, color: textColor, size: 20),
+        icon: leading,
         label: Text(text, style: TextStyle(color: textColor, fontSize: 16)),
         style: ElevatedButton.styleFrom(
           backgroundColor: color,

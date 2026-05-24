@@ -65,21 +65,3 @@ class Onboard4 extends StatelessWidget {
     );
   }
 }
-
-Widget _decorativeCurve() {
-  return Positioned(
-    right: -80,
-    top: -40,
-    bottom: -40,
-    child: Container(
-      width: 200,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(200),
-        border: Border.all(
-          color: const Color(0xFFEBB22F),
-          width: 2,
-        ),
-      ),
-    ),
-  );
-}
