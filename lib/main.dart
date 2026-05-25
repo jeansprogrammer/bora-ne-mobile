@@ -5,6 +5,7 @@ import 'controllers/destino_controller.dart'; // Importe o novo controller
 import 'view/pages/splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'controllers/destino_creation_controller.dart';
 //import 'services/carga_dados_service.dart';
 
 Future<void> main() async {
@@ -24,9 +25,10 @@ Future<void> main() async {
           create: (_) => RouteCreationController(),
         ),
         // Adicionamos o DestinoController aqui para o app todo ter acesso
-        ChangeNotifierProvider(
+        /*ChangeNotifierProvider(
           create: (_) => DestinoController(),
-        ),
+        ),*/
+        ChangeNotifierProvider(create: (_) => DestinoCreationController()),
       ],
       child: const BoraNE(),
     ),
