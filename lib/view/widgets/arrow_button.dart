@@ -20,7 +20,12 @@ class ArrowButton extends StatelessWidget {
           shape: BoxShape.circle,
           color: Color(0xFFEBB22F),
         ),
-        child: Icon(icon, size: 32, color: Colors.black),
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: icon == Icons.arrow_back_ios ? 5 : 0,
+          ),
+          child: Icon(icon, size: 32, color: Colors.black),
+        ),
       ),
     );
   }

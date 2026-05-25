@@ -4,50 +4,55 @@ import 'onboard2.dart';
 import 'onboard3.dart';
 import 'onboard4.dart';
 
-class Onboarding extends StatefulWidget {
-  const Onboarding({super.key});
+class OnboardingPage extends StatefulWidget {
+  const OnboardingPage({super.key});
 
   @override
-  State<Onboarding> createState() => _OnboardingState();
+  State<OnboardingPage> createState() => _OnboardingPageState();
 }
 
-class _OnboardingState extends State<Onboarding> {
+class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _controller = PageController();
   int _currentPage = 0;
 
-  void nextPage() {
+  void _next() {
     if (_currentPage < 3) {
-      _controller.nextPage(
-        duration: const Duration(milliseconds: 300),
+      _controller.animateToPage(
+        _currentPage + 1,
+        duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
     }
   }
 
-  void previousPage() {
+  void _back() {
     if (_currentPage > 0) {
-      _controller.previousPage(
-        duration: const Duration(milliseconds: 300),
+      _controller.animateToPage(
+        _currentPage - 1,
+        duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: PageView(
-        controller: _controller,
-        onPageChanged: (index) {
-          setState(() => _currentPage = index);
-        },
-        children: [
-          Onboard1(onNext: nextPage),
-          Onboard2(onNext: nextPage, onBack: previousPage),
-          Onboard3(onNext: nextPage, onBack: previousPage),
-          const Onboard4(),
-        ],
-      ),
+    return PageView(
+      controller: _controller,
+      physics: const NeverScrollableScrollPhysics(),
+      onPageChanged: (i) => setState(() => _currentPage = i),
+      children: [
+        Onboard1(onNext: _next),
+        Onboard2(onNext: _next, onBack: _back),
+        Onboard3(onNext: _next, onBack: _back),
+        Onboard4(onBack: _back),
+      ],
     );
   }
 }
