@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
-import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:boranemobile/view/pages/profile_page.dart';
 
 class LoginPage extends StatelessWidget {
@@ -57,7 +56,7 @@ class LoginPage extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              SocialButton(
+              /*SocialButton(
                 text: 'Entrar com Facebook',
                 color: const Color(0xFF1877F2),
                 textColor: Colors.white,
@@ -66,7 +65,7 @@ class LoginPage extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (_) => const HomePage()),
                 ),
-              ),
+              ),*/
             ],
           ),
         ),
