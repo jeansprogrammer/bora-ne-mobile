@@ -1,66 +1,43 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
+import '../widgets/onboard_base.dart';
 
 class Onboard4 extends StatelessWidget {
-  const Onboard4({super.key});
+  final VoidCallback onBack;
+
+  const Onboard4({super.key, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Tudo pronto!\nComece agora sua\njornada com o BoraNE.",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFEBB22F),
-                  ),
-                ),
+    return OnboardBase(
+      imagePath: 'assets/images/image_on4.png',
+      dark: false,
+      title: RichText(
+        text: const TextSpan(
+          style: TextStyle(fontSize: 30, color: Colors.black, height: 1.3),
+          children: [
+            TextSpan(
+              text: 'Conecte-se ',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFEBB22F),
               ),
-              const SizedBox(height: 40),
-              Image.asset("assets/images/background.png", height: 400),
-              const Spacer(),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFEBB22F),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const HomePage()),
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    "Começar",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
-            ],
-          ),
+            ),
+            TextSpan(text: 'e\nfortaleça o local.'),
+          ],
         ),
+      ),
+      subtitle: 'Valorize pequenos empreendedores e\nviva experiências autênticas.',
+      bottomAction: OnboardNavRow(
+        onBack: onBack,
+        isLast: true,
+        onNext: () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
+            (route) => false,
+          );
+        },
       ),
     );
   }
