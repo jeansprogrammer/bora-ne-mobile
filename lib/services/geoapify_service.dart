@@ -57,4 +57,31 @@ class GeoapifyService {
       'lon': (props['lon'] as num).toDouble(),
     };
   }
+
+  // Obtém o nome da cidade a partir das coordenadas geográficas (Reverse Geocoding)
+  Future<String?> obterCidadePorCoordenadas(double lat, double lon) async {
+    final url = Uri.parse(
+      'https://api.geoapify.com/v1/geocode/reverse'
+      '?lat=$lat'
+      '&lon=$lon'
+      '&format=json'
+      '&apiKey=$_apiKey',
+    );
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode != 200) return null;
+
+      final data = jsonDecode(response.body);
+      final results = data['results'] as List?;
+      if (results == null || results.isEmpty) return null;
+
+      final props = results[0];
+      // O Geoapify retorna a cidade em 'city' ou campos alternativos como 'municipality'
+      return props['city'] ?? props['municipality'] ?? props['county'];
+    } catch (e) {
+      print('Erro ao obter cidade por coordenadas: $e');
+      return null;
+    }
+  }
 }

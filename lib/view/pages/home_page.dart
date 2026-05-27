@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/view/widgets/route_carousel.dart';
 import 'package:boranemobile/view/pages/routes_page.dart';
+import 'package:boranemobile/services/location_service.dart';
+import 'package:boranemobile/services/geoapify_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,6 +15,43 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
+  String? _cidadeDetectada;
+  bool _estaCarregandoLocalizacao = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _detectarLocalizacao();
+  }
+
+  Future<void> _detectarLocalizacao() async {
+    setState(() {
+      _estaCarregandoLocalizacao = true;
+    });
+
+    try {
+      final pos = await LocationService().obterPosicaoAtual();
+      if (pos != null) {
+        final cidade = await GeoapifyService().obterCidadePorCoordenadas(
+          pos.latitude,
+          pos.longitude,
+        );
+        if (cidade != null && mounted) {
+          setState(() {
+            _cidadeDetectada = cidade;
+          });
+        }
+      }
+    } catch (e) {
+      print('Erro ao obter localização ou cidade: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _estaCarregandoLocalizacao = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +69,68 @@ class _HomePageState extends State<HomePage> {
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Image.asset('assets/images/logo_bora_ne.png', height: 44),
+                ),
+              ),
+
+              // ── Barra de Localização ──────────────────────────────────────
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.orangeAccent.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.location_on, color: Colors.orangeAccent, size: 18),
+                        const SizedBox(width: 6),
+                        if (_estaCarregandoLocalizacao) ...[
+                          const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.orangeAccent,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Detectando sua cidade...',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ] else if (_cidadeDetectada != null)
+                          Text(
+                            'Mostrando rotas de $_cidadeDetectada',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          )
+                        else
+                          GestureDetector(
+                            onTap: _detectarLocalizacao,
+                            child: const Text(
+                              'Definir localização / Permitir GPS',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orangeAccent,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
 
@@ -71,7 +172,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 16),
 
               // ── Carrossel de rotas ────────────────────────────────────────
-              const RouteCarousel(),
+              RouteCarousel(cidade: _cidadeDetectada),
 
               const SizedBox(height: 20),
 
@@ -155,88 +256,148 @@ class _HomePageState extends State<HomePage> {
   // ── PRÓXIMO A VOCÊ ────────────────────────────────────────────────────────
 
   Widget _buildProximoAVoce() {
+    // Definimos o stream filtrado por cidade se disponível
+    final streamFiltrado = (_cidadeDetectada != null && _cidadeDetectada!.isNotEmpty)
+        ? FirebaseFirestore.instance
+            .collection('rotas_criadas')
+            .where('cidade', isEqualTo: _cidadeDetectada)
+            .limit(3)
+            .snapshots()
+        : FirebaseFirestore.instance
+            .collection('rotas_criadas')
+            .limit(3)
+            .snapshots();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Próximo a você',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Próximo a você',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              if (_cidadeDetectada != null && _cidadeDetectada!.isNotEmpty)
+                Text(
+                  'em $_cidadeDetectada',
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.orangeAccent),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
         StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('rotas_criadas')
-              .limit(3)
-              .snapshots(),
+          stream: streamFiltrado,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(
-                  color: Colors.orangeAccent));
+              return const Center(child: CircularProgressIndicator(color: Colors.orangeAccent));
             }
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Text('Nenhuma rota encontrada.',
-                    style: TextStyle(color: Colors.grey)),
+
+            // Se estiver vazio E tínhamos uma cidade filtrada, fazemos o fallback para todas as rotas
+            if ((!snapshot.hasData || snapshot.data!.docs.isEmpty) &&
+                _cidadeDetectada != null &&
+                _cidadeDetectada!.isNotEmpty) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Text(
+                      'Ainda não temos rotas cadastradas em $_cidadeDetectada. Enquanto isso, confira estas opções de outras cidades:',
+                      style: const TextStyle(fontSize: 13, color: Colors.grey, height: 1.3),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('rotas_criadas')
+                        .limit(3)
+                        .snapshots(),
+                    builder: (context, fallbackSnapshot) {
+                      if (fallbackSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator(color: Colors.orangeAccent));
+                      }
+                      if (!fallbackSnapshot.hasData || fallbackSnapshot.data!.docs.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text('Nenhuma rota disponível.', style: TextStyle(color: Colors.grey)),
+                        );
+                      }
+                      return _buildRotasList(fallbackSnapshot.data!.docs);
+                    },
+                  ),
+                ],
               );
             }
 
-            return Column(
-              children: [
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (_, i) {
-                    final doc = snapshot.data!.docs[i];
-                    final data = doc.data() as Map<String, dynamic>;
-                    return _buildRotaCard(doc.id, data);
-                  },
-                ),
-                const SizedBox(height: 8),
-                // ── Botão Ver mais ─────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const ListaReligiososPage()),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: Colors.black12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Ver mais',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 15),
-                          ),
-                          SizedBox(width: 6),
-                          Icon(Icons.arrow_forward_ios,
-                              size: 14, color: Colors.black54),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            );
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text('Nenhuma rota encontrada.', style: TextStyle(color: Colors.grey)),
+              );
+            }
+
+            return _buildRotasList(snapshot.data!.docs);
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRotasList(List<QueryDocumentSnapshot> docs) {
+    return Column(
+      children: [
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: docs.length,
+          itemBuilder: (_, i) {
+            final doc = docs[i];
+            final data = doc.data() as Map<String, dynamic>;
+            return _buildRotaCard(doc.id, data);
+          },
+        ),
+        const SizedBox(height: 8),
+        // ── Botão Ver mais ─────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ListaReligiososPage()),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Colors.black12),
+                ),
+                elevation: 0,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Ver mais',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  ),
+                  SizedBox(width: 6),
+                  Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black54),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );

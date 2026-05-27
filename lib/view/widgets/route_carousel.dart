@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class RouteCarousel extends StatefulWidget {
-  const RouteCarousel({super.key});
+  final String? cidade;
+
+  const RouteCarousel({super.key, this.cidade});
 
   @override
   State<RouteCarousel> createState() => _RouteCarouselState();
@@ -21,11 +23,31 @@ class _RouteCarouselState extends State<RouteCarousel> {
     _carregarRotas();
   }
 
+  @override
+  void didUpdateWidget(covariant RouteCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cidade != widget.cidade) {
+      _carregarRotas();
+    }
+  }
+
   Future<void> _carregarRotas() async {
-    final snap = await FirebaseFirestore.instance
-        .collection('rotas_criadas')
-        .limit(5)
-        .get();
+    Query<Map<String, dynamic>> ref = FirebaseFirestore.instance.collection('rotas_criadas');
+
+    // Se houver cidade informada, filtramos as rotas por ela
+    if (widget.cidade != null && widget.cidade!.isNotEmpty) {
+      ref = ref.where('cidade', isEqualTo: widget.cidade);
+    }
+
+    var snap = await ref.limit(5).get();
+
+    // Fallback: se buscamos por uma cidade específica e não há rotas nela, mostramos todas as rotas
+    if (snap.docs.isEmpty && widget.cidade != null && widget.cidade!.isNotEmpty) {
+      snap = await FirebaseFirestore.instance
+          .collection('rotas_criadas')
+          .limit(5)
+          .get();
+    }
 
     if (mounted) {
       setState(() {

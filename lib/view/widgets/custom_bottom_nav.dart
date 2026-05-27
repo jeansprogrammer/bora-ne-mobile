@@ -5,6 +5,8 @@ import 'package:boranemobile/view/pages/favorites_page.dart';
 import 'package:boranemobile/view/pages/mapa_page.dart';
 import 'package:boranemobile/view/pages/login_page.dart';
 import 'package:boranemobile/view/pages/profile_page.dart';
+import 'package:boranemobile/view/pages/new_route_page.dart';
+import 'package:boranemobile/view/pages/new_place_page.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
 
 class CustomBottomNav extends StatefulWidget {
@@ -144,6 +146,7 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
             icon: Icons.person_outline,
             iconActive: Icons.person,
             label: 'Perfil',
+            isActive: currentRoute == '/perfil' || currentRoute == '/login',
             onTap: () {
               final auth = Provider.of<AuthController>(context, listen: false);
               if (auth.isLoggedIn) {
