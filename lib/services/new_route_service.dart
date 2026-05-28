@@ -30,7 +30,7 @@ class NewRouteService {
   // Método para salvar a rota final
   Future<bool> saveRouteToFirestore(Map<String, dynamic> data) async {
     try {
-      await _firestore.collection('rotas_criadas').add({
+      await _firestore.collection('routes').add({
         ...data,
         'data_criacao': FieldValue.serverTimestamp(),
       });

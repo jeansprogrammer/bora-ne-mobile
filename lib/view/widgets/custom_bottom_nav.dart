@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:boranemobile/view/pages/favorites_page.dart';
 import 'package:boranemobile/view/pages/mapa_page.dart';
-import 'package:boranemobile/view/pages/login_page.dart';
-import 'package:boranemobile/view/pages/profile_page.dart';
 import 'package:boranemobile/view/pages/new_route_page.dart';
-import 'package:boranemobile/view/pages/new_place_page.dart';
-import 'package:boranemobile/controllers/auth_controller.dart';
+import 'package:boranemobile/view/pages/new_destination_page.dart';
 
 class CustomBottomNav extends StatefulWidget {
   const CustomBottomNav({super.key});
@@ -72,7 +68,7 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
                 child: const Icon(Icons.add_location_alt_outlined,
                     color: Colors.orangeAccent),
               ),
-              title: const Text('Novo destino',
+              title: const Text('Novo Destino',
                   style: TextStyle(fontWeight: FontWeight.w600)),
               subtitle: const Text('Cadastre um ponto turístico'),
               onTap: () {
@@ -146,21 +142,8 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
             icon: Icons.person_outline,
             iconActive: Icons.person,
             label: 'Perfil',
-            isActive: currentRoute == '/perfil' || currentRoute == '/login',
-            onTap: () {
-              final auth = Provider.of<AuthController>(context, listen: false);
-              if (auth.isLoggedIn) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProfilePage()),
-                );
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                );
-              }
-            },
+            isActive: currentRoute == '/perfil',
+            onTap: () {},
           ),
         ],
       ),
@@ -199,16 +182,6 @@ class _NavItem extends StatelessWidget {
               color: isActive ? Colors.orangeAccent : Colors.grey,
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                color: isActive ? Colors.orangeAccent : Colors.grey,
-              ),
-            ),
-            // Indicador ativo
-            const SizedBox(height: 2),
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: isActive ? 18 : 0,
@@ -234,31 +207,21 @@ class _NavItemCenter extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: const BoxDecoration(
+      child: Container(
+        width: 50,
+        height: 50,
+        decoration: const BoxDecoration(
+          color: Colors.orangeAccent,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
               color: Colors.orangeAccent,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.orangeAccent,
-                  blurRadius: 10,
-                  offset: Offset(0, 3),
-                ),
-              ],
+              blurRadius: 10,
+              offset: Offset(0, 3),
             ),
-            child: const Icon(Icons.add, color: Colors.white, size: 28),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Adicionar',
-            style: TextStyle(fontSize: 11, color: Colors.grey),
-          ),
-        ],
+          ],
+        ),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
     );
   }

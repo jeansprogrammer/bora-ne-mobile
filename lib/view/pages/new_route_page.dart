@@ -2,8 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../controllers/route_creation_controller.dart';
-import '../../../models/destino_model.dart';
-import 'new_place_page.dart';
+import '../../models/destination_model.dart';
+import '../../../view/widgets/confirm_exit_dialog.dart';
+import 'new_destination_page.dart';
 
 class NewRoutePage extends StatefulWidget {
   const NewRoutePage({super.key});
@@ -14,7 +15,22 @@ class NewRoutePage extends StatefulWidget {
 
 class _NewRoutePageState extends State<NewRoutePage> {
   final TextEditingController _searchController = TextEditingController();
-  List<DestinoModel> _searchResults = [];
+  List<DestinationModel> _searchResults = [];
+
+  bool _temDados(RouteCreationController c) =>
+      c.newRoute.name.isNotEmpty ||
+      c.categoriasSelecionadas.isNotEmpty ||
+      c.cidadeSelecionada.isNotEmpty ||
+      c.DestinationsSelecionados.isNotEmpty ||
+      c.fotos.isNotEmpty ||
+      c.urlFotoCapaManual.isNotEmpty;
+
+  Future<bool> _confirmarSaida(RouteCreationController controller) async {
+    if (!_temDados(controller)) return true;
+    final sair = await ConfirmExitDialog.show(context);
+    if (sair) controller.resetar();
+    return sair;
+  }
 
   final List<String> _categoriasDisponiveis = [
     'Religioso', 'Lazer', 'Gastronomia', 'Aventura',
@@ -64,14 +80,18 @@ class _NewRoutePageState extends State<NewRoutePage> {
   Widget build(BuildContext context) {
     final controller = Provider.of<RouteCreationController>(context);
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () => _confirmarSaida(controller),
+      child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () async {
+            if (await _confirmarSaida(controller)) Navigator.pop(context);
+          },
         ),
         title: Center(
           child: Image.asset('assets/images/logo_bora_ne.png', height: 40),
@@ -108,16 +128,16 @@ class _NewRoutePageState extends State<NewRoutePage> {
             const SizedBox(height: 20),
             const Divider(height: 32),
             _buildSectionTitle("Destinos (máx. 10)"),
-            _buildBuscaDestinos(controller),
+            _buildBuscaDestinations(controller),
             const SizedBox(height: 8),
-            _buildDestinosAdicionados(controller),
+            _buildDestinationsAdicionados(controller),
             const SizedBox(height: 30),
             _buildActionButtons(context, controller),
             const SizedBox(height: 80),
           ],
         ),
       ),
-    );
+    ));
   }
 
   // ── FOTO CAPA — idêntico ao new_place_page ────────────────────────────────
@@ -412,20 +432,33 @@ class _NewRoutePageState extends State<NewRoutePage> {
 
   // ── BUSCA DE DESTINOS ─────────────────────────────────────────────────────
 
-  Widget _buildBuscaDestinos(RouteCreationController controller) {
+  Widget _buildBuscaDestinations(RouteCreationController controller) {
+    final cidadeSelecionada = controller.cidadeSelecionada.isNotEmpty;
     return Column(
       children: [
-        TextField(
-          controller: _searchController,
-          decoration: _inputStyle("Buscar destino pelo nome...", Icons.search),
-          onChanged: (val) async {
-            if (val.length > 2) {
-              final resultados = await controller.pesquisarDestinos(val);
-              setState(() => _searchResults = resultados);
-            } else {
-              setState(() => _searchResults = []);
-            }
-          },
+        // Campo bloqueado se cidade não selecionada
+        Opacity(
+          opacity: cidadeSelecionada ? 1.0 : 0.5,
+          child: AbsorbPointer(
+            absorbing: !cidadeSelecionada,
+            child: TextField(
+              controller: _searchController,
+              decoration: _inputStyle(
+                cidadeSelecionada
+                    ? "Buscar Destino pelo nome..."
+                    : "Selecione a cidade primeiro",
+                Icons.search,
+              ),
+              onChanged: (val) async {
+                if (val.length > 2) {
+                  final resultados = await controller.pesquisarDestinations(val);
+                  setState(() => _searchResults = resultados);
+                } else {
+                  setState(() => _searchResults = []);
+                }
+              },
+            ),
+          ),
         ),
 
         if (controller.isSearching)
@@ -446,8 +479,8 @@ class _NewRoutePageState extends State<NewRoutePage> {
               boxShadow: const [BoxShadow(blurRadius: 8, color: Colors.black12)],
             ),
             child: Column(
-              children: _searchResults.map((destino) {
-                return _buildSearchResultItem(destino, controller);
+              children: _searchResults.map((Destination) {
+                return _buildSearchResultItem(Destination, controller);
               }).toList(),
             ),
           ),
@@ -460,24 +493,24 @@ class _NewRoutePageState extends State<NewRoutePage> {
             width: double.infinity,
             child: OutlinedButton.icon(
               icon: const Icon(Icons.add_location_alt_outlined, color: Colors.orangeAccent),
-              label: const Text("Criar novo destino",
+              label: const Text("Criar novo Destino",
                   style: TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 side: const BorderSide(color: Colors.orangeAccent),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: () => _abrirCriarNovoDestino(context),
+              onPressed: () => _abrirCriarNovoDestination(context),
             ),
           ),
       ],
     );
   }
 
-  Widget _buildSearchResultItem(DestinoModel destino, RouteCreationController controller) {
+  Widget _buildSearchResultItem(DestinationModel Destination, RouteCreationController controller) {
     return InkWell(
       onTap: () {
-        controller.addDestino(destino);
+        controller.addDestination(Destination);
         _searchController.clear();
         setState(() => _searchResults = []);
       },
@@ -487,8 +520,8 @@ class _NewRoutePageState extends State<NewRoutePage> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: destino.fotoCapa.isNotEmpty
-                  ? Image.network(destino.fotoCapa,
+              child: Destination.coverPhoto.isNotEmpty
+                  ? Image.network(Destination.coverPhoto,
                       width: 52, height: 52, fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => _iconePlaceholder())
                   : _iconePlaceholder(),
@@ -498,13 +531,13 @@ class _NewRoutePageState extends State<NewRoutePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(destino.nome,
+                  Text(Destination.name,
                       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 2),
-                  if (destino.categorias.isNotEmpty)
-                    Text(destino.categorias.join(', '),
+                  if (Destination.categories.isNotEmpty)
+                    Text(Destination.categories.join(', '),
                         style: const TextStyle(fontSize: 12, color: Colors.orangeAccent)),
-                  Text(destino.local,
+                  Text(Destination.local,
                       style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
@@ -527,31 +560,44 @@ class _NewRoutePageState extends State<NewRoutePage> {
     );
   }
 
-  // ── DESTINOS ADICIONADOS ──────────────────────────────────────────────────
+  // ── DESTINOS ADICIONADOS — reordenável ───────────────────────────────────
 
-  Widget _buildDestinosAdicionados(RouteCreationController controller) {
-    if (controller.destinosSelecionados.isEmpty) return const SizedBox.shrink();
+  Widget _buildDestinationsAdicionados(RouteCreationController controller) {
+    if (controller.DestinationsSelecionados.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 4),
           child: Text(
-            "${controller.destinosSelecionados.length} destino(s) adicionado(s)",
-            style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500),
+            "${controller.DestinationsSelecionados.length} Destino(s) — arraste para reordenar",
+            style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
           ),
         ),
-        ...controller.destinosSelecionados.asMap().entries.map((entry) {
-          return _buildDestinoCard(entry.value, entry.key, controller);
-        }),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: controller.DestinationsSelecionados.length,
+          onReorder: (oldIndex, newIndex) {
+            if (newIndex > oldIndex) newIndex--;
+            controller.reordenarDestination(oldIndex, newIndex);
+          },
+          itemBuilder: (_, index) {
+            final Destination = controller.DestinationsSelecionados[index];
+            return _buildDestinationCard(Destination, index, controller,
+                key: ValueKey(Destination.name));
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildDestinoCard(DestinoModel destino, int index, RouteCreationController controller) {
+  Widget _buildDestinationCard(DestinationModel Destination, int index,
+      RouteCreationController controller, {Key? key}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      key: key,
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -562,38 +608,54 @@ class _NewRoutePageState extends State<NewRoutePage> {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              bottomLeft: Radius.circular(12),
+          // Número da ordem
+          Container(
+            width: 32,
+            height: 90,
+            decoration: BoxDecoration(
+              color: Colors.orangeAccent.withOpacity(0.12),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+              ),
             ),
-            child: destino.fotoCapa.isNotEmpty
-                ? Image.network(destino.fotoCapa,
-                    width: 90, height: 90, fit: BoxFit.cover,
+            child: Center(
+              child: Text("${index + 1}",
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orangeAccent,
+                      fontSize: 14)),
+            ),
+          ),
+          // Imagem
+          ClipRRect(
+            child: Destination.coverPhoto.isNotEmpty
+                ? Image.network(Destination.coverPhoto,
+                    width: 80, height: 90, fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => _cardImagePlaceholder())
                 : _cardImagePlaceholder(),
           ),
+          // Info
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(destino.nome,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  Text(Destination.name,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
-                  if (destino.categorias.isNotEmpty)
-                    Text(destino.categorias.join(', '),
-                        style: const TextStyle(fontSize: 12, color: Colors.orangeAccent, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
+                  if (Destination.categories.isNotEmpty)
+                    Text(Destination.categories.join(', '),
+                        style: const TextStyle(fontSize: 11, color: Colors.orangeAccent)),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, size: 13, color: Colors.grey),
+                      const Icon(Icons.location_on_outlined, size: 11, color: Colors.grey),
                       const SizedBox(width: 2),
                       Expanded(
-                        child: Text(destino.local,
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        child: Text(Destination.local,
+                            style: const TextStyle(fontSize: 11, color: Colors.grey),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
                     ],
@@ -602,10 +664,19 @@ class _NewRoutePageState extends State<NewRoutePage> {
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.red, size: 20),
-            onPressed: () => controller.removeDestino(index),
+          // Handle de drag + remover
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.drag_handle, color: Colors.grey, size: 20),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () => controller.removeDestination(index),
+                child: const Icon(Icons.close, color: Colors.red, size: 18),
+              ),
+            ],
           ),
+          const SizedBox(width: 8),
         ],
       ),
     );
@@ -619,9 +690,9 @@ class _NewRoutePageState extends State<NewRoutePage> {
     );
   }
 
-  // ── POPUP — Criar novo destino ────────────────────────────────────────────
+  // ── POPUP — Criar novo Destino ────────────────────────────────────────────
 
-  void _abrirCriarNovoDestino(BuildContext context) {
+  void _abrirCriarNovoDestination(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -645,17 +716,17 @@ class _NewRoutePageState extends State<NewRoutePage> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text("Criar novo destino",
+            const Text("Criar novo Destino",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            const Text("Este destino não existe ainda. Deseja cadastrá-lo?",
+            const Text("Este Destino não existe ainda. Deseja cadastrá-lo?",
                 style: TextStyle(color: Colors.grey, fontSize: 13)),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.add_location_alt, color: Colors.black),
-                label: const Text("Ir para cadastro de destino",
+                label: const Text("Ir para cadastro de Destino",
                     style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orangeAccent,
@@ -665,21 +736,21 @@ class _NewRoutePageState extends State<NewRoutePage> {
                 onPressed: () async {
   Navigator.pop(context); // fecha o bottomsheet
   
-  // Navega para criar destino e aguarda o retorno
-  final destinoCriado = await Navigator.push<DestinoModel>(
+  // Navega para criar Destino e aguarda o retorno
+  final DestinationCriado = await Navigator.push<DestinationModel>(
     context,
     MaterialPageRoute(builder: (_) => const NewPlacePage()),
   );
 
-  // Se voltou com destino criado, adiciona na rota automaticamente
-  if (destinoCriado != null && context.mounted) {
+  // Se voltou com Destino criado, adiciona na rota automaticamente
+  if (DestinationCriado != null && context.mounted) {
     final controller = Provider.of<RouteCreationController>(
         context, listen: false);
-    controller.addDestino(destinoCriado);
+    controller.addDestination(DestinationCriado);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("📍 ${destinoCriado.nome} adicionado à rota!"),
+        content: Text("📍 ${DestinationCriado.name} adicionado à rota!"),
         backgroundColor: Colors.green,
       ),
     );
@@ -708,59 +779,97 @@ class _NewRoutePageState extends State<NewRoutePage> {
   // ── BOTÕES DE AÇÃO ────────────────────────────────────────────────────────
 
   Widget _buildActionButtons(BuildContext context, RouteCreationController controller) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text("Cancelar",
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton.icon(
-            icon: controller.isSaving
-                ? const SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                : const Icon(Icons.map_outlined, color: Colors.black),
-            label: Text(
-              controller.isSaving ? "Salvando..." : "Criar rota",
-              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            ),
-            onPressed: (controller.isSaving || !controller.isValid)
-                ? null
-                : () async {
-                    if (await controller.saveRoute()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("✅ Rota criada com sucesso!"),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                      Navigator.pop(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("⚠️ Preencha nome, categoria e pelo menos um destino."),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    }
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orangeAccent,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        // Chips de validação
+        if (!controller.isValid)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                if (controller.newRoute.name.isEmpty)
+                  _chip("Título obrigatório"),
+                if (controller.categoriasSelecionadas.isEmpty)
+                  _chip("Categoria obrigatória"),
+                if (controller.cidadeSelecionada.isEmpty)
+                  _chip("Cidade obrigatória"),
+                if (controller.DestinationsSelecionados.length < 3)
+                  _chip("Mínimo 3 Destinos (${controller.DestinationsSelecionados.length}/3)"),
+              ],
             ),
           ),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () async {
+                  if (await _confirmarSaida(controller)) Navigator.pop(context);
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text("Cancelar",
+                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton.icon(
+                icon: controller.isSaving
+                    ? const SizedBox(
+                        width: 20, height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                    : const Icon(Icons.map_outlined, color: Colors.black),
+                label: Text(
+                  controller.isSaving ? "Salvando..." : "Criar rota",
+                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+                onPressed: (controller.isSaving || !controller.isValid)
+                    ? null
+                    : () async {
+                        if (await controller.saveRoute()) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("✅ Rota criada com sucesso!"),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          Navigator.pop(context);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("⚠️ Verifique os campos obrigatórios."),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orangeAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _chip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Text(label,
+          style: TextStyle(fontSize: 11, color: Colors.orange.shade800)),
     );
   }
 }

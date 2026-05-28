@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/detalhe_local_sheet.dart';
+import '../widgets/detail_local_sheet.dart';
 
 class ListaReligiososPage extends StatelessWidget {
   const ListaReligiososPage({super.key});
@@ -114,7 +114,7 @@ class ListaReligiososPage extends StatelessWidget {
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
           builder: (_) {
-            return DetalheLocalSheet(titulo: titulo, img: img, nota: nota);
+            return DetailLocalSheet(titulo: titulo, img: img, nota: nota);
           },
         );
       },
@@ -239,10 +239,10 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class DetalheLocalPage extends StatelessWidget {
+class DetailLocalPage extends StatelessWidget {
   final String titulo;
 
-  const DetalheLocalPage({super.key, required this.titulo});
+  const DetailLocalPage({super.key, required this.titulo});
 
   @override
   Widget build(BuildContext context) {

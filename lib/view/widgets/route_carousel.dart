@@ -3,9 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class RouteCarousel extends StatefulWidget {
-  final String? cidade;
+  final String? city;
 
-  const RouteCarousel({super.key, this.cidade});
+  const RouteCarousel({super.key, this.city});
 
   @override
   State<RouteCarousel> createState() => _RouteCarouselState();
@@ -26,25 +26,25 @@ class _RouteCarouselState extends State<RouteCarousel> {
   @override
   void didUpdateWidget(covariant RouteCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.cidade != widget.cidade) {
+    if (oldWidget.city != widget.city) {
       _carregarRotas();
     }
   }
 
   Future<void> _carregarRotas() async {
-    Query<Map<String, dynamic>> ref = FirebaseFirestore.instance.collection('rotas_criadas');
+    Query<Map<String, dynamic>> ref = FirebaseFirestore.instance.collection('routes');
 
     // Se houver cidade informada, filtramos as rotas por ela
-    if (widget.cidade != null && widget.cidade!.isNotEmpty) {
-      ref = ref.where('cidade', isEqualTo: widget.cidade);
+    if (widget.city != null && widget.city!.isNotEmpty) {
+      ref = ref.where('city', isEqualTo: widget.city);
     }
 
     var snap = await ref.limit(5).get();
 
     // Fallback: se buscamos por uma cidade específica e não há rotas nela, mostramos todas as rotas
-    if (snap.docs.isEmpty && widget.cidade != null && widget.cidade!.isNotEmpty) {
+    if (snap.docs.isEmpty && widget.city != null && widget.city!.isNotEmpty) {
       snap = await FirebaseFirestore.instance
-          .collection('rotas_criadas')
+          .collection('routes')
           .limit(5)
           .get();
     }
@@ -196,7 +196,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
                   GestureDetector(
                     onTap: () async {
                       final ref = FirebaseFirestore.instance
-                          .collection('rotas_criadas')
+                          .collection('routes')
                           .doc(rota['id']);
                       final lista = List<String>.from(favoritadoPor);
                       if (lista.contains(uidAtual)) {

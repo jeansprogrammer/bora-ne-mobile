@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../controllers/destino_creation_controller.dart';
+import '../../controllers/destination_creation_controller.dart';
+import '../../../view/widgets/confirm_exit_dialog.dart';
 
 class NewPlacePage extends StatefulWidget {
   const NewPlacePage({super.key});
@@ -12,6 +13,34 @@ class NewPlacePage extends StatefulWidget {
 }
 
 class _NewPlacePageState extends State<NewPlacePage> {
+  // Controller criado no State para ter acesso direto sem depender do Consumer
+  late final DestinationCreationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = DestinationCreationController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  bool _temDados() =>
+      _controller.nome.isNotEmpty ||
+      _controller.categoriasSelecionadas.isNotEmpty ||
+      _controller.cidade.isNotEmpty ||
+      _controller.fotos.isNotEmpty ||
+      _controller.urlImagemManual.isNotEmpty;
+
+  Future<bool> _confirmarSaida() async {
+    if (!_temDados()) return true;
+    final sair = await ConfirmExitDialog.show(context);
+    if (sair) _controller.resetar();
+    return sair;
+  }
   final List<String> _categoriasDisponiveis = [
     'Religioso',
     'Lazer',
@@ -57,12 +86,6 @@ class _NewPlacePageState extends State<NewPlacePage> {
 
   // Controller do CEP — separado pois não é gerenciado pelo controller MVC
   final TextEditingController _cepController = TextEditingController();
-
-  @override
-  void dispose() {
-    _cepController.dispose();
-    super.dispose();
-  }
 
   // ── Estilos ──────────────────────────────────────────────────────────────
 
@@ -147,18 +170,22 @@ class _NewPlacePageState extends State<NewPlacePage> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => DestinoCreationController(),
-      child: Consumer<DestinoCreationController>(
+    return ChangeNotifierProvider<DestinationCreationController>.value(
+      value: _controller,
+      child: Consumer<DestinationCreationController>(
         builder: (context, controller, _) {
-          return Scaffold(
+          return WillPopScope(
+            onWillPop: _confirmarSaida,
+            child: Scaffold(
             backgroundColor: Colors.white,
             appBar: AppBar(
               backgroundColor: Colors.white,
               elevation: 0,
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.black),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () async {
+                  if (await _confirmarSaida()) Navigator.pop(context);
+                },
               ),
               title: Center(
                 child: Image.asset(
@@ -176,7 +203,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
                   const SizedBox(height: 12),
                   _buildFotos(controller),
                   const SizedBox(height: 24),
-                  _sectionTitle("Nome do destino"),
+                  _sectionTitle("Nome do Destino"),
                   TextField(
                     onChanged: controller.setNome,
                     decoration: _inputStyle(
@@ -191,7 +218,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
                     maxLines: 3,
                     maxLength: 300,
                     decoration: _inputStyle(
-                      "Descreva brevemente o destino...",
+                      "Descreva brevemente o Destino...",
                       Icons.edit_outlined,
                     ),
                   ),
@@ -211,7 +238,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
                 ],
               ),
             ),
-          );
+          ));
         },
       ),
     );
@@ -219,12 +246,12 @@ class _NewPlacePageState extends State<NewPlacePage> {
 
   // ── FOTOS ────────────────────────────────────────────────────────────────
 
-  Widget _buildFotos(DestinoCreationController controller) {
+  Widget _buildFotos(DestinationCreationController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionTitle(
-          "Fotos do destino",
+          "Fotos do Destino",
           subtitle: "Toque em uma foto para definir como capa",
         ),
         GestureDetector(
@@ -350,7 +377,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
 
   // ── CATEGORIAS ───────────────────────────────────────────────────────────
 
-  Widget _buildCategoriasField(DestinoCreationController controller) {
+  Widget _buildCategoriasField(DestinationCreationController controller) {
     final selecionadas = controller.categoriasSelecionadas;
     return GestureDetector(
       onTap: () => _abrirPopupCategorias(context, controller),
@@ -415,7 +442,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
 
   void _abrirPopupCategorias(
     BuildContext context,
-    DestinoCreationController controller,
+    DestinationCreationController controller,
   ) {
     showModalBottomSheet(
       context: context,
@@ -541,65 +568,136 @@ class _NewPlacePageState extends State<NewPlacePage> {
 
   // ── ENDEREÇO ─────────────────────────────────────────────────────────────
 
-  Widget _buildEndereco(DestinoCreationController controller) {
+  Widget _buildEndereco(DestinationCreationController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── CEP ──────────────────────────────────────────────────────────
-        TextField(
-          controller: _cepController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(8),
-          ],
-          onChanged: (val) {
-            if (val.length == 8) {
-              controller.buscarCep(val);
-            }
-          },
-          decoration: _inputStyle(
-            "CEP (somente números)",
-            Icons.markunread_mailbox_outlined,
-            suffix: controller.isBuscandoCep
-                ? const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.orangeAccent,
-                      ),
+
+        // ── Toggle CEP / Manual ───────────────────────────────────────────
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => controller.setModoEndereco(false),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: !controller.modoManual
+                          ? Colors.orangeAccent
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  )
-                : controller.erroCep != null
-                ? const Icon(Icons.error_outline, color: Colors.red)
-                : controller.rua.isNotEmpty
-                ? const Icon(Icons.check_circle, color: Colors.green)
-                : null,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.markunread_mailbox_outlined,
+                            size: 16,
+                            color: !controller.modoManual
+                                ? Colors.white
+                                : Colors.grey),
+                        const SizedBox(width: 6),
+                        Text('Por CEP',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: !controller.modoManual
+                                    ? Colors.white
+                                    : Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => controller.setModoEndereco(true),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: controller.modoManual
+                          ? Colors.orangeAccent
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.edit_outlined,
+                            size: 16,
+                            color: controller.modoManual
+                                ? Colors.white
+                                : Colors.grey),
+                        const SizedBox(width: 6),
+                        Text('Manual',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: controller.modoManual
+                                    ? Colors.white
+                                    : Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
 
-        // Mensagem de erro do CEP
-        if (controller.erroCep != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 6, left: 4),
-            child: Row(
-              children: [
-                const Icon(Icons.error_outline, size: 14, color: Colors.red),
-                const SizedBox(width: 4),
-                Text(
-                  controller.erroCep!,
-                  style: const TextStyle(fontSize: 12, color: Colors.red),
-                ),
-              ],
-            ),
-          ),
-
         const SizedBox(height: 12),
 
-        // ── Rua + Número ─────────────────────────────────────────────────
+        // ── Modo CEP ──────────────────────────────────────────────────────
+        if (!controller.modoManual) ...[
+          TextField(
+            controller: _cepController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(8),
+            ],
+            onChanged: (val) {
+              if (val.length == 8) controller.buscarCep(val);
+            },
+            decoration: _inputStyle(
+              "CEP (somente números)",
+              Icons.markunread_mailbox_outlined,
+              suffix: controller.isBuscandoCep
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.orangeAccent),
+                      ),
+                    )
+                  : controller.erroCep != null
+                      ? const Icon(Icons.error_outline, color: Colors.red)
+                      : controller.rua.isNotEmpty
+                          ? const Icon(Icons.check_circle, color: Colors.green)
+                          : null,
+            ),
+          ),
+          if (controller.erroCep != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, size: 14, color: Colors.red),
+                  const SizedBox(width: 4),
+                  Text(controller.erroCep!,
+                      style: const TextStyle(fontSize: 12, color: Colors.red)),
+                ],
+              ),
+            ),
+          const SizedBox(height: 12),
+        ],
+
+        // ── Rua + Número (ambos os modos) ─────────────────────────────────
         Row(
           children: [
             Expanded(
@@ -607,7 +705,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
               child: TextField(
                 controller: controller.ruaController,
                 onChanged: controller.setRua,
-                decoration: controller.rua.isNotEmpty
+                decoration: controller.rua.isNotEmpty && !controller.modoManual
                     ? _inputAutoStyle("Rua / Av.", Icons.signpost_outlined)
                     : _inputStyle("Rua / Av.", Icons.signpost_outlined),
               ),
@@ -625,17 +723,17 @@ class _NewPlacePageState extends State<NewPlacePage> {
         ),
         const SizedBox(height: 12),
 
-        // ── Bairro ───────────────────────────────────────────────────────
+        // ── Bairro ────────────────────────────────────────────────────────
         TextField(
           controller: controller.bairroController,
           onChanged: controller.setBairro,
-          decoration: controller.bairro.isNotEmpty
+          decoration: controller.bairro.isNotEmpty && !controller.modoManual
               ? _inputAutoStyle("Bairro", Icons.location_city_outlined)
               : _inputStyle("Bairro", Icons.location_city_outlined),
         ),
         const SizedBox(height: 12),
 
-        // ── Cidade + UF ──────────────────────────────────────────────────
+        // ── Cidade + UF ───────────────────────────────────────────────────
         Row(
           children: [
             Expanded(
@@ -643,14 +741,12 @@ class _NewPlacePageState extends State<NewPlacePage> {
               child: TextField(
                 controller: controller.cidadeController,
                 onChanged: controller.setCidade,
-                decoration: controller.cidade.isNotEmpty
+                decoration: controller.cidade.isNotEmpty && !controller.modoManual
                     ? _inputAutoStyle("Cidade", Icons.location_on_outlined)
                     : _inputStyle("Cidade", Icons.location_on_outlined),
               ),
             ),
             const SizedBox(width: 10),
-
-            // UF — dropdown, pré-selecionado pelo CEP
             Expanded(
               flex: 1,
               child: DropdownButtonFormField<String>(
@@ -658,72 +754,63 @@ class _NewPlacePageState extends State<NewPlacePage> {
                 decoration: InputDecoration(
                   hintText: "UF",
                   hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-                  prefixIcon: Icon(
-                    Icons.map_outlined,
-                    color: controller.uf.isNotEmpty
-                        ? Colors.green
-                        : Colors.orangeAccent,
-                    size: 20,
-                  ),
+                  prefixIcon: Icon(Icons.map_outlined,
+                      color: controller.uf.isNotEmpty
+                          ? Colors.green
+                          : Colors.orangeAccent,
+                      size: 20),
                   filled: true,
-                  fillColor: controller.uf.isNotEmpty
+                  fillColor: controller.uf.isNotEmpty && !controller.modoManual
                       ? const Color(0xFFF0FFF4)
                       : Colors.white,
                   contentPadding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                    horizontal: 8,
-                  ),
+                      vertical: 14, horizontal: 8),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: controller.uf.isNotEmpty
-                          ? Colors.green
-                          : Colors.black12,
-                    ),
-                  ),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                          color: controller.uf.isNotEmpty && !controller.modoManual
+                              ? Colors.green
+                              : Colors.black12)),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: controller.uf.isNotEmpty
-                          ? Colors.green
-                          : Colors.black12,
-                    ),
-                  ),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                          color: controller.uf.isNotEmpty && !controller.modoManual
+                              ? Colors.green
+                              : Colors.black12)),
                 ),
                 items: _ufs
                     .map((uf) => DropdownMenuItem(value: uf, child: Text(uf)))
                     .toList(),
-                onChanged: (v) {
-                  if (v != null) controller.setUf(v);
-                },
+                onChanged: (v) { if (v != null) controller.setUf(v); },
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
 
-        // ── Botão localizar coordenadas ──────────────────────────────────
+        // ── Botão localizar ───────────────────────────────────────────────
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed:
-                controller.isBuscandoCoordenadas || controller.rua.isEmpty
+            onPressed: controller.isBuscandoCoordenadas ||
+                    controller.rua.isEmpty ||
+                    controller.cidade.isEmpty
                 ? null
                 : () async {
                     await controller.buscarCoordenadas();
+                    if (!mounted) return;
                     if (controller.latitude != 0.0) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text(
-                            "📍 Coordenadas encontradas com sucesso!",
-                          ),
+                          content: Text("📍 Coordenadas encontradas!"),
                           backgroundColor: Colors.green,
                         ),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("⚠️ Endereço não encontrado no mapa"),
+                          content: Text(
+                              "⚠️ Endereço não encontrado. Verifique os dados."),
                           backgroundColor: Colors.orange,
                         ),
                       );
@@ -731,31 +818,22 @@ class _NewPlacePageState extends State<NewPlacePage> {
                   },
             icon: controller.isBuscandoCoordenadas
                 ? const SizedBox(
-                    width: 18,
-                    height: 18,
+                    width: 18, height: 18,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.black,
-                    ),
-                  )
+                        strokeWidth: 2, color: Colors.black))
                 : Icon(
                     controller.latitude != 0.0
                         ? Icons.check_circle
                         : Icons.my_location,
-                    color: Colors.black,
-                    size: 18,
-                  ),
+                    color: Colors.black, size: 18),
             label: Text(
               controller.isBuscandoCoordenadas
                   ? "Buscando localização..."
                   : controller.latitude != 0.0
-                  ? "✅ Localização encontrada"
-                  : "Localizar no mapa",
+                      ? "✅ Localização encontrada"
+                      : "Localizar no mapa",
               style: const TextStyle(
-                color: Colors.black,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+                  color: Colors.black, fontSize: 13, fontWeight: FontWeight.w600),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: controller.latitude != 0.0
@@ -763,8 +841,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
                   : Colors.orangeAccent,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+                  borderRadius: BorderRadius.circular(12)),
               elevation: 0,
             ),
           ),
@@ -792,7 +869,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
 
   Widget _buildActionButtons(
     BuildContext context,
-    DestinoCreationController controller,
+    DestinationCreationController controller,
   ) {
     return Column(
       children: [
@@ -831,6 +908,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
                   _chip("Categoria obrigatória"),
                 if (controller.cidade.isEmpty) _chip("Cidade obrigatória"),
                 if (controller.uf.isEmpty) _chip("UF obrigatória"),
+                if (controller.latitude == 0.0) _chip("Localização obrigatória"),
               ],
             ),
           ),
@@ -839,7 +917,9 @@ class _NewPlacePageState extends State<NewPlacePage> {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () async {
+                  if (await _confirmarSaida()) Navigator.pop(context);
+                },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -872,17 +952,20 @@ class _NewPlacePageState extends State<NewPlacePage> {
                         color: Colors.black,
                       ),
                 label: Text(
-                  controller.isSaving ? "Salvando..." : "Criar destino",
+                  controller.isSaving ? "Salvando..." : "Criar Destino",
                   style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                onPressed: (controller.isSaving || !controller.isValid)
+                // ← bloqueado se não tiver coordenadas ou campos inválidos
+                onPressed: (controller.isSaving ||
+                        !controller.isValid ||
+                        controller.latitude == 0.0)
                     ? null
                     : () async {
-                        final destinoCriado = await controller.salvar();
-                        if (destinoCriado != null) {
+                        final destinationCriado = await controller.salvar();
+                        if (destinationCriado != true) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text("✅ Destino criado com sucesso!"),
@@ -891,8 +974,8 @@ class _NewPlacePageState extends State<NewPlacePage> {
                           );
                           Navigator.pop(
                             context,
-                            destinoCriado,
-                          ); // ← retorna o destino
+                            destinationCriado,
+                          ); // ← retorna o Destino
                         }
                       },
                 style: ElevatedButton.styleFrom(
