@@ -1,4 +1,4 @@
-const List<Map<String, dynamic>> destinosIniciais = [
+const List<Map<String, dynamic>> DestinationsIniciais = [
     {
     "categorias": ["Religioso"],
     "nome": "Catedral de Santo Antônio",
@@ -138,7 +138,7 @@ const List<Map<String, dynamic>> destinosIniciais = [
   {
     "categorias": ["Gastronomia"],
     "nome": "Cantinho da Macaxeira",
-    "descricao": "Restaurante regional famoso pelos pratos nordestinos, macaxeira, carne de sol e culinária típica pernambucana.",
+    "descricao": "Restaurante regional famoso pelos pratos norDestinations, macaxeira, carne de sol e culinária típica pernambucana.",
     "imagem": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_OXuo09VjKwymEV4nQ5DrqGk5pUtE0RuMsw&s",
     "local": "Centro, Garanhuns – Pernambuco",
     "cidade": "Garanhuns",

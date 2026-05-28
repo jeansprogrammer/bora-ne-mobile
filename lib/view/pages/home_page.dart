@@ -172,7 +172,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 16),
 
               // ── Carrossel de rotas ────────────────────────────────────────
-              RouteCarousel(cidade: _cidadeDetectada),
+              RouteCarousel(city: _cidadeDetectada),
 
               const SizedBox(height: 20),
 
@@ -259,12 +259,12 @@ class _HomePageState extends State<HomePage> {
     // Definimos o stream filtrado por cidade se disponível
     final streamFiltrado = (_cidadeDetectada != null && _cidadeDetectada!.isNotEmpty)
         ? FirebaseFirestore.instance
-            .collection('rotas_criadas')
-            .where('cidade', isEqualTo: _cidadeDetectada)
+            .collection('routes')
+            .where('city', isEqualTo: _cidadeDetectada)
             .limit(3)
             .snapshots()
         : FirebaseFirestore.instance
-            .collection('rotas_criadas')
+            .collection('routes')
             .limit(3)
             .snapshots();
 
@@ -316,7 +316,7 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 8),
                   StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
-                        .collection('rotas_criadas')
+                        .collection('routes')
                         .limit(3)
                         .snapshots(),
                     builder: (context, fallbackSnapshot) {
@@ -406,11 +406,11 @@ class _HomePageState extends State<HomePage> {
   Widget _buildRotaCard(String id, Map<String, dynamic> data) {
     final nome = data['name'] ?? 'Sem título';
     final descricao = data['description'] ?? '';
-    final fotoCapa = data['fotoCapa'] ?? '';
-    final categorias = List<String>.from(data['categorias'] ?? []);
+    final fotoCapa = data['coverPhoto'] ?? '';
+    final categorias = List<String>.from(data['categories'] ?? []);
 
     // Favoritos: lista de UIDs
-    final favoritadoPor = List<String>.from(data['favoritadoPor'] ?? []);
+    final favoritadoPor = List<String>.from(data['favoritedBy'] ?? []);
     // TODO: substituir pelo UID real do usuário logado
     const String uidAtual = 'usuario_teste';
     final isFavorito = favoritadoPor.contains(uidAtual);
@@ -499,14 +499,14 @@ class _HomePageState extends State<HomePage> {
   Future<void> _toggleFavorito(
       String rotaId, List<String> favoritadoPor, String uid) async {
     final ref =
-        FirebaseFirestore.instance.collection('rotas_criadas').doc(rotaId);
+        FirebaseFirestore.instance.collection('routes').doc(rotaId);
     final lista = List<String>.from(favoritadoPor);
     if (lista.contains(uid)) {
       lista.remove(uid);
     } else {
       lista.add(uid);
     }
-    await ref.update({'favoritadoPor': lista});
+    await ref.update({'favoritedBy': lista});
   }
 
   Widget _imagePlaceholder() {

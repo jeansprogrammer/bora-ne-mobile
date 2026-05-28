@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '../models/route_creation_model.dart';
-import '../models/destino_model.dart';
+import '../models/destination_model.dart';
 import '../services/new_route_service.dart';
-import '../services/destino_service.dart';
+import '../services/destination_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 class RouteCreationController extends ChangeNotifier {
   final NewRouteService _routeService = NewRouteService();
-  final DestinoService _destinoService = DestinoService();
+  final DestinationService _DestinationService = DestinationService();
 
   RouteCreationModel newRoute = RouteCreationModel();
 
@@ -28,20 +28,21 @@ class RouteCreationController extends ChangeNotifier {
   String _cidadeSelecionada = '';
 
   // ── Destinos selecionados (modelo completo) ───────────────────────────────
-  List<DestinoModel> _destinosSelecionados = [];
+  List<DestinationModel> _DestinationsSelecionados = [];
 
   // ── Getters ───────────────────────────────────────────────────────────────
   bool get isSaving => _isSaving;
   bool get isSearching => _isSearching;
   List<String> get categoriasSelecionadas => _categoriasSelecionadas;
   String get cidadeSelecionada => _cidadeSelecionada;
-  List<DestinoModel> get destinosSelecionados => _destinosSelecionados;
-  bool get canAddMorePlaces => _destinosSelecionados.length < 10;
+  List<DestinationModel> get DestinationsSelecionados => _DestinationsSelecionados;
+  bool get canAddMorePlaces => _DestinationsSelecionados.length < 10;
 
   bool get isValid =>
       newRoute.name.isNotEmpty &&
       _categoriasSelecionadas.isNotEmpty &&
-      _destinosSelecionados.isNotEmpty;
+      _cidadeSelecionada.isNotEmpty &&
+      _DestinationsSelecionados.length >= 3;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -73,15 +74,18 @@ class RouteCreationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Busca de destinos — Firestore ─────────────────────────────────────────
+  // ── Busca de Destinos filtrada pela cidade selecionada ────────────────────
 
-  Future<List<DestinoModel>> pesquisarDestinos(String query) async {
+  Future<List<DestinationModel>> pesquisarDestinations(String query) async {
     if (query.isEmpty) return [];
 
     _isSearching = true;
     notifyListeners();
 
-    final resultados = await _destinoService.buscarDestinosPorNome(query);
+    final resultados = await _DestinationService.buscarDestinationsPorNomeECidade(
+      query,
+      _cidadeSelecionada,
+    );
 
     _isSearching = false;
     notifyListeners();
@@ -114,21 +118,29 @@ class RouteCreationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addDestino(DestinoModel destino) {
+  void addDestination(DestinationModel Destination) {
     if (!canAddMorePlaces) return;
-    if (_destinosSelecionados.any((d) => d.nome == destino.nome)) return;
-    _destinosSelecionados.add(destino);
+    if (_DestinationsSelecionados.any((d) => d.name == Destination.name)) return;
+    _DestinationsSelecionados.add(Destination);
     newRoute.places.add(PlaceModel(
-      name: destino.nome,
-      lat: destino.latitude,
-      lon: destino.longitude,
+      name: Destination.name,
+      lat: Destination.latitude,
+      lon: Destination.longitude,
     ));
     notifyListeners();
   }
 
-  void removeDestino(int index) {
-    _destinosSelecionados.removeAt(index);
+  void removeDestination(int index) {
+    _DestinationsSelecionados.removeAt(index);
     newRoute.places.removeAt(index);
+    notifyListeners();
+  }
+
+  void reordenarDestination(int oldIndex, int newIndex) {
+    final Destination = _DestinationsSelecionados.removeAt(oldIndex);
+    _DestinationsSelecionados.insert(newIndex, Destination);
+    final place = newRoute.places.removeAt(oldIndex);
+    newRoute.places.insert(newIndex, place);
     notifyListeners();
   }
 
@@ -166,7 +178,7 @@ class RouteCreationController extends ChangeNotifier {
         urlFotoCapaManual = '';
         _categoriasSelecionadas = [];
         _cidadeSelecionada = '';
-        _destinosSelecionados = [];
+        _DestinationsSelecionados = [];
       }
 
       _isSaving = false;
@@ -178,5 +190,18 @@ class RouteCreationController extends ChangeNotifier {
       print("Erro ao salvar rota: $e");
       return false;
     }
+  }
+
+  // ── Reset público (ao confirmar saída) ────────────────────────────────────
+
+  void resetar() {
+    newRoute = RouteCreationModel();
+    fotos = [];
+    indiceFotoCapa = 0;
+    urlFotoCapaManual = '';
+    _categoriasSelecionadas = [];
+    _cidadeSelecionada = '';
+    _DestinationsSelecionados = [];
+    notifyListeners();
   }
 }
