@@ -41,4 +41,19 @@ class RouteCreationModel {
     'places': places.map((p) => p.toMap()).toList(),
     'createdAt': DateTime.now(),
   };
+
+  factory RouteCreationModel.fromMap(Map<String, dynamic> map) {
+    return RouteCreationModel(
+      name: map['name'] ?? '',
+      category: map['category'] ?? '',
+      description: map['description'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      // Mapeia a lista interna de PlaceModel
+      places: map['places'] != null
+          ? (map['places'] as List)
+              .map((p) => PlaceModel.fromMap(p as Map<String, dynamic>))
+              .toList()
+          : [],
+    );
+  }
 }
