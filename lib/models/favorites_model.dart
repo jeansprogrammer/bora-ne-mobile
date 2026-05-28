@@ -1,11 +1,11 @@
 // models/favorites_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:boranemobile/models/destino_model.dart';
+import 'package:boranemobile/models/destination_model.dart';
 import 'package:boranemobile/models/route_creation_model.dart';
 
 class FavoritesModel {
   final String userId;
-  final List<DestinoModel> destinos; // Coleção de objetos DestinoModel
+  final List<DestinationModel> destinos; // Coleção de objetos DestinoModel
   final List<RouteCreationModel> rotas;     // Coleção de objetos RouteCreationModel
   final DateTime dataCriacao;
 
@@ -21,10 +21,10 @@ class FavoritesModel {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
     // Converte a lista de Maps do Firestore em instâncias de DestinoModel
-    List<DestinoModel> listaDestinos = [];
+    List<DestinationModel> listaDestinos = [];
     if (data['destinos'] != null) {
       listaDestinos = (data['destinos'] as List)
-          .map((item) => DestinoModel.fromMap(item as Map<String, dynamic>))
+          .map((item) => DestinationModel.fromMap(item as Map<String, dynamic>))
           .toList();
     }
 

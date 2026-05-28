@@ -1,4 +1,4 @@
-import 'package:boranemobile/models/destino_model.dart';
+import 'package:boranemobile/models/destination_model.dart';
 import 'package:boranemobile/models/favorites_model.dart';
 import 'package:boranemobile/models/route_creation_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,14 +23,14 @@ class FavoritesService {
     return null;
   }
 
-  Future<void> favoritarDestino(String userId, DestinoModel destino) async {
+  Future<void> favoritarDestino(String userId, DestinationModel destino) async {
     await _db.collection(_collectionPath).doc(userId).update({
       'destinos': FieldValue.arrayUnion([destino.toMap()]),
     });
   }
 
   /// Remove um [DestinoModel] exato do array de favoritos no Firestore.
-  Future<void> desfavoritarDestino(String userId, DestinoModel destino) async {
+  Future<void> desfavoritarDestino(String userId, DestinationModel destino) async {
     await _db.collection(_collectionPath).doc(userId).update({
       'destinos': FieldValue.arrayRemove([destino.toMap()]),
     });
