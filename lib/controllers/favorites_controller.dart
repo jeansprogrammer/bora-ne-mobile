@@ -1,4 +1,4 @@
-import 'package:boranemobile/models/destino_model.dart';
+import 'package:boranemobile/models/destination_model.dart';
 import 'package:boranemobile/models/favorites_model.dart';
 import 'package:boranemobile/models/route_creation_model.dart';
 import 'package:boranemobile/services/favorites_service.dart';
@@ -16,7 +16,7 @@ class FavoritesController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  List<DestinoModel> get destinosFavoritos => _favorites?.destinos ?? [];
+  List<DestinationModel> get destinosFavoritos => _favorites?.destinos ?? [];
   List<RouteCreationModel> get rotasFavoritas => _favorites?.rotas ?? []; 
 
 
@@ -57,7 +57,7 @@ Future<void> fetchFavorites(String userId) async {
     return destinosFavoritos.any((d) => d.id == destinoId);
   }
 
-  Future<void> toggleDestinoFavorito(String userId, DestinoModel destino) async {
+  Future<void> toggleDestinoFavorito(String userId, DestinationModel destino) async {
     if (_favorites == null || destino.id == null) return;
 
     final existe = isDestinoFavorito(destino.id!);

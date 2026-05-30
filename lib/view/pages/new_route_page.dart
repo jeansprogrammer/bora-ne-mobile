@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../controllers/route_creation_controller.dart';
+import '../../controllers/route_creation_controller.dart';
 import '../../models/destination_model.dart';
-import '../../../view/widgets/confirm_exit_dialog.dart';
+import '../widgets/confirm_exit_dialog.dart';
 import 'new_destination_page.dart';
 
 class NewRoutePage extends StatefulWidget {
@@ -420,13 +420,95 @@ class _NewRoutePageState extends State<NewRoutePage> {
   // ── CIDADE ────────────────────────────────────────────────────────────────
 
   Widget _buildCidadeDropdown(RouteCreationController controller) {
-    return DropdownButtonFormField<String>(
-      value: controller.cidadeSelecionada.isEmpty ? null : controller.cidadeSelecionada,
-      decoration: _inputStyle("Selecione a cidade", Icons.location_city),
-      items: _cidadesDisponiveis
-          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-          .toList(),
-      onChanged: (v) { if (v != null) controller.setCidade(v); },
+    final temDestinos = controller.DestinationsSelecionados.isNotEmpty;
+
+    return GestureDetector(
+      onTap: temDestinos ? () => _mostrarPopupCidadeBloqueada(context) : null,
+      child: AbsorbPointer(
+        absorbing: temDestinos,
+        child: DropdownButtonFormField<String>(
+          value: controller.cidadeSelecionada.isEmpty
+              ? null
+              : controller.cidadeSelecionada,
+          decoration: InputDecoration(
+            hintText: "Selecione a cidade",
+            hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+            prefixIcon: Icon(
+              Icons.location_city,
+              color: temDestinos ? Colors.grey : Colors.orangeAccent,
+              size: 22,
+            ),
+            suffixIcon: temDestinos
+                ? const Icon(Icons.lock_outline, color: Colors.grey, size: 20)
+                : null,
+            filled: true,
+            fillColor: temDestinos ? Colors.grey.shade100 : Colors.white,
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                  color: temDestinos ? Colors.grey.shade300 : Colors.grey,
+                  width: 0.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                  color: temDestinos ? Colors.grey.shade300 : Colors.black12,
+                  width: 1),
+            ),
+          ),
+          items: _cidadesDisponiveis
+              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+              .toList(),
+          onChanged: temDestinos
+              ? null
+              : (v) { if (v != null) controller.setCidade(v); },
+        ),
+      ),
+    );
+  }
+
+  void _mostrarPopupCidadeBloqueada(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_outline, color: Colors.orangeAccent, size: 22),
+            SizedBox(width: 8),
+            Text('Cidade bloqueada',
+                style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Você já adicionou destinos desta cidade à rota.\n\n'
+          'Para trocar a cidade, remova todos os destinos adicionados primeiro.',
+          style: TextStyle(
+              color: Colors.black54, fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orangeAccent,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Entendi',
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -578,6 +660,7 @@ class _NewRoutePageState extends State<NewRoutePage> {
         ReorderableListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
+          buildDefaultDragHandles: false, // ← desativa handle automático da direita
           itemCount: controller.DestinationsSelecionados.length,
           onReorder: (oldIndex, newIndex) {
             if (newIndex > oldIndex) newIndex--;
@@ -595,90 +678,118 @@ class _NewRoutePageState extends State<NewRoutePage> {
 
   Widget _buildDestinationCard(DestinationModel Destination, int index,
       RouteCreationController controller, {Key? key}) {
-    return Container(
+    return Row(
       key: key,
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black12),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Número da ordem
-          Container(
-            width: 32,
-            height: 90,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // ── Número fora do card ───────────────────────────────────────────
+        SizedBox(
+          width: 28,
+          child: Text(
+            "${index + 1}",
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.orangeAccent,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+
+        // ── Card ──────────────────────────────────────────────────────────
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
-              color: Colors.orangeAccent.withOpacity(0.12),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-              ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.black12),
+              boxShadow: const [
+                BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+              ],
             ),
-            child: Center(
-              child: Text("${index + 1}",
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orangeAccent,
-                      fontSize: 14)),
-            ),
-          ),
-          // Imagem
-          ClipRRect(
-            child: Destination.coverPhoto.isNotEmpty
-                ? Image.network(Destination.coverPhoto,
-                    width: 80, height: 90, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _cardImagePlaceholder())
-                : _cardImagePlaceholder(),
-          ),
-          // Info
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(Destination.name,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 3),
-                  if (Destination.categories.isNotEmpty)
-                    Text(Destination.categories.join(', '),
-                        style: const TextStyle(fontSize: 11, color: Colors.orangeAccent)),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined, size: 11, color: Colors.grey),
-                      const SizedBox(width: 2),
-                      Expanded(
-                        child: Text(Destination.local,
-                            style: const TextStyle(fontSize: 11, color: Colors.grey),
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Row(
+              children: [
+                // Handle de drag — envolto em ReorderableDragStartListener
+                ReorderableDragStartListener(
+                  index: index,
+                  child: Container(
+                    width: 36,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomLeft: Radius.circular(12),
                       ),
-                    ],
+                    ),
+                    child: const Icon(Icons.drag_handle,
+                        color: Colors.grey, size: 22),
                   ),
-                ],
-              ),
+                ),
+
+                // Imagem
+                ClipRRect(
+                  child: Destination.coverPhoto.isNotEmpty
+                      ? Image.network(Destination.coverPhoto,
+                          width: 80, height: 90, fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _cardImagePlaceholder())
+                      : _cardImagePlaceholder(),
+                ),
+
+                // Info
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(Destination.name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 13),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 3),
+                        if (Destination.categories.isNotEmpty)
+                          Text(Destination.categories.join(', '),
+                              style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.orangeAccent)),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined,
+                                size: 11, color: Colors.grey),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(Destination.local,
+                                  style: const TextStyle(
+                                      fontSize: 11, color: Colors.grey),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Botão remover — separado do drag
+                IconButton(
+                  onPressed: () => controller.removeDestination(index),
+                  icon: const Icon(Icons.close,
+                      color: Colors.red, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                      minWidth: 36, minHeight: 36),
+                ),
+              ],
             ),
           ),
-          // Handle de drag + remover
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.drag_handle, color: Colors.grey, size: 20),
-              const SizedBox(height: 4),
-              GestureDetector(
-                onTap: () => controller.removeDestination(index),
-                child: const Icon(Icons.close, color: Colors.red, size: 18),
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -734,28 +845,28 @@ class _NewRoutePageState extends State<NewRoutePage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () async {
-  Navigator.pop(context); // fecha o bottomsheet
-  
-  // Navega para criar Destino e aguarda o retorno
-  final DestinationCriado = await Navigator.push<DestinationModel>(
-    context,
-    MaterialPageRoute(builder: (_) => const NewPlacePage()),
-  );
+                  Navigator.pop(context); // fecha o bottomsheet
 
-  // Se voltou com Destino criado, adiciona na rota automaticamente
-  if (DestinationCriado != null && context.mounted) {
-    final controller = Provider.of<RouteCreationController>(
-        context, listen: false);
-    controller.addDestination(DestinationCriado);
+                  // Navega para criar Destino e aguarda o retorno
+                  final destinationCriado = await Navigator.push<DestinationModel>(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NewDestinationPage()),
+                  );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("📍 ${DestinationCriado.name} adicionado à rota!"),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-},
+                  // Se voltou com Destino criado, adiciona na rota automaticamente
+                  if (destinationCriado != null && context.mounted) {
+                    final controller = Provider.of<RouteCreationController>(
+                        context, listen: false);
+                    controller.addDestination(destinationCriado);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("📍 ${destinationCriado.name} adicionado à rota!"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                },
               ),
             ),
             const SizedBox(height: 12),

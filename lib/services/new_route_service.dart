@@ -32,7 +32,7 @@ class NewRouteService {
     try {
       await _firestore.collection('routes').add({
         ...data,
-        'data_criacao': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
       });
       return true;
     } catch (e) {

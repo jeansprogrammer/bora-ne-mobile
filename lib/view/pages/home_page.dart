@@ -16,7 +16,11 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   String? _cidadeDetectada;
+  String? _cidadeManual; // ← cidade escolhida manualmente pelo usuário
   bool _estaCarregandoLocalizacao = false;
+
+  // Cidade ativa: manual tem prioridade sobre a detectada
+  String? get _cidadeAtiva => _cidadeManual ?? _cidadeDetectada;
 
   @override
   void initState() {
@@ -25,10 +29,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _detectarLocalizacao() async {
-    setState(() {
-      _estaCarregandoLocalizacao = true;
-    });
-
+    setState(() => _estaCarregandoLocalizacao = true);
     try {
       final pos = await LocationService().obterPosicaoAtual();
       if (pos != null) {
@@ -37,20 +38,186 @@ class _HomePageState extends State<HomePage> {
           pos.longitude,
         );
         if (cidade != null && mounted) {
-          setState(() {
-            _cidadeDetectada = cidade;
-          });
+          setState(() => _cidadeDetectada = cidade);
         }
       }
     } catch (e) {
-      print('Erro ao obter localização ou cidade: $e');
+      print('Erro ao obter localização: $e');
     } finally {
-      if (mounted) {
-        setState(() {
-          _estaCarregandoLocalizacao = false;
-        });
-      }
+      if (mounted) setState(() => _estaCarregandoLocalizacao = false);
     }
+  }
+
+  // ── Busca cidades únicas do Firestore ─────────────────────────────────────
+
+  Future<List<String>> _buscarCidadesDoFirestore() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('routes')
+        .get();
+
+    final cidades = snapshot.docs
+        .map((doc) {
+          final data = doc.data();
+          return (data['city'] as String? ?? '').trim();
+        })
+        .where((c) => c.isNotEmpty)
+        .toSet() // remove duplicatas
+        .toList()
+      ..sort(); // ordena alfabeticamente
+
+    return cidades;
+  }
+
+  // ── Popup de seleção de cidade ────────────────────────────────────────────
+
+  Future<void> _abrirSeletorCidade() async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.85,
+        minChildSize: 0.4,
+        builder: (_, scrollController) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Selecionar cidade',
+                  style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              const Text(
+                'Escolha uma cidade para ver as rotas disponíveis.',
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+
+              // Opção: usar localização atual
+              if (_cidadeDetectada != null)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orangeAccent.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.my_location,
+                        color: Colors.orangeAccent, size: 20),
+                  ),
+                  title: Text('Usar minha localização ($_cidadeDetectada)',
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Detectada automaticamente'),
+                  trailing: _cidadeManual == null
+                      ? const Icon(Icons.check_circle,
+                          color: Colors.orangeAccent)
+                      : null,
+                  onTap: () {
+                    setState(() => _cidadeManual = null);
+                    Navigator.pop(context);
+                  },
+                ),
+
+              if (_cidadeDetectada != null)
+                const Divider(height: 8),
+
+              const SizedBox(height: 4),
+              const Text('Cidades disponíveis',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54)),
+              const SizedBox(height: 8),
+
+              // Lista de cidades do Firestore
+              Expanded(
+                child: FutureBuilder<List<String>>(
+                  future: _buscarCidadesDoFirestore(),
+                  builder: (context, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                            color: Colors.orangeAccent),
+                      );
+                    }
+                    if (!snap.hasData || snap.data!.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Nenhuma cidade encontrada.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      );
+                    }
+
+                    final cidades = snap.data!;
+                    return ListView.separated(
+                      controller: scrollController,
+                      itemCount: cidades.length,
+                      separatorBuilder: (_, __) =>
+                          const Divider(height: 1),
+                      itemBuilder: (_, i) {
+                        final cidade = cidades[i];
+                        final selecionada = _cidadeAtiva == cidade;
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: selecionada
+                                  ? Colors.orangeAccent.withOpacity(0.15)
+                                  : Colors.grey.shade100,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.location_city,
+                                color: selecionada
+                                    ? Colors.orangeAccent
+                                    : Colors.grey,
+                                size: 20),
+                          ),
+                          title: Text(cidade,
+                              style: TextStyle(
+                                fontWeight: selecionada
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: selecionada
+                                    ? Colors.orangeAccent
+                                    : Colors.black87,
+                              )),
+                          trailing: selecionada
+                              ? const Icon(Icons.check_circle,
+                                  color: Colors.orangeAccent)
+                              : null,
+                          onTap: () {
+                            setState(() => _cidadeManual = cidade);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -68,67 +235,72 @@ class _HomePageState extends State<HomePage> {
               Center(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: Image.asset('assets/images/logo_bora_ne.png', height: 44),
+                  child: Image.asset('assets/images/logo_nome1.png', height: 44),
                 ),
               ),
 
-              // ── Barra de Localização ──────────────────────────────────────
+              // ── Barra de Localização (clicável) ──────────────────────────
               Center(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.orangeAccent.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.location_on, color: Colors.orangeAccent, size: 18),
-                        const SizedBox(width: 6),
-                        if (_estaCarregandoLocalizacao) ...[
-                          const SizedBox(
-                            width: 12,
-                            height: 12,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.orangeAccent,
-                            ),
-                          ),
+                  child: GestureDetector(
+                    onTap: _estaCarregandoLocalizacao
+                        ? null
+                        : _abrirSeletorCidade,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.orangeAccent.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: Colors.orangeAccent.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.location_on,
+                              color: Colors.orangeAccent, size: 18),
                           const SizedBox(width: 6),
-                          const Text(
-                            'Detectando sua cidade...',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
+                          if (_estaCarregandoLocalizacao) ...[
+                            const SizedBox(
+                              width: 12, height: 12,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.orangeAccent),
                             ),
-                          ),
-                        ] else if (_cidadeDetectada != null)
-                          Text(
-                            'Mostrando rotas de $_cidadeDetectada',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                            const SizedBox(width: 6),
+                            const Text('Detectando sua cidade...',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w500)),
+                          ] else if (_cidadeAtiva != null) ...[
+                            Text(
+                              'Mostrando rotas de $_cidadeAtiva',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87),
                             ),
-                          )
-                        else
-                          GestureDetector(
-                            onTap: _detectarLocalizacao,
-                            child: const Text(
-                              'Definir localização / Permitir GPS',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.orangeAccent,
-                                decoration: TextDecoration.underline,
+                            const SizedBox(width: 6),
+                            const Icon(Icons.keyboard_arrow_down,
+                                color: Colors.orangeAccent, size: 16),
+                          ] else
+                            GestureDetector(
+                              onTap: _abrirSeletorCidade,
+                              child: const Text(
+                                'Definir localização / Permitir GPS',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orangeAccent,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -172,7 +344,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 16),
 
               // ── Carrossel de rotas ────────────────────────────────────────
-              RouteCarousel(city: _cidadeDetectada),
+              RouteCarousel(city: _cidadeAtiva),
 
               const SizedBox(height: 20),
 
@@ -219,7 +391,7 @@ class _HomePageState extends State<HomePage> {
               final cat = categorias[i];
               return GestureDetector(
                 onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => ListaReligiososPage())),
+                    MaterialPageRoute(builder: (_) => RoutesPage())),
                 child: Container(
                   margin: const EdgeInsets.only(right: 12),
                   child: Column(
@@ -253,83 +425,76 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── PRÓXIMO A VOCÊ ────────────────────────────────────────────────────────
+  // ── PRÓXIMO A VOCÊ — destinos da cidade ──────────────────────────────────
 
   Widget _buildProximoAVoce() {
-    // Definimos o stream filtrado por cidade se disponível
-    final streamFiltrado = (_cidadeDetectada != null && _cidadeDetectada!.isNotEmpty)
+    final stream = (_cidadeAtiva != null && _cidadeAtiva!.isNotEmpty)
         ? FirebaseFirestore.instance
-            .collection('routes')
-            .where('city', isEqualTo: _cidadeDetectada)
+            .collection('destinations')
+            .where('city', isEqualTo: _cidadeAtiva)
             .limit(3)
             .snapshots()
         : FirebaseFirestore.instance
-            .collection('routes')
+            .collection('destinations')
             .limit(3)
             .snapshots();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Próximo a você',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              if (_cidadeDetectada != null && _cidadeDetectada!.isNotEmpty)
-                Text(
-                  'em $_cidadeDetectada',
-                  style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.orangeAccent),
-                ),
-            ],
+        // Título sem botão lateral
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Próximo a você',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 12),
         StreamBuilder<QuerySnapshot>(
-          stream: streamFiltrado,
+          stream: stream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: Colors.orangeAccent));
+              return const Center(
+                  child: CircularProgressIndicator(
+                      color: Colors.orangeAccent));
             }
 
-            // Se estiver vazio E tínhamos uma cidade filtrada, fazemos o fallback para todas as rotas
+            // Sem destinos na cidade → fallback geral
             if ((!snapshot.hasData || snapshot.data!.docs.isEmpty) &&
-                _cidadeDetectada != null &&
-                _cidadeDetectada!.isNotEmpty) {
+                _cidadeAtiva != null) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 4),
                     child: Text(
-                      'Ainda não temos rotas cadastradas em $_cidadeDetectada. Enquanto isso, confira estas opções de outras cidades:',
-                      style: const TextStyle(fontSize: 13, color: Colors.grey, height: 1.3),
+                      'Ainda não temos destinos em $_cidadeAtiva. Confira outras opções:',
+                      style: const TextStyle(
+                          fontSize: 13, color: Colors.grey, height: 1.3),
                     ),
                   ),
                   const SizedBox(height: 8),
                   StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
-                        .collection('routes')
+                        .collection('destinations')
                         .limit(3)
                         .snapshots(),
-                    builder: (context, fallbackSnapshot) {
-                      if (fallbackSnapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator(color: Colors.orangeAccent));
+                    builder: (context, fb) {
+                      if (fb.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                            child: CircularProgressIndicator(
+                                color: Colors.orangeAccent));
                       }
-                      if (!fallbackSnapshot.hasData || fallbackSnapshot.data!.docs.isEmpty) {
+                      if (!fb.hasData || fb.data!.docs.isEmpty) {
                         return const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: Text('Nenhuma rota disponível.', style: TextStyle(color: Colors.grey)),
+                          child: Text('Nenhum destino disponível.',
+                              style: TextStyle(color: Colors.grey)),
                         );
                       }
-                      return _buildRotasList(fallbackSnapshot.data!.docs);
+                      return _buildDestinosList(fb.data!.docs);
                     },
                   ),
                 ],
@@ -339,18 +504,19 @@ class _HomePageState extends State<HomePage> {
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
               return const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Text('Nenhuma rota encontrada.', style: TextStyle(color: Colors.grey)),
+                child: Text('Nenhum destino encontrado.',
+                    style: TextStyle(color: Colors.grey)),
               );
             }
 
-            return _buildRotasList(snapshot.data!.docs);
+            return _buildDestinosList(snapshot.data!.docs);
           },
         ),
       ],
     );
   }
 
-  Widget _buildRotasList(List<QueryDocumentSnapshot> docs) {
+  Widget _buildDestinosList(List<QueryDocumentSnapshot> docs) {
     return Column(
       children: [
         ListView.builder(
@@ -361,11 +527,10 @@ class _HomePageState extends State<HomePage> {
           itemBuilder: (_, i) {
             final doc = docs[i];
             final data = doc.data() as Map<String, dynamic>;
-            return _buildRotaCard(doc.id, data);
+            return _buildDestinoCard(doc.id, data);
           },
         ),
         const SizedBox(height: 8),
-        // ── Botão Ver mais ─────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: SizedBox(
@@ -373,7 +538,7 @@ class _HomePageState extends State<HomePage> {
             child: ElevatedButton(
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const ListaReligiososPage()),
+                MaterialPageRoute(builder: (_) => const RoutesPage()),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
@@ -388,12 +553,12 @@ class _HomePageState extends State<HomePage> {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Ver mais',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                  ),
+                  Text('Ver mais',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 15)),
                   SizedBox(width: 6),
-                  Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black54),
+                  Icon(Icons.arrow_forward_ios,
+                      size: 14, color: Colors.black54),
                 ],
               ),
             ),
@@ -403,17 +568,19 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildRotaCard(String id, Map<String, dynamic> data) {
-    final nome = data['name'] ?? 'Sem título';
-    final descricao = data['description'] ?? '';
-    final fotoCapa = data['coverPhoto'] ?? '';
-    final categorias = List<String>.from(data['categories'] ?? []);
+  Widget _buildDestinoCard(String id, Map<String, dynamic> data) {
+    final nome       = data['name']        ?? 'Sem título';
+    final descricao  = data['description'] ?? '';
+    final coverPhoto = data['coverPhoto']  ?? '';
+    final categories = List<String>.from(data['categories'] ?? []);
+    final neighborhood = data['neighborhood'] ?? '';
+    final city       = data['city']        ?? '';
+    final state      = data['state']       ?? '';
+    final local      = '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city – $state';
 
-    // Favoritos: lista de UIDs
-    final favoritadoPor = List<String>.from(data['favoritedBy'] ?? []);
-    // TODO: substituir pelo UID real do usuário logado
+    final favoritedBy = List<String>.from(data['favoritedBy'] ?? []);
     const String uidAtual = 'usuario_teste';
-    final isFavorito = favoritadoPor.contains(uidAtual);
+    final isFavorito = favoritedBy.contains(uidAtual);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -421,8 +588,10 @@ class _HomePageState extends State<HomePage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06),
-              blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: Row(
@@ -433,9 +602,9 @@ class _HomePageState extends State<HomePage> {
               topLeft: Radius.circular(16),
               bottomLeft: Radius.circular(16),
             ),
-            child: fotoCapa.isNotEmpty
-                ? Image.network(fotoCapa,
-                    width: 100, height: 100, fit: BoxFit.cover,
+            child: coverPhoto.isNotEmpty
+                ? Image.network(coverPhoto,
+                    width: 100, height: 110, fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => _imagePlaceholder())
                 : _imagePlaceholder(),
           ),
@@ -443,7 +612,8 @@ class _HomePageState extends State<HomePage> {
           // Info
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -452,37 +622,46 @@ class _HomePageState extends State<HomePage> {
                           fontWeight: FontWeight.bold, fontSize: 15),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
+                  if (categories.isNotEmpty)
+                    Text(
+                      categories.join(', '),
+                      style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.orangeAccent,
+                          fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  const SizedBox(height: 2),
                   Text(descricao,
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      style: const TextStyle(
+                          color: Colors.grey, fontSize: 12),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orangeAccent,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 6),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
-                          textStyle: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        child: const Text('Ver rota'),
+                      const Icon(Icons.location_on_outlined,
+                          size: 12, color: Colors.grey),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(local,
+                            style: const TextStyle(
+                                fontSize: 11, color: Colors.grey),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
                       ),
+                      // Favorito
                       GestureDetector(
-                        onTap: () => _toggleFavorito(id, favoritadoPor, uidAtual),
+                        onTap: () =>
+                            _toggleFavoritoDestino(id, favoritedBy, uidAtual),
                         child: Icon(
-                          isFavorito ? Icons.favorite : Icons.favorite_border,
+                          isFavorito
+                              ? Icons.favorite
+                              : Icons.favorite_border,
                           color: isFavorito ? Colors.red : Colors.grey,
-                          size: 22,
+                          size: 20,
                         ),
                       ),
                     ],
@@ -496,11 +675,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _toggleFavorito(
-      String rotaId, List<String> favoritadoPor, String uid) async {
+  Future<void> _toggleFavoritoDestino(
+      String id, List<String> favoritedBy, String uid) async {
     final ref =
-        FirebaseFirestore.instance.collection('routes').doc(rotaId);
-    final lista = List<String>.from(favoritadoPor);
+        FirebaseFirestore.instance.collection('destinations').doc(id);
+    final lista = List<String>.from(favoritedBy);
     if (lista.contains(uid)) {
       lista.remove(uid);
     } else {
@@ -512,7 +691,7 @@ class _HomePageState extends State<HomePage> {
   Widget _imagePlaceholder() {
     return Container(
       width: 100,
-      height: 100,
+      height: 110,
       color: const Color(0xFFFFF9E7),
       child: const Icon(Icons.image_outlined,
           color: Colors.orangeAccent, size: 32),

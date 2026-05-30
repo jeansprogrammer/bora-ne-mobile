@@ -5,14 +5,14 @@ import 'package:provider/provider.dart';
 import '../../controllers/destination_creation_controller.dart';
 import '../../../view/widgets/confirm_exit_dialog.dart';
 
-class NewPlacePage extends StatefulWidget {
-  const NewPlacePage({super.key});
+class NewDestinationPage extends StatefulWidget {
+  const NewDestinationPage({super.key});
 
   @override
-  State<NewPlacePage> createState() => _NewPlacePageState();
+  State<NewDestinationPage> createState() => _NewDestinationPageState();
 }
 
-class _NewPlacePageState extends State<NewPlacePage> {
+class _NewDestinationPageState extends State<NewDestinationPage> {
   // Controller criado no State para ter acesso direto sem depender do Consumer
   late final DestinationCreationController _controller;
 
@@ -31,7 +31,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
   bool _temDados() =>
       _controller.nome.isNotEmpty ||
       _controller.categoriasSelecionadas.isNotEmpty ||
-      _controller.cidade.isNotEmpty ||
+      _controller.city.isNotEmpty ||
       _controller.fotos.isNotEmpty ||
       _controller.urlImagemManual.isNotEmpty;
 
@@ -41,6 +41,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
     if (sair) _controller.resetar();
     return sair;
   }
+
   final List<String> _categoriasDisponiveis = [
     'Religioso',
     'Lazer',
@@ -177,68 +178,69 @@ class _NewPlacePageState extends State<NewPlacePage> {
           return WillPopScope(
             onWillPop: _confirmarSaida,
             child: Scaffold(
-            backgroundColor: Colors.white,
-            appBar: AppBar(
               backgroundColor: Colors.white,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
-                onPressed: () async {
-                  if (await _confirmarSaida()) Navigator.pop(context);
-                },
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () async {
+                    if (await _confirmarSaida()) Navigator.pop(context);
+                  },
+                ),
+                title: Center(
+                  child: Image.asset(
+                    'assets/images/logo_bora_ne.png',
+                    height: 40,
+                  ),
+                ),
+                actions: [const SizedBox(width: 48)],
               ),
-              title: Center(
-                child: Image.asset(
-                  'assets/images/logo_bora_ne.png',
-                  height: 40,
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildFotos(controller),
+                    const SizedBox(height: 24),
+                    _sectionTitle("Nome do Destino"),
+                    TextField(
+                      onChanged: controller.setNome,
+                      decoration: _inputStyle(
+                        "Ex: Restaurante Lua Cheia",
+                        Icons.place_outlined,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _sectionTitle("Descrição"),
+                    TextField(
+                      onChanged: controller.setDescricao,
+                      maxLines: 3,
+                      maxLength: 300,
+                      decoration: _inputStyle(
+                        "Descreva brevemente o Destino...",
+                        Icons.edit_outlined,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    _sectionTitle("Categorias"),
+                    _buildCategoriasField(controller),
+                    const SizedBox(height: 20),
+                    const Divider(height: 32),
+                    _sectionTitle(
+                      "Endereço",
+                      subtitle: "Digite o CEP para preencher automaticamente",
+                    ),
+                    _buildEndereco(controller),
+                    const SizedBox(height: 30),
+                    _buildActionButtons(context, controller),
+                    const SizedBox(height: 60),
+                  ],
                 ),
               ),
-              actions: [const SizedBox(width: 48)],
             ),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-                  _buildFotos(controller),
-                  const SizedBox(height: 24),
-                  _sectionTitle("Nome do Destino"),
-                  TextField(
-                    onChanged: controller.setNome,
-                    decoration: _inputStyle(
-                      "Ex: Restaurante Lua Cheia",
-                      Icons.place_outlined,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  _sectionTitle("Descrição"),
-                  TextField(
-                    onChanged: controller.setDescricao,
-                    maxLines: 3,
-                    maxLength: 300,
-                    decoration: _inputStyle(
-                      "Descreva brevemente o Destino...",
-                      Icons.edit_outlined,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  _sectionTitle("Categorias"),
-                  _buildCategoriasField(controller),
-                  const SizedBox(height: 20),
-                  const Divider(height: 32),
-                  _sectionTitle(
-                    "Endereço",
-                    subtitle: "Digite o CEP para preencher automaticamente",
-                  ),
-                  _buildEndereco(controller),
-                  const SizedBox(height: 30),
-                  _buildActionButtons(context, controller),
-                  const SizedBox(height: 60),
-                ],
-              ),
-            ),
-          ));
+          );
         },
       ),
     );
@@ -572,7 +574,6 @@ class _NewPlacePageState extends State<NewPlacePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         // ── Toggle CEP / Manual ───────────────────────────────────────────
         Container(
           decoration: BoxDecoration(
@@ -595,19 +596,24 @@ class _NewPlacePageState extends State<NewPlacePage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.markunread_mailbox_outlined,
-                            size: 16,
+                        Icon(
+                          Icons.markunread_mailbox_outlined,
+                          size: 16,
+                          color: !controller.modoManual
+                              ? Colors.white
+                              : Colors.grey,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Por CEP',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                             color: !controller.modoManual
                                 ? Colors.white
-                                : Colors.grey),
-                        const SizedBox(width: 6),
-                        Text('Por CEP',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: !controller.modoManual
-                                    ? Colors.white
-                                    : Colors.grey)),
+                                : Colors.grey,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -627,19 +633,24 @@ class _NewPlacePageState extends State<NewPlacePage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.edit_outlined,
-                            size: 16,
+                        Icon(
+                          Icons.edit_outlined,
+                          size: 16,
+                          color: controller.modoManual
+                              ? Colors.white
+                              : Colors.grey,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Manual',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                             color: controller.modoManual
                                 ? Colors.white
-                                : Colors.grey),
-                        const SizedBox(width: 6),
-                        Text('Manual',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: controller.modoManual
-                                    ? Colors.white
-                                    : Colors.grey)),
+                                : Colors.grey,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -670,16 +681,19 @@ class _NewPlacePageState extends State<NewPlacePage> {
                   ? const Padding(
                       padding: EdgeInsets.all(12),
                       child: SizedBox(
-                        width: 18, height: 18,
+                        width: 18,
+                        height: 18,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.orangeAccent),
+                          strokeWidth: 2,
+                          color: Colors.orangeAccent,
+                        ),
                       ),
                     )
                   : controller.erroCep != null
-                      ? const Icon(Icons.error_outline, color: Colors.red)
-                      : controller.rua.isNotEmpty
-                          ? const Icon(Icons.check_circle, color: Colors.green)
-                          : null,
+                  ? const Icon(Icons.error_outline, color: Colors.red)
+                  : controller.rua.isNotEmpty
+                  ? const Icon(Icons.check_circle, color: Colors.green)
+                  : null,
             ),
           ),
           if (controller.erroCep != null)
@@ -689,8 +703,10 @@ class _NewPlacePageState extends State<NewPlacePage> {
                 children: [
                   const Icon(Icons.error_outline, size: 14, color: Colors.red),
                   const SizedBox(width: 4),
-                  Text(controller.erroCep!,
-                      style: const TextStyle(fontSize: 12, color: Colors.red)),
+                  Text(
+                    controller.erroCep!,
+                    style: const TextStyle(fontSize: 12, color: Colors.red),
+                  ),
                 ],
               ),
             ),
@@ -741,7 +757,7 @@ class _NewPlacePageState extends State<NewPlacePage> {
               child: TextField(
                 controller: controller.cidadeController,
                 onChanged: controller.setCidade,
-                decoration: controller.cidade.isNotEmpty && !controller.modoManual
+                decoration: controller.city.isNotEmpty && !controller.modoManual
                     ? _inputAutoStyle("Cidade", Icons.location_on_outlined)
                     : _inputStyle("Cidade", Icons.location_on_outlined),
               ),
@@ -754,34 +770,44 @@ class _NewPlacePageState extends State<NewPlacePage> {
                 decoration: InputDecoration(
                   hintText: "UF",
                   hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-                  prefixIcon: Icon(Icons.map_outlined,
-                      color: controller.uf.isNotEmpty
-                          ? Colors.green
-                          : Colors.orangeAccent,
-                      size: 20),
+                  prefixIcon: Icon(
+                    Icons.map_outlined,
+                    color: controller.uf.isNotEmpty
+                        ? Colors.green
+                        : Colors.orangeAccent,
+                    size: 20,
+                  ),
                   filled: true,
                   fillColor: controller.uf.isNotEmpty && !controller.modoManual
                       ? const Color(0xFFF0FFF4)
                       : Colors.white,
                   contentPadding: const EdgeInsets.symmetric(
-                      vertical: 14, horizontal: 8),
+                    vertical: 14,
+                    horizontal: 8,
+                  ),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                          color: controller.uf.isNotEmpty && !controller.modoManual
-                              ? Colors.green
-                              : Colors.black12)),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: controller.uf.isNotEmpty && !controller.modoManual
+                          ? Colors.green
+                          : Colors.black12,
+                    ),
+                  ),
                   enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                          color: controller.uf.isNotEmpty && !controller.modoManual
-                              ? Colors.green
-                              : Colors.black12)),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: controller.uf.isNotEmpty && !controller.modoManual
+                          ? Colors.green
+                          : Colors.black12,
+                    ),
+                  ),
                 ),
                 items: _ufs
                     .map((uf) => DropdownMenuItem(value: uf, child: Text(uf)))
                     .toList(),
-                onChanged: (v) { if (v != null) controller.setUf(v); },
+                onChanged: (v) {
+                  if (v != null) controller.setUf(v);
+                },
               ),
             ),
           ],
@@ -792,9 +818,10 @@ class _NewPlacePageState extends State<NewPlacePage> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: controller.isBuscandoCoordenadas ||
+            onPressed:
+                controller.isBuscandoCoordenadas ||
                     controller.rua.isEmpty ||
-                    controller.cidade.isEmpty
+                    controller.city.isEmpty
                 ? null
                 : () async {
                     await controller.buscarCoordenadas();
@@ -810,7 +837,8 @@ class _NewPlacePageState extends State<NewPlacePage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                              "⚠️ Endereço não encontrado. Verifique os dados."),
+                            "⚠️ Endereço não encontrado. Verifique os dados.",
+                          ),
                           backgroundColor: Colors.orange,
                         ),
                       );
@@ -818,22 +846,31 @@ class _NewPlacePageState extends State<NewPlacePage> {
                   },
             icon: controller.isBuscandoCoordenadas
                 ? const SizedBox(
-                    width: 18, height: 18,
+                    width: 18,
+                    height: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.black))
+                      strokeWidth: 2,
+                      color: Colors.black,
+                    ),
+                  )
                 : Icon(
                     controller.latitude != 0.0
                         ? Icons.check_circle
                         : Icons.my_location,
-                    color: Colors.black, size: 18),
+                    color: Colors.black,
+                    size: 18,
+                  ),
             label: Text(
               controller.isBuscandoCoordenadas
                   ? "Buscando localização..."
                   : controller.latitude != 0.0
-                      ? "✅ Localização encontrada"
-                      : "Localizar no mapa",
+                  ? "✅ Localização encontrada"
+                  : "Localizar no mapa",
               style: const TextStyle(
-                  color: Colors.black, fontSize: 13, fontWeight: FontWeight.w600),
+                color: Colors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: controller.latitude != 0.0
@@ -841,7 +878,8 @@ class _NewPlacePageState extends State<NewPlacePage> {
                   : Colors.orangeAccent,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: 0,
             ),
           ),
@@ -906,9 +944,10 @@ class _NewPlacePageState extends State<NewPlacePage> {
                 if (controller.nome.isEmpty) _chip("Nome obrigatório"),
                 if (controller.categoriasSelecionadas.isEmpty)
                   _chip("Categoria obrigatória"),
-                if (controller.cidade.isEmpty) _chip("Cidade obrigatória"),
+                if (controller.city.isEmpty) _chip("Cidade obrigatória"),
                 if (controller.uf.isEmpty) _chip("UF obrigatória"),
-                if (controller.latitude == 0.0) _chip("Localização obrigatória"),
+                if (controller.latitude == 0.0)
+                  _chip("Localização obrigatória"),
               ],
             ),
           ),
@@ -959,23 +998,30 @@ class _NewPlacePageState extends State<NewPlacePage> {
                   ),
                 ),
                 // ← bloqueado se não tiver coordenadas ou campos inválidos
-                onPressed: (controller.isSaving ||
+                onPressed:
+                    (controller.isSaving ||
                         !controller.isValid ||
                         controller.latitude == 0.0)
                     ? null
                     : () async {
-                        final destinationCriado = await controller.salvar();
-                        if (destinationCriado != true) {
+                        final sucesso = await controller.salvar();
+                        if (sucesso) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text("✅ Destino criado com sucesso!"),
                               backgroundColor: Colors.green,
                             ),
                           );
-                          Navigator.pop(
-                            context,
-                            destinationCriado,
-                          ); // ← retorna o Destino
+                          // Fecha a tela de criação e volta para a anterior
+                          Navigator.pop(context);
+                        } else {
+                          // Opcional: mostrar erro caso controller.erroMensagem não seja nulo
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("⚠️ Erro ao salvar destino."),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         }
                       },
                 style: ElevatedButton.styleFrom(

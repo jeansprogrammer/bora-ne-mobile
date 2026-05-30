@@ -3,12 +3,14 @@ import '../models/route_creation_model.dart';
 import '../models/destination_model.dart';
 import '../services/new_route_service.dart';
 import '../services/destination_service.dart';
+import '../services/image_upload_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 class RouteCreationController extends ChangeNotifier {
   final NewRouteService _routeService = NewRouteService();
   final DestinationService _DestinationService = DestinationService();
+  final ImageUploadService _imageService = ImageUploadService();
 
   RouteCreationModel newRoute = RouteCreationModel();
 
@@ -113,8 +115,8 @@ class RouteCreationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setCidade(String cidade) {
-    _cidadeSelecionada = cidade;
+  void setCidade(String city) {
+    _cidadeSelecionada = city;
     notifyListeners();
   }
 
@@ -122,7 +124,7 @@ class RouteCreationController extends ChangeNotifier {
     if (!canAddMorePlaces) return;
     if (_DestinationsSelecionados.any((d) => d.name == Destination.name)) return;
     _DestinationsSelecionados.add(Destination);
-    newRoute.places.add(PlaceModel(
+    newRoute.destinations.add(PlaceModel(
       name: Destination.name,
       lat: Destination.latitude,
       lon: Destination.longitude,
@@ -132,15 +134,15 @@ class RouteCreationController extends ChangeNotifier {
 
   void removeDestination(int index) {
     _DestinationsSelecionados.removeAt(index);
-    newRoute.places.removeAt(index);
+    newRoute.destinations.removeAt(index);
     notifyListeners();
   }
 
   void reordenarDestination(int oldIndex, int newIndex) {
     final Destination = _DestinationsSelecionados.removeAt(oldIndex);
     _DestinationsSelecionados.insert(newIndex, Destination);
-    final place = newRoute.places.removeAt(oldIndex);
-    newRoute.places.insert(newIndex, place);
+    final place = newRoute.destinations.removeAt(oldIndex);
+    newRoute.destinations.insert(newIndex, place);
     notifyListeners();
   }
 
@@ -153,10 +155,10 @@ class RouteCreationController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Foto capa: tenta upload se tiver arquivo, senão usa URL manual
+      // Foto capa: upload via Cloudinary se tiver arquivo, senão usa URL manual
       String urlCapa = '';
       if (fotos.isNotEmpty) {
-        final urls = await _routeService.uploadImages(fotos);
+        final urls = await _imageService.uploadImagens(fotos);
         urlCapa = urls.isNotEmpty
             ? urls[indiceFotoCapa.clamp(0, urls.length - 1)]
             : urlFotoCapaManual;
@@ -165,9 +167,9 @@ class RouteCreationController extends ChangeNotifier {
       }
 
       final Map<String, dynamic> dadosParaSalvar = newRoute.toMap();
-      dadosParaSalvar['fotoCapa'] = urlCapa;
-      dadosParaSalvar['categorias'] = _categoriasSelecionadas;
-      dadosParaSalvar['cidade'] = _cidadeSelecionada;
+      dadosParaSalvar['coverPhoto'] = urlCapa;
+      dadosParaSalvar['categories'] = _categoriasSelecionadas;
+      dadosParaSalvar['city'] = _cidadeSelecionada;
 
       final success = await _routeService.saveRouteToFirestore(dadosParaSalvar);
 

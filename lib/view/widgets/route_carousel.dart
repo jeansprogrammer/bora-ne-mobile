@@ -129,9 +129,9 @@ class _RouteCarouselState extends State<RouteCarousel> {
 
   Widget _buildCard(Map<String, dynamic> rota) {
     final nome = rota['name'] ?? 'Sem título';
-    final fotoCapa = rota['fotoCapa'] ?? '';
-    final categorias = List<String>.from(rota['categorias'] ?? []);
-    final categoria = categorias.isNotEmpty ? categorias.first : '';
+    final coverPhoto = rota['coverPhoto'] ?? '';
+    final categories = List<String>.from(rota['categories'] ?? []);
+    final categoria = categories.isNotEmpty ? categories.first : '';
 
     // Favoritos
     final favoritadoPor = List<String>.from(rota['favoritadoPor'] ?? []);
@@ -145,9 +145,9 @@ class _RouteCarouselState extends State<RouteCarousel> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: Colors.grey.shade300,
-          image: fotoCapa.isNotEmpty
+          image: coverPhoto.isNotEmpty
               ? DecorationImage(
-                  image: NetworkImage(fotoCapa),
+                  image: NetworkImage(coverPhoto),
                   fit: BoxFit.cover,
                 )
               : null,
@@ -216,7 +216,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
                       child: Icon(
                         isFavorito ? Icons.favorite : Icons.favorite_border,
                         color: isFavorito ? Colors.red : Colors.white,
-                        size: 18,
+                        size: 22,
                       ),
                     ),
                   ),
