@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/detail_local_sheet.dart';
 
-class ListaReligiososPage extends StatelessWidget {
-  const ListaReligiososPage({super.key});
+class RoutesPage extends StatelessWidget {
+  const RoutesPage({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -6,9 +6,11 @@ import 'package:image_picker/image_picker.dart';
 import '../models/destination_model.dart';
 import '../services/destination_service.dart';
 import '../services/geoapify_service.dart';
+import '../services/image_upload_service.dart';
 
 class DestinationCreationController extends ChangeNotifier {
   final DestinationService _service = DestinationService();
+  final ImageUploadService _imageService = ImageUploadService();
   final ImagePicker _picker = ImagePicker();
 
   // ── Fotos ────────────────────────────────────────────────────────────────
@@ -26,7 +28,7 @@ class DestinationCreationController extends ChangeNotifier {
   String numero = '';
   String bairro = '';
   String cep = '';
-  String cidade = '';
+  String city = '';
   String uf = '';
 
   // Coordenadas
@@ -49,7 +51,7 @@ class DestinationCreationController extends ChangeNotifier {
   bool get isValid =>
       nome.isNotEmpty &&
       categoriasSelecionadas.isNotEmpty &&
-      cidade.isNotEmpty &&
+      city.isNotEmpty &&
       uf.isNotEmpty;
 
   void setModoEndereco(bool manual) {
@@ -85,13 +87,13 @@ class DestinationCreationController extends ChangeNotifier {
           // Preenche os campos automaticamente
           rua    = data['logradouro'] ?? '';
           bairro = data['bairro']     ?? '';
-          cidade = data['localidade'] ?? '';
+          city = data['localidade'] ?? '';
           uf     = data['uf']         ?? '';
 
           // Atualiza os TextEditingControllers para refletir na tela
           ruaController.text    = rua;
           bairroController.text = bairro;
-          cidadeController.text = cidade;
+          cidadeController.text = city;
 
           erroCep = null;
         }
@@ -137,7 +139,7 @@ class DestinationCreationController extends ChangeNotifier {
   void setNumero(String v)    { numero = v;            notifyListeners(); }
   void setBairro(String v)    { bairro = v;            notifyListeners(); }
   void setCep(String v)       { cep = v;               notifyListeners(); }
-  void setCidade(String v)    { cidade = v;            notifyListeners(); }
+  void setCidade(String v)    { city = v;            notifyListeners(); }
   void setUf(String v)        { uf = v.toUpperCase();  notifyListeners(); }
   void setUrlImagem(String v) { urlImagemManual = v; notifyListeners(); }
 
@@ -155,7 +157,7 @@ class DestinationCreationController extends ChangeNotifier {
 
   // Destination_creation_controller.dart — método buscarCoordenadas()
 Future<void> buscarCoordenadas() async {
-  if (rua.isEmpty || cidade.isEmpty) return;
+  if (rua.isEmpty || city.isEmpty) return;
 
   isBuscandoCoordenadas = true;
   notifyListeners();
@@ -165,7 +167,7 @@ Future<void> buscarCoordenadas() async {
     if (rua.isNotEmpty) rua,
     if (numero.isNotEmpty) numero,
     if (bairro.isNotEmpty) bairro,
-    if (cidade.isNotEmpty) cidade,
+    if (city.isNotEmpty) city,
     if (uf.isNotEmpty) uf,
     'Brasil',
   ];
@@ -197,19 +199,19 @@ Future<void> buscarCoordenadas() async {
 
     try {
       List<String> urls = [];
-String urlCapa = '';
+      String urlCapa = '';
 
-if (fotos.isNotEmpty) {
-  // Tenta upload se tiver foto selecionada
-  urls = await _service.uploadFotos(fotos);
-  urlCapa = urls.isNotEmpty
-      ? urls[indiceFotoCapa.clamp(0, urls.length - 1)]
-      : urlImagemManual;
-} else {
-  // Usa URL manual se informada
-  urlCapa = urlImagemManual;
-  if (urlCapa.isNotEmpty) urls = [urlCapa];
-}
+      if (fotos.isNotEmpty) {
+        // Upload via Cloudinary com compressão automática
+        urls = await _imageService.uploadImagens(fotos);
+        urlCapa = urls.isNotEmpty
+            ? urls[indiceFotoCapa.clamp(0, urls.length - 1)]
+            : urlImagemManual;
+      } else {
+        // Usa URL manual se informada
+        urlCapa = urlImagemManual;
+        if (urlCapa.isNotEmpty) urls = [urlCapa];
+      }
 
       final Destination = DestinationModel(
         name: nome,
@@ -221,7 +223,7 @@ if (fotos.isNotEmpty) {
         number: numero,
         neighborhood: bairro,
         cep: cep,
-        city: cidade,
+        city: city,
         state: uf,
         latitude: latitude,
         longitude: longitude,
@@ -257,7 +259,7 @@ if (fotos.isNotEmpty) {
     numero = '';
     bairro = '';
     cep = '';
-    cidade = '';
+    city = '';
     uf = '';
     latitude = 0.0;
     longitude = 0.0;

@@ -20,37 +20,36 @@ class PlaceModel {
 
 class RouteCreationModel {
   String name;
-  String category;
+  String categories;
   String description;
   String imageUrl;
-  List<PlaceModel> places;
+  List<PlaceModel> destinations;
 
   RouteCreationModel({
     this.name = '',
-    this.category = '',
+    this.categories = '',
     this.description = '',
     this.imageUrl = '',
-    List<PlaceModel>? places,
-  }) : places = places ?? [];
+    List<PlaceModel>? destinations,
+  }) : destinations = destinations ?? [];
 
   Map<String, dynamic> toMap() => {
     'name': name,
-    'category': category,
+    'categories': categories,
     'description': description,
     'imageUrl': imageUrl,
-    'places': places.map((p) => p.toMap()).toList(),
-    'createdAt': DateTime.now(),
+    'destinations': destinations.map((p) => p.toMap()).toList(),
   };
 
   factory RouteCreationModel.fromMap(Map<String, dynamic> map) {
     return RouteCreationModel(
       name: map['name'] ?? '',
-      category: map['category'] ?? '',
+      categories: map['categories'] ?? '',
       description: map['description'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
       // Mapeia a lista interna de PlaceModel
-      places: map['places'] != null
-          ? (map['places'] as List)
+      destinations: map['destinations'] != null
+          ? (map['destinations'] as List)
               .map((p) => PlaceModel.fromMap(p as Map<String, dynamic>))
               .toList()
           : [],

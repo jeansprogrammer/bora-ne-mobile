@@ -74,7 +74,7 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const NewPlacePage()));
+                    MaterialPageRoute(builder: (_) => const NewDestinationPage()));
               },
             ),
           ],
