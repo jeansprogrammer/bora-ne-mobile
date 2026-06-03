@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:boranemobile/view/pages/favorites_page.dart';
