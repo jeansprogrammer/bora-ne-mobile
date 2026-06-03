@@ -1,36 +1,20 @@
-class PlaceModel {
-  final String name;
-  final double lat;
-  final double lon;
 
-  PlaceModel({required this.name, required this.lat, required this.lon});
 
-  Map<String, dynamic> toMap() => {
-    'name': name,
-    'lat': lat,
-    'lon': lon,
-  };
-
-  factory PlaceModel.fromMap(Map<String, dynamic> map) => PlaceModel(
-    name: map['name'],
-    lat: map['lat'],
-    lon: map['lon'],
-  );
-}
+import 'package:boranemobile/models/destination_model.dart';
 
 class RouteCreationModel {
   String name;
   String categories;
   String description;
   String imageUrl;
-  List<PlaceModel> destinations;
+  List<DestinationModel> destinations;
 
   RouteCreationModel({
     this.name = '',
     this.categories = '',
     this.description = '',
     this.imageUrl = '',
-    List<PlaceModel>? destinations,
+    List<DestinationModel>? destinations,
   }) : destinations = destinations ?? [];
 
   Map<String, dynamic> toMap() => {
@@ -47,10 +31,10 @@ class RouteCreationModel {
       categories: map['categories'] ?? '',
       description: map['description'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
-      // Mapeia a lista interna de PlaceModel
+      // Mapeia a lista interna de DestinationModel
       destinations: map['destinations'] != null
           ? (map['destinations'] as List)
-              .map((p) => PlaceModel.fromMap(p as Map<String, dynamic>))
+              .map((p) => DestinationModel.fromMap(p as Map<String, dynamic>))
               .toList()
           : [],
     );
