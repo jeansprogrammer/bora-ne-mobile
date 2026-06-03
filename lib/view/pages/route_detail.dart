@@ -15,7 +15,6 @@ class RouteDetailPage extends StatelessWidget {
 
     // ── Lista de Destinos Internos da Rota ─────────────────────────────────
     final List<dynamic> destinosRaw = rota['destinations'] ?? [];
-    print('Destinos brutos: $destinosRaw'); // Debug: Verificar estrutura dos destinos
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -114,13 +113,10 @@ class RouteDetailPage extends StatelessWidget {
                       itemCount: destinosRaw.length,
                       itemBuilder: (context, index) {
                         final item = destinosRaw[index] as Map<String, dynamic>;
-                        print('Array ${index + 1}: $item'); 
                         
                         // Extraindo dados específicos do Destino atual
                         final String nomeDestino = item['name'] ?? 'Destino sem nome';
-                        print('Destino ${index + 1}: $nomeDestino'); // Debug: Verificar nome do destino
                         final String cidadeDestino = item['city'] ?? 'Cidade não especificada';
-                        print('cheggou aqui ${index + 1}: $cidadeDestino'); // Debug: Verificar nome do destino
                         final String descricaoDestino = item['description'] ?? 'Sem descrição.';
                         
                         // Fallback de imagem do destino: pega a 'coverPhoto' ou a primeira do array 'photos'

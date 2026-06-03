@@ -346,7 +346,6 @@ class _HomePageState extends State<HomePage> {
 
               // ── Carrossel de rotas ────────────────────────────────────────
               RouteCarousel(city: _cidadeAtiva,onTapRota: (rotaSelecionada) {
-              // Navega para a página de detalhes passando o Map da rota clicada
               Navigator.push(
                 context,
                 MaterialPageRoute(
