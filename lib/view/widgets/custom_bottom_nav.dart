@@ -14,7 +14,6 @@ class CustomBottomNav extends StatefulWidget {
 }
 
 class _CustomBottomNavState extends State<CustomBottomNav> {
-
   void _abrirMenuAdicionar() {
     showModalBottomSheet(
       context: context,
@@ -27,7 +26,8 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
@@ -36,8 +36,10 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
             const SizedBox(height: 20),
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text('O que deseja adicionar?',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(
+                'O que deseja adicionar?',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -49,13 +51,17 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
                 ),
                 child: const Icon(Icons.alt_route, color: Colors.orangeAccent),
               ),
-              title: const Text('Nova rota',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+              title: const Text(
+                'Nova rota',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
               subtitle: const Text('Crie uma rota personalizada'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const NewRoutePage()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NewRoutePage()),
+                );
               },
             ),
             const Divider(height: 1),
@@ -66,16 +72,22 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
                   color: Colors.orangeAccent.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.add_location_alt_outlined,
-                    color: Colors.orangeAccent),
+                child: const Icon(
+                  Icons.add_location_alt_outlined,
+                  color: Colors.orangeAccent,
+                ),
               ),
-              title: const Text('Novo Destino',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+              title: const Text(
+                'Novo Destino',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
               subtitle: const Text('Cadastre um ponto turístico'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const NewDestinationPage()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NewDestinationPage()),
+                );
               },
             ),
           ],
@@ -113,7 +125,9 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
             onTap: () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                  builder: (_) => const HomePage(), settings: const RouteSettings(name: '/home')),
+                builder: (_) => const HomePage(),
+                settings: const RouteSettings(name: '/home'),
+              ),
             ),
           ),
           _NavItem(
@@ -124,14 +138,13 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (_) => const FavoritesPage(),
-                  settings: const RouteSettings(name: '/favoritos')),
+                builder: (_) => const FavoritesPage(),
+                settings: const RouteSettings(name: '/favoritos'),
+              ),
             ),
           ),
-  // Botão central — Adicionar
-          _NavItemCenter(
-            onTap: () => _abrirMenuAdicionar(),
-          ),
+          // Botão central — Adicionar
+          _NavItemCenter(onTap: () => _abrirMenuAdicionar()),
           _NavItem(
             icon: Icons.notifications_outlined,
             iconActive: Icons.notifications,
@@ -144,7 +157,12 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
             iconActive: Icons.person,
             label: 'Perfil',
             isActive: currentRoute == '/perfil',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UserProfilePage()),
+              );
+            },
           ),
         ],
       ),
