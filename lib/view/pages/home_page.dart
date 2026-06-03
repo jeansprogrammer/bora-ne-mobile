@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/route_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
@@ -344,7 +345,15 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 16),
 
               // ── Carrossel de rotas ────────────────────────────────────────
-              RouteCarousel(city: _cidadeAtiva),
+              RouteCarousel(city: _cidadeAtiva,onTapRota: (rotaSelecionada) {
+              // Navega para a página de detalhes passando o Map da rota clicada
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RouteDetailPage(rota: rotaSelecionada),
+                ),
+                );
+              },),
 
               const SizedBox(height: 20),
 
