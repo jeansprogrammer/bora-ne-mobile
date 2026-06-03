@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 
 class RouteCarousel extends StatefulWidget {
   final String? city;
+  final Function(Map<String, dynamic> rota)? onTapRota;
 
-  const RouteCarousel({super.key, this.city});
+  const RouteCarousel({super.key, this.city, this.onTapRota});
+  
+  get onRouteTap => null;
 
   @override
   State<RouteCarousel> createState() => _RouteCarouselState();
@@ -70,6 +73,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
       _pageController.animateToPage(
         _currentIndex,
         duration: const Duration(milliseconds: 500),
+
         curve: Curves.easeInOut,
       );
       setState(() {});
@@ -139,7 +143,11 @@ class _RouteCarouselState extends State<RouteCarousel> {
     final isFavorito = favoritadoPor.contains(uidAtual);
 
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        if (widget.onTapRota != null) {
+          widget.onTapRota!(rota);
+        }
+      },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(

@@ -124,10 +124,21 @@ class RouteCreationController extends ChangeNotifier {
     if (!canAddMorePlaces) return;
     if (_DestinationsSelecionados.any((d) => d.name == Destination.name)) return;
     _DestinationsSelecionados.add(Destination);
-    newRoute.destinations.add(PlaceModel(
+    newRoute.destinations.add(DestinationModel(
       name: Destination.name,
-      lat: Destination.latitude,
-      lon: Destination.longitude,
+      description: Destination.description,
+      photos: Destination.photos,
+      coverPhoto: Destination.coverPhoto,
+      categories: Destination.categories,
+      street: Destination.street,
+      number: Destination.number,
+      neighborhood: Destination.neighborhood,
+      cep: Destination.cep,
+      city: Destination.city, 
+      state: Destination.state,
+      latitude: Destination.latitude,
+      longitude: Destination.longitude,
+      favoritedBy: Destination.favoritedBy,
     ));
     notifyListeners();
   }
