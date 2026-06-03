@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "706506597068",
+    "project_id": "borane-a6ce6",
+    "storage_bucket": "borane-a6ce6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:706506597068:android:711aa4ec391647edab1869",
+        "android_client_info": {
+          "package_name": "com.example.boranemobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "706506597068-el8gnqfbfk4l2dvjusp01ss8a8lc0b1f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.boranemobile",
+            "certificate_hash": "29fcb7fe1adcd296519e8748d178bf5172dfe942"
+          }
+        },
+        {
+          "client_id": "706506597068-6rs0lvkrnrpjd2rna8d8c3l7ov9ta0i1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxoLRzAkq2-VfcclnuHqNfBWkaBLM--Ng"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "706506597068-6rs0lvkrnrpjd2rna8d8c3l7ov9ta0i1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "706506597068-oqutbnk5o9rj39agpsbfea890k3an9c7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.boranemobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

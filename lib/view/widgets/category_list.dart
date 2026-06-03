@@ -32,7 +32,7 @@ class _CategoryListState extends State<CategoryList> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => ListaReligiososPage()),
+                MaterialPageRoute(builder: (_) => RoutesPage()),
               );
 
               setState(() => selectedIndex = index);

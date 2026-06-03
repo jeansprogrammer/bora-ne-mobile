@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class DetalheLocalSheet extends StatelessWidget {
+class DetailLocalSheet extends StatelessWidget {
   final String titulo;
   final String img;
   final int nota;
 
-  const DetalheLocalSheet({
+  const DetailLocalSheet({
     super.key,
     required this.titulo,
     required this.img,
