@@ -1,5 +1,3 @@
-
-
 import 'package:boranemobile/models/destination_model.dart';
 
 class RouteCreationModel {
@@ -7,6 +5,7 @@ class RouteCreationModel {
   String categories;
   String description;
   String imageUrl;
+  String state;
   List<DestinationModel> destinations;
 
   RouteCreationModel({
@@ -14,6 +13,7 @@ class RouteCreationModel {
     this.categories = '',
     this.description = '',
     this.imageUrl = '',
+    this.state = '',
     List<DestinationModel>? destinations,
   }) : destinations = destinations ?? [];
 
@@ -22,6 +22,7 @@ class RouteCreationModel {
     'categories': categories,
     'description': description,
     'imageUrl': imageUrl,
+    'state': state,
     'destinations': destinations.map((p) => p.toMap()).toList(),
   };
 
@@ -31,7 +32,7 @@ class RouteCreationModel {
       categories: map['categories'] ?? '',
       description: map['description'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
-      // Mapeia a lista interna de DestinationModel
+      state: map['state'] ?? '',
       destinations: map['destinations'] != null
           ? (map['destinations'] as List)
               .map((p) => DestinationModel.fromMap(p as Map<String, dynamic>))

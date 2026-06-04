@@ -6,6 +6,7 @@ import '../../models/destination_model.dart';
 import '../widgets/confirm_exit_dialog.dart';
 import 'new_destination_page.dart';
 import '../../data/category_data.dart';
+import '../../data/nordeste_data.dart';
 
 class NewRoutePage extends StatefulWidget {
   const NewRoutePage({super.key});
@@ -22,6 +23,7 @@ class _NewRoutePageState extends State<NewRoutePage> {
       c.newRoute.name.isNotEmpty ||
       c.categoriasSelecionadas.isNotEmpty ||
       c.cidadeSelecionada.isNotEmpty ||
+      c.ufSelecionado.isNotEmpty ||
       c.DestinationsSelecionados.isNotEmpty ||
       c.fotos.isNotEmpty ||
       c.urlFotoCapaManual.isNotEmpty;
@@ -34,12 +36,6 @@ class _NewRoutePageState extends State<NewRoutePage> {
   }
 
   final categorias = nomesCategorias;
-
-  final List<String> _cidadesDisponiveis = [
-    'Recife', 'Caruaru', 'Garanhuns', 'Fortaleza', 'Salvador',
-    'Natal', 'João Pessoa', 'Maceió', 'Aracaju', 'Teresina',
-    'São Luís', 'Campina Grande', 'Mossoró', 'Petrolina', 'Juazeiro do Norte',
-  ];
 
   InputDecoration _inputStyle(String hint, IconData icon) {
     return InputDecoration(
@@ -415,53 +411,125 @@ class _NewRoutePageState extends State<NewRoutePage> {
     );
   }
 
-  // ── CIDADE ────────────────────────────────────────────────────────────────
+  // ── CIDADE + UF ───────────────────────────────────────────────────────────
 
   Widget _buildCidadeDropdown(RouteCreationController controller) {
     final temDestinos = controller.DestinationsSelecionados.isNotEmpty;
+    final cidades = controller.ufSelecionado.isNotEmpty
+        ? cidadesDoEstado(controller.ufSelecionado)
+        : <String>[];
 
     return GestureDetector(
       onTap: temDestinos ? () => _mostrarPopupCidadeBloqueada(context) : null,
       child: AbsorbPointer(
         absorbing: temDestinos,
-        child: DropdownButtonFormField<String>(
-          value: controller.cidadeSelecionada.isEmpty
-              ? null
-              : controller.cidadeSelecionada,
-          decoration: InputDecoration(
-            hintText: "Selecione a cidade",
-            hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-            prefixIcon: Icon(
-              Icons.location_city,
-              color: temDestinos ? Colors.grey : Colors.orangeAccent,
-              size: 22,
+        child: Row(
+          children: [
+            // ── Cidade ──────────────────────────────────────────────────
+            Expanded(
+              flex: 4,
+              child: Opacity(
+                opacity: controller.ufSelecionado.isEmpty ? 0.4 : 1.0,
+                child: AbsorbPointer(
+                  absorbing: controller.ufSelecionado.isEmpty,
+                  child: DropdownButtonFormField<String>(
+                    value: controller.cidadeSelecionada.isEmpty
+                        ? null
+                        : controller.cidadeSelecionada,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      hintText: controller.ufSelecionado.isEmpty
+                          ? 'Selecione o UF primeiro'
+                          : 'Cidade',
+                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                      prefixIcon: Icon(Icons.location_city,
+                          color: temDestinos ? Colors.grey : Colors.orangeAccent,
+                          size: 22),
+                      suffixIcon: temDestinos
+                          ? const Icon(Icons.lock_outline,
+                              color: Colors.grey, size: 20)
+                          : null,
+                      filled: true,
+                      fillColor: temDestinos ? Colors.grey.shade100 : Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 16, horizontal: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: temDestinos
+                                ? Colors.grey.shade300
+                                : Colors.grey,
+                            width: 0.5),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: temDestinos
+                                ? Colors.grey.shade300
+                                : Colors.black12,
+                            width: 1),
+                      ),
+                    ),
+                    items: cidades
+                        .map((c) => DropdownMenuItem(
+                              value: c,
+                              child: Text(c,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1),
+                            ))
+                        .toList(),
+                    onChanged: temDestinos
+                        ? null
+                        : (v) { if (v != null) controller.setCidade(v); },
+                  ),
+                ),
+              ),
             ),
-            suffixIcon: temDestinos
-                ? const Icon(Icons.lock_outline, color: Colors.grey, size: 20)
-                : null,
-            filled: true,
-            fillColor: temDestinos ? Colors.grey.shade100 : Colors.white,
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                  color: temDestinos ? Colors.grey.shade300 : Colors.grey,
-                  width: 0.5),
+            const SizedBox(width: 10),
+            // ── UF ────────────────────────────────────────────────────────
+            Expanded(
+              flex: 2,
+              child: DropdownButtonFormField<String>(
+                value: controller.ufSelecionado.isEmpty
+                    ? null
+                    : controller.ufSelecionado,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  hintText: 'UF',
+                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                  prefixIcon: Icon(Icons.map_outlined,
+                      color: temDestinos ? Colors.grey : Colors.orangeAccent,
+                      size: 20),
+                  filled: true,
+                  fillColor: temDestinos ? Colors.grey.shade100 : Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                      vertical: 16, horizontal: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: temDestinos
+                            ? Colors.grey.shade300
+                            : Colors.grey,
+                        width: 0.5),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: temDestinos
+                            ? Colors.grey.shade300
+                            : Colors.black12,
+                        width: 1),
+                  ),
+                ),
+                items: siglaEstados
+                    .map((uf) => DropdownMenuItem(value: uf, child: Text(uf)))
+                    .toList(),
+                onChanged: temDestinos
+                    ? null
+                    : (v) { if (v != null) controller.setUf(v); },
+              ),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                  color: temDestinos ? Colors.grey.shade300 : Colors.black12,
-                  width: 1),
-            ),
-          ),
-          items: _cidadesDisponiveis
-              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-              .toList(),
-          onChanged: temDestinos
-              ? null
-              : (v) { if (v != null) controller.setCidade(v); },
+          ],
         ),
       ),
     );
@@ -902,6 +970,8 @@ class _NewRoutePageState extends State<NewRoutePage> {
                   _chip("Título obrigatório"),
                 if (controller.categoriasSelecionadas.isEmpty)
                   _chip("Categoria obrigatória"),
+                if (controller.ufSelecionado.isEmpty)
+                  _chip("UF obrigatório"),
                 if (controller.cidadeSelecionada.isEmpty)
                   _chip("Cidade obrigatória"),
                 if (controller.DestinationsSelecionados.length < 3)
