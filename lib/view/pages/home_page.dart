@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/destination_detail.dart';
 import 'package:boranemobile/view/pages/route_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -590,7 +591,15 @@ class _HomePageState extends State<HomePage> {
     const String uidAtual = 'usuario_teste';
     final isFavorito = favoritedBy.contains(uidAtual);
 
-    return Container(
+    return GestureDetector(                         // ← adiciona isso
+    onTap: () => Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DestinationDetail(id: id, data: data),
+      ),
+    
+    ),
+    child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -662,7 +671,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       // Favorito
                       GestureDetector(
-                        onTap: () =>
+                        onTap: () => 
                             _toggleFavoritoDestino(id, favoritedBy, uidAtual),
                         child: Icon(
                           isFavorito
@@ -680,6 +689,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    ),
     );
   }
 
