@@ -226,7 +226,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      bottomNavigationBar: const CustomBottomNav(),
+      bottomNavigationBar: const CustomBottomNav(activeTab: BottomNavTab.home),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 12),

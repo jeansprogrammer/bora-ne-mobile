@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:boranemobile/view/pages/login_page.dart';
 import 'package:boranemobile/view/pages/profile_page.dart';
+import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
 
 class FavoritesPage extends StatelessWidget {
@@ -12,7 +13,7 @@ class FavoritesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5), // Light gray background
-      bottomNavigationBar: const _FavoritesBottomNavBar(),
+      bottomNavigationBar: const CustomBottomNav(activeTab: BottomNavTab.favoritos),
       body: Column(
         children: [
           // Top curved dark bar
@@ -250,107 +251,6 @@ class _FavoriteCardState extends State<FavoriteCard> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FavoritesBottomNavBar extends StatelessWidget {
-  const _FavoritesBottomNavBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 72,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, -3),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // INÍCIO
-          _NavBarItem(
-            icon: Icons.home_outlined,
-            label: 'INÍCIO',
-            isActive: false,
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const HomePage(),
-                  settings: const RouteSettings(name: '/home'),
-                ),
-              );
-            },
-          ),
-          
-          // FAVORITOS (Active layout)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFC107), // Yellow/gold active background
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(
-                  Icons.favorite,
-                  color: Colors.black,
-                  size: 22,
-                ),
-                SizedBox(width: 6),
-                Text(
-                  'FAVORITOS',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // NOTIFICAÇÕES
-          _NavBarItem(
-            icon: Icons.notifications_outlined,
-            label: 'NOTIFICAÇÕES',
-            isActive: false,
-            onTap: () {
-              // Notification page not yet implemented
-            },
-          ),
-
-          // PERFIL
-          _NavBarItem(
-            icon: Icons.person_outline,
-            label: 'PERFIL',
-            isActive: false,
-            onTap: () {
-              final auth = Provider.of<AuthController>(context, listen: false);
-              if (auth.isLoggedIn) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProfilePage()),
-                );
-              } else {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                );
-              }
-            },
           ),
         ],
       ),
