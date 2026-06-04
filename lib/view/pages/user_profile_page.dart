@@ -30,7 +30,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       builder: (context, _) {
         return Scaffold(
           backgroundColor: const Color(0xFFF5F5F5),
-          bottomNavigationBar: const CustomBottomNav(),
+          bottomNavigationBar: const CustomBottomNav(activeTab: BottomNavTab.perfil),
           body: _controller.isLoading
               ? const Center(
                   child: CircularProgressIndicator(color: Colors.amber))
@@ -313,7 +313,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     bool showChevron = true,
     VoidCallback? onTap,
   }) {
-    return Container(
+    return Material(
       color: Colors.white,
       child: ListTile(
         leading: Icon(icon,
