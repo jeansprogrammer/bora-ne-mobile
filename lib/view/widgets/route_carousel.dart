@@ -131,10 +131,17 @@ class _RouteCarouselState extends State<RouteCarousel> {
     );
   }
 
+  List<String> _parseCats(dynamic valor) {
+    if (valor == null) return [];
+    if (valor is List) return List<String>.from(valor);
+    if (valor is String && valor.isNotEmpty) return [valor];
+    return [];
+  }
+
   Widget _buildCard(Map<String, dynamic> rota) {
     final nome = rota['name'] ?? 'Sem título';
     final coverPhoto = rota['coverPhoto'] ?? '';
-    final categories = List<String>.from(rota['categories'] ?? []);
+    final categories = _parseCats(rota['categories']);
     final categoria = categories.isNotEmpty ? categories.first : '';
 
     // Favoritos
@@ -181,50 +188,22 @@ class _RouteCarouselState extends State<RouteCarousel> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   if (categoria.isNotEmpty)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                                color: Colors.white.withOpacity(0.5),
-                                width: 1),
-                          ),
-                          child: Text(
-                            categoria,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        // Badge "+N" se houver mais categorias
-                        if (categories.length > 1) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                  color: Colors.white.withOpacity(0.5),
-                                  width: 1),
-                            ),
-                            child: Text(
-                              '+${categories.length - 1}',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.5), width: 1),
+                      ),
+                      child: Text(
+                        categoria,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600),
+                      ),
                     )
                   else
                     const SizedBox.shrink(),

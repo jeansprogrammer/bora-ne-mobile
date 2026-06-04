@@ -194,9 +194,10 @@ class RouteCreationController extends ChangeNotifier {
 
       final Map<String, dynamic> dadosParaSalvar = newRoute.toMap();
       dadosParaSalvar['coverPhoto'] = urlCapa;
-      dadosParaSalvar['categories'] = _categoriasSelecionadas;
+      dadosParaSalvar['categories'] = _categoriasSelecionadas; // List<String>
       dadosParaSalvar['city'] = _cidadeSelecionada;
       dadosParaSalvar['state'] = _ufSelecionado;
+      dadosParaSalvar['favoritedBy'] = [];  // inicia vazio
 
       final success = await _routeService.saveRouteToFirestore(dadosParaSalvar);
 
