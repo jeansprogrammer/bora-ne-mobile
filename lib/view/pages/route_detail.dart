@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/destination_detail.dart';
 import 'package:flutter/material.dart';
 
 class RouteDetailPage extends StatelessWidget {
@@ -10,7 +11,8 @@ class RouteDetailPage extends StatelessWidget {
     // ── Extraindo as informações básicas da Rota Principal ─────────────────
     final String nomeRota = rota['name'] ?? 'Sem título';
     final String coverPhotoRota = rota['coverPhoto'] ?? '';
-    final String descricaoRota = rota['description'] ?? 'Sem descrição disponível.';
+    final String descricaoRota =
+        rota['description'] ?? 'Sem descrição disponível.';
     final List<String> categories = List<String>.from(rota['categories'] ?? []);
 
     // ── Lista de Destinos Internos da Rota ─────────────────────────────────
@@ -18,7 +20,10 @@ class RouteDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text(nomeRota, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        title: Text(
+          nomeRota,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -35,7 +40,7 @@ class RouteDetailPage extends StatelessWidget {
                 height: 230,
                 fit: BoxFit.cover,
               ),
-            
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -54,7 +59,7 @@ class RouteDetailPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                  
+
                   // Título da Rota
                   Text(
                     nomeRota,
@@ -64,7 +69,7 @@ class RouteDetailPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Descrição da Rota Principal
                   const Text(
                     'Sobre a rota',
@@ -79,7 +84,7 @@ class RouteDetailPage extends StatelessWidget {
                       height: 1.4,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
                   const Divider(height: 1),
                   const SizedBox(height: 20),
@@ -87,12 +92,16 @@ class RouteDetailPage extends StatelessWidget {
                   // ── SEÇÃO DE DESTINOS ──────────────────────────────────────
                   Row(
                     children: [
-                      const Icon(Icons.alt_route, color: Colors.orangeAccent, size: 22),
+                      const Icon(
+                        Icons.alt_route,
+                        color: Colors.orangeAccent,
+                        size: 22,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Paradas desta rota (${destinosRaw.length})',
                         style: const TextStyle(
-                          fontSize: 16, 
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -113,15 +122,19 @@ class RouteDetailPage extends StatelessWidget {
                       itemCount: destinosRaw.length,
                       itemBuilder: (context, index) {
                         final item = destinosRaw[index] as Map<String, dynamic>;
-                        
+
                         // Extraindo dados específicos do Destino atual
-                        final String nomeDestino = item['name'] ?? 'Destino sem nome';
-                        final String cidadeDestino = item['city'] ?? 'Cidade não especificada';
-                        final String descricaoDestino = item['description'] ?? 'Sem descrição.';
-                        
+                        final String nomeDestino =
+                            item['name'] ?? 'Destino sem nome';
+                        final String cidadeDestino =
+                            item['city'] ?? 'Cidade não especificada';
+                        final String descricaoDestino =
+                            item['description'] ?? 'Sem descrição.';
+
                         // Fallback de imagem do destino: pega a 'coverPhoto' ou a primeira do array 'photos'
                         final List<dynamic> fotosDestino = item['photos'] ?? [];
-                        final String imagemDestino = item['coverPhoto'] ?? 
+                        final String imagemDestino =
+                            item['coverPhoto'] ??
                             (fotosDestino.isNotEmpty ? fotosDestino.first : '');
 
                         return IntrinsicHeight(
@@ -135,7 +148,9 @@ class RouteDetailPage extends StatelessWidget {
                                     width: 24,
                                     height: 24,
                                     decoration: BoxDecoration(
-                                      color: Colors.orangeAccent.withOpacity(0.15),
+                                      color: Colors.orangeAccent.withOpacity(
+                                        0.15,
+                                      ),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(
@@ -153,91 +168,115 @@ class RouteDetailPage extends StatelessWidget {
                                     Expanded(
                                       child: Container(
                                         width: 2,
-                                        color: Colors.orangeAccent.withOpacity(0.3),
+                                        color: Colors.orangeAccent.withOpacity(
+                                          0.3,
+                                        ),
                                       ),
                                     ),
                                 ],
                               ),
                               const SizedBox(width: 12),
-                              
+
                               // Card Expandido contendo Imagem, Nome, Cidade e Descrição
                               Expanded(
-                                child: Container(
-                                  margin: const EdgeInsets.only(bottom: 20),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.black12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.02),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 3),
-                                      )
-                                    ],
-                                  ),
-                                  clipBehavior: Clip.antiAlias, // Garante o border radius na imagem
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // 1. Imagem do Destino
-                                      if (imagemDestino.isNotEmpty)
-                                        Image.network(
-                                          imagemDestino,
-                                          width: double.infinity,
-                                          height: 140,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      
-                                      // 2. Informações de texto do Destino
-                                      Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            // Nome do ponto turístico
-                                            Text(
-                                              nomeDestino,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                             
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            
-                                            // Localização (Cidade) com Ícone
-                                            Row(
-                                              children: [
-                                                const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  cidadeDestino,
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey.shade600,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 8),
-                                            
-                                            // Descrição do Destino
-                                            Text(
-                                              descricaoDestino,
-                                              maxLines: 3,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey.shade800,
-                                                height: 1.3,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                child: GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => DestinationDetail(
+                                        id:
+                                            item['id'] ??
+                                            '', // se o mapa tiver o id
+                                        data: item,
                                       ),
-                                    ],
+                                    ),
+                                  ),
+
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 20),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: Colors.black12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.02),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    clipBehavior: Clip
+                                        .antiAlias, // Garante o border radius na imagem
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // 1. Imagem do Destino
+                                        if (imagemDestino.isNotEmpty)
+                                          Image.network(
+                                            imagemDestino,
+                                            width: double.infinity,
+                                            height: 140,
+                                            fit: BoxFit.cover,
+                                          ),
+
+                                        // 2. Informações de texto do Destino
+                                        Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Nome do ponto turístico
+                                              Text(
+                                                nomeDestino,
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+
+                                              // Localização (Cidade) com Ícone
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.location_on,
+                                                    size: 14,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    cidadeDestino,
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+
+                                              // Descrição do Destino
+                                              Text(
+                                                descricaoDestino,
+                                                maxLines: 3,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.grey.shade800,
+                                                  height: 1.3,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
