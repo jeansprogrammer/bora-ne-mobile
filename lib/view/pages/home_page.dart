@@ -7,6 +7,7 @@ import 'package:boranemobile/view/widgets/route_carousel.dart';
 import 'package:boranemobile/view/pages/routes_page.dart';
 import 'package:boranemobile/services/location_service.dart';
 import 'package:boranemobile/services/geoapify_service.dart';
+import 'package:boranemobile/data/category_data.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -226,7 +227,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      bottomNavigationBar: const CustomBottomNav(activeTab: BottomNavTab.home),
+      bottomNavigationBar: const CustomBottomNav(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -376,17 +377,6 @@ class _HomePageState extends State<HomePage> {
   // ── SEÇÃO CATEGORIAS ──────────────────────────────────────────────────────
 
   Widget _buildCategoriasSection() {
-    final categorias = [
-      {'nome': 'Gastronomia', 'icone': '🍔', 'cor': const Color(0xFFFFB347)},
-      {'nome': 'Religioso',   'icone': '⛪', 'cor': const Color(0xFF7B9FE0)},
-      {'nome': 'Lazer',       'icone': '🎪', 'cor': const Color(0xFF6FD18A)},
-      {'nome': 'Música',      'icone': '🎭', 'cor': const Color(0xFFE07B7B)},
-      {'nome': 'Cultural',    'icone': '🏛️', 'cor': const Color(0xFFB07BE0)},
-      {'nome': 'Histórico',   'icone': '🏰', 'cor': const Color(0xFF7BBBE0)},
-      {'nome': 'Natural',     'icone': '🌿', 'cor': const Color(0xFF5DBE8A)},
-      {'nome': 'Aventura',    'icone': '🧗', 'cor': const Color(0xFFE0A87B)},
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -395,9 +385,9 @@ class _HomePageState extends State<HomePage> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: categorias.length,
+            itemCount: categoriasBoraNE.length,
             itemBuilder: (_, i) {
-              final cat = categorias[i];
+              final cat = categoriasBoraNE[i];
               return GestureDetector(
                 onTap: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => RoutesPage())),
@@ -409,17 +399,17 @@ class _HomePageState extends State<HomePage> {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: (cat['cor'] as Color).withOpacity(0.2),
+                          color: _corCategoria(cat.name).withOpacity(0.2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Center(
-                          child: Text(cat['icone'] as String,
+                          child: Text(cat.emoji,
                               style: const TextStyle(fontSize: 28)),
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        cat['nome'] as String,
+                        cat.name,
                         style: const TextStyle(
                             fontSize: 12, fontWeight: FontWeight.w500),
                       ),
@@ -432,6 +422,25 @@ class _HomePageState extends State<HomePage> {
         ),
       ],
     );
+  }
+
+  Color _corCategoria(String nome) {
+    const cores = {
+      'Cultural':       Color(0xFFB07BE0),
+      'Histórico':      Color(0xFF7BBBE0),
+      'Religioso':      Color(0xFF7B9FE0),
+      'Natureza':       Color(0xFF5DBE8A),
+      'Lazer':          Color(0xFFD16F6F),
+      'Entretenimento': Color(0xFF696ABD),
+      'Aventura':       Color(0xFFE0A87B),
+      'Esportes':       Color(0xFF47F3FF),
+      'Gastronomia':    Color(0xFFFFB347),
+      'Compras':        Color(0xFFC2CA69),
+      'Hospedagem':     Color(0xFF647DB4),
+      'Eventos':        Color(0xFFC6708A),
+      'Experiências':   Color(0xFFFFE347),
+    };
+    return cores[nome] ?? const Color(0xFFFFB347);
   }
 
   // ── PRÓXIMO A VOCÊ — destinos da cidade ──────────────────────────────────
@@ -591,13 +600,12 @@ class _HomePageState extends State<HomePage> {
     const String uidAtual = 'usuario_teste';
     final isFavorito = favoritedBy.contains(uidAtual);
 
-    return GestureDetector(                         // ← adiciona isso
+    return GestureDetector(
     onTap: () => Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => DestinationDetail(id: id, data: data),
       ),
-    
     ),
     child: Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -611,79 +619,99 @@ class _HomePageState extends State<HomePage> {
               offset: const Offset(0, 2)),
         ],
       ),
-      child: Row(
+      child: Stack(
         children: [
-          // Imagem
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              bottomLeft: Radius.circular(16),
-            ),
-            child: coverPhoto.isNotEmpty
-                ? Image.network(coverPhoto,
-                    width: 100, height: 110, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _imagePlaceholder())
-                : _imagePlaceholder(),
-          ),
+          Row(
+            children: [
+              // Imagem
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  bottomLeft: Radius.circular(16),
+                ),
+                child: coverPhoto.isNotEmpty
+                    ? Image.network(coverPhoto,
+                        width: 100, height: 110, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _imagePlaceholder())
+                    : _imagePlaceholder(),
+              ),
 
-          // Info
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(nome,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 3),
-                  if (categories.isNotEmpty)
-                    Text(
-                      categories.join(', '),
-                      style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.orangeAccent,
-                          fontWeight: FontWeight.w500),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  const SizedBox(height: 2),
-                  Text(descricao,
-                      style: const TextStyle(
-                          color: Colors.grey, fontSize: 12),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 6),
-                  Row(
+              // Info
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 36, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 12, color: Colors.grey),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(local,
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.grey),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                      ),
-                      // Favorito
-                      GestureDetector(
-                        onTap: () => 
-                            _toggleFavoritoDestino(id, favoritedBy, uidAtual),
-                        child: Icon(
-                          isFavorito
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: isFavorito ? Colors.red : Colors.grey,
-                          size: 20,
+                      Text(nome,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 3),
+                      if (categories.isNotEmpty)
+                        Text(
+                          categories.join(', '),
+                          style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.orangeAccent,
+                              fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                      const SizedBox(height: 2),
+                      Text(descricao,
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 12),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined,
+                              size: 12, color: Colors.grey),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(local,
+                                style: const TextStyle(
+                                    fontSize: 11, color: Colors.grey),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
+              ),
+            ],
+          ),
+
+          // ── Coração no topo direito ──────────────────────────────────
+          Positioned(
+            top: 8,
+            right: 8,
+            child: GestureDetector(
+              onTap: () =>
+                  _toggleFavoritoDestino(id, favoritedBy, uidAtual),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  isFavorito ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorito ? Colors.red : Colors.grey,
+                  size: 18,
+                ),
               ),
             ),
           ),

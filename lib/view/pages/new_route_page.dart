@@ -5,6 +5,7 @@ import '../../controllers/route_creation_controller.dart';
 import '../../models/destination_model.dart';
 import '../widgets/confirm_exit_dialog.dart';
 import 'new_destination_page.dart';
+import '../../data/category_data.dart';
 
 class NewRoutePage extends StatefulWidget {
   const NewRoutePage({super.key});
@@ -32,10 +33,7 @@ class _NewRoutePageState extends State<NewRoutePage> {
     return sair;
   }
 
-  final List<String> _categoriasDisponiveis = [
-    'Religioso', 'Lazer', 'Gastronomia', 'Aventura',
-    'Cultural', 'Histórico', 'Natural', 'Compras',
-  ];
+  final categorias = nomesCategorias;
 
   final List<String> _cidadesDisponiveis = [
     'Recife', 'Caruaru', 'Garanhuns', 'Fortaleza', 'Salvador',
@@ -355,7 +353,7 @@ class _NewRoutePageState extends State<NewRoutePage> {
               const SizedBox(height: 20),
               Wrap(
                 spacing: 10, runSpacing: 10,
-                children: _categoriasDisponiveis.map((cat) {
+                children: categorias.map((cat) {
                   final sel = controller.categoriasSelecionadas.contains(cat);
                   return GestureDetector(
                     onTap: () { controller.toggleCategoria(cat); setModal(() {}); },

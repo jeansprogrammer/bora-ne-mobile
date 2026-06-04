@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/destination_creation_controller.dart';
 import '../../../view/widgets/confirm_exit_dialog.dart';
+import '../../data/category_data.dart';
 
 class NewDestinationPage extends StatefulWidget {
   const NewDestinationPage({super.key});
@@ -42,18 +43,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
     return sair;
   }
 
-  final List<String> _categoriasDisponiveis = [
-    'Religioso',
-    'Lazer',
-    'Gastronomia',
-    'Aventura',
-    'Cultural',
-    'Histórico',
-    'Natural',
-    'Compras',
-    'Hospedagem',
-    'Serviços',
-  ];
+ final categorias = nomesCategorias;
 
   final List<String> _ufs = [
     'AL',
@@ -483,7 +473,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: _categoriasDisponiveis.map((cat) {
+                children: categorias.map((cat) {
                   final sel = controller.categoriasSelecionadas.contains(cat);
                   return GestureDetector(
                     onTap: () {
