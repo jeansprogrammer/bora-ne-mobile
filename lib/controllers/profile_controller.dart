@@ -1,34 +1,54 @@
-import 'package:boranemobile/models/profile_model.dart';
-import 'package:boranemobile/services/profile_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import '../models/profile_model.dart';
+import '../services/profile_service.dart';
 
-class ProfileController {
-  // Instancia o serviço criado para esta regra de negócio
-  final ProfileLoadDadosService _loadDadosService = ProfileLoadDadosService();
-  
+class ProfileController extends ChangeNotifier {
+  final ProfileService _service = ProfileService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   UserModel? currentUser;
-  bool isLoading = true;
+  bool isLoading = false;
 
-  // Função disparada pela View para inicializar a tela
-  Future<void> carregarPerfil(Function updateState) async {
+  // ── Verifica se o usuário está logado ─────────────────────────────────────
+  bool get isLoggedIn => _auth.currentUser != null;
+  User? get firebaseUser => _auth.currentUser;
+
+  ProfileController() {
+    // Ouve mudanças de autenticação automaticamente
+    _auth.authStateChanges().listen((user) {
+      if (user != null) {
+        carregarPerfil();
+      } else {
+        currentUser = null;
+        notifyListeners();
+      }
+    });
+  }
+
+  // ── Carrega perfil do Firestore ───────────────────────────────────────────
+  Future<void> carregarPerfil([Function? updateState]) async {
+    if (_auth.currentUser == null) return;
+
+    isLoading = true;
+    notifyListeners();
+    updateState?.call();
+
     try {
-      isLoading = true;
-      updateState(); // Ativa o setState na View para exibir o loading
-
-      // Solicita os dados estruturados ao Service
-      currentUser = await _loadDadosService.fetchUserData();
+      currentUser = await _service.fetchOrCreateUser();
     } catch (e) {
-      print("Erro ao processar dados do perfil: $e");
+      print('Erro ao carregar perfil: $e');
     } finally {
       isLoading = false;
-      updateState(); // Desativa o loading e exibe os dados reais na View
+      notifyListeners();
+      updateState?.call();
     }
   }
 
-  void navegarParaEdicao() {
-    print("Abrir tela de edição de perfil...");
-  }
-
+  // ── Logout ────────────────────────────────────────────────────────────────
   Future<void> executarLogout() async {
-    await _loadDadosService.logoutAccount();
+    await _service.signOut();
+    currentUser = null;
+    notifyListeners();
   }
 }

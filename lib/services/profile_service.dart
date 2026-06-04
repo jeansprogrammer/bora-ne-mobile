@@ -1,25 +1,44 @@
-import 'package:boranemobile/models/profile_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/profile_model.dart';
 
-class ProfileLoadDadosService {
-  // Simula a busca de dados no banco de dados
-  Future<UserModel> fetchUserData() async {
-    await Future.delayed(const Duration(seconds: 1)); // Simula o tempo de requisição
-    
-    // Na integração real com o Firebase, seria algo como:
-    // var doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
-    // return UserModel.fromMap(doc.data()!, doc.id);
+class ProfileService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-    return UserModel(
-      uid: "user_999",
-      name: "João Silva",
-      email: "joao.silva@email.com",
-      photoUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde",
+  // ── Busca ou cria o documento do usuário no Firestore ─────────────────────
+  Future<UserModel?> fetchOrCreateUser() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+
+    final ref = _firestore.collection('users').doc(user.uid);
+    final doc = await ref.get();
+
+    if (doc.exists) {
+      return UserModel.fromMap(doc.data()!, doc.id);
+    }
+
+    // Primeira vez logando → cria documento com dados do Google
+    final novoUsuario = UserModel(
+      uid: user.uid,
+      name: user.displayName ?? '',
+      email: user.email ?? '',
+      photoUrl: user.photoURL ?? '',
     );
+    await ref.set(novoUsuario.toMap());
+    return novoUsuario;
   }
 
-  // Simula o processo de deslogar
-  Future<void> logoutAccount() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    print("Sessão encerrada no Firebase.");
+  // ── Atualiza dados do usuário ─────────────────────────────────────────────
+  Future<void> updateUser(UserModel user) async {
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .update(user.toMap());
+  }
+
+  // ── Logout ────────────────────────────────────────────────────────────────
+  Future<void> signOut() async {
+    await _auth.signOut();
   }
 }
