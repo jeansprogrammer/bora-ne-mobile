@@ -16,7 +16,7 @@ class _TelaMapaState extends State<TelaMapa> {
 
   final garanhuns = const LatLng(-8.8908, -36.4969);
   final mapStyleUrl =
-      "https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=6257076878834395a36b96b113242568";
+      "https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=aeccc7dd6dea4139a6cf6da8046a2f75";
 
   @override
   Widget build(BuildContext context) {
