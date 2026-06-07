@@ -88,7 +88,7 @@ class _NewRoutePageState extends State<NewRoutePage> {
           },
         ),
         title: Center(
-          child: Image.asset('assets/images/logo_bora_ne.png', height: 40),
+          child: Image.asset('assets/images/LOGO_V2_1.png', height: 40),
         ),
         actions: [const SizedBox(width: 48)],
       ),

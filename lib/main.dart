@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'controllers/route_creation_controller.dart';
-//import 'controllers/destination_controller.dart';
-//import 'controllers/auth_controller.dart';
+import 'controllers/auth_controller.dart';
 import 'view/pages/splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -25,17 +24,8 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => RouteCreationController(),
-        ),
-        // Adicionamos o DestinationController aqui para o app todo ter acesso
-        /*ChangeNotifierProvider(
-          create: (_) => DestinationController(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AuthController(),
-        ),
-        ),*/
+        ChangeNotifierProvider(create: (_) => AuthController()),
+        ChangeNotifierProvider(create: (_) => RouteCreationController()),
         ChangeNotifierProvider(create: (_) => CategoryController()),
         ChangeNotifierProvider(create: (_) => DestinationCreationController()),
       ],
