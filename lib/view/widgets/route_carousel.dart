@@ -131,10 +131,17 @@ class _RouteCarouselState extends State<RouteCarousel> {
     );
   }
 
+  List<String> _parseCats(dynamic valor) {
+    if (valor == null) return [];
+    if (valor is List) return List<String>.from(valor);
+    if (valor is String && valor.isNotEmpty) return [valor];
+    return [];
+  }
+
   Widget _buildCard(Map<String, dynamic> rota) {
     final nome = rota['name'] ?? 'Sem título';
     final coverPhoto = rota['coverPhoto'] ?? '';
-    final categories = List<String>.from(rota['categories'] ?? []);
+    final categories = _parseCats(rota['categories']);
     final categoria = categories.isNotEmpty ? categories.first : '';
 
     // Favoritos
