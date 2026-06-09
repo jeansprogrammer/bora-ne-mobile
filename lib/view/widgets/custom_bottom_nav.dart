@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/notifications_page.dart';
 import 'package:boranemobile/view/pages/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
@@ -194,7 +195,14 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const NotificationsPage(),
+          ),
+        );
+      },
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 60,
