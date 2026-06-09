@@ -1,39 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/detail_local_sheet.dart';
 
-class RoutesPage extends StatelessWidget {
-  const RoutesPage({super.key});
+class RoutesPage extends StatefulWidget {
+  /// Categoria escolhida na HomeP age (ex: 'Gastronomia', 'Religioso').
+  final String categoria;
+
+  const RoutesPage({super.key, required this.categoria});
+
+  @override
+  State<RoutesPage> createState() => _RoutesPageState();
+}
+
+class _RoutesPageState extends State<RoutesPage> {
+  late Future<List<Map<String, dynamic>>> _destinosFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _destinosFuture = _buscarPorCategoria(widget.categoria);
+  }
+
+  // ── Query no Firebase ─────────────────────────────────────
+  // O campo 'categorias' é um array no Firestore →  arrayContains
+  Future<List<Map<String, dynamic>>> _buscarPorCategoria(
+      String categoria) async {
+    final snap = await FirebaseFirestore.instance
+        .collection('destinations')          // ← sua coleção
+        .where('categories', arrayContains: categoria)
+        .get();
+
+    return snap.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id; // guarda o id para uso futuro
+      return data;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final locais = [
-      {
-        "titulo": "Seminário São José",
-        "img": "assets/seminario.jpg",
-        "nota": 5,
-      },
-      {
-        "titulo": "Catedral de Santo Antônio",
-        "img": "assets/catedral.jpg",
-        "nota": 5,
-      },
-      {
-        "titulo": "Santuário Mãe Rainha",
-        "img": "assets/santuario.jpg",
-        "nota": 5,
-      },
-      {
-        "titulo": "Mosteiro de São Bento",
-        "img": "assets/mosteiro.jpg",
-        "nota": 4,
-      },
-      {
-        "titulo": "Mirante Cristo do Magano",
-        "img": "assets/magano.jpg",
-        "nota": 5,
-      },
-    ];
-
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: _bottomNavBar(),
@@ -45,22 +50,62 @@ class RoutesPage extends StatelessWidget {
             children: [
               _searchBar(),
               const SizedBox(height: 20),
-              const Text(
-                "Locais Religiosos",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+
+              // Título dinâmico com a categoria escolhida
+              Text(
+                widget.categoria,
+                style: const TextStyle(
+                    fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 15),
 
+              // Lista vinda do Firebase
               Expanded(
-                child: ListView.builder(
-                  itemCount: locais.length,
-                  itemBuilder: (context, index) {
-                    final item = locais[index];
-                    return _itemCard(
-                      context,
-                      titulo: item["titulo"] as String,
-                      img: item["img"] as String,
-                      nota: item["nota"] as int,
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _destinosFuture,
+                  builder: (context, snapshot) {
+                    // ── Carregando ─────────────────────────
+                    if (snapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                            color: Colors.orangeAccent),
+                      );
+                    }
+
+                    // ── Erro ───────────────────────────────
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Erro: ${snapshot.error}'),
+                      );
+                    }
+
+                    final locais = snapshot.data ?? [];
+
+                    // ── Vazio ──────────────────────────────
+                    if (locais.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'Nenhum local encontrado\npara "${widget.categoria}".',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 15),
+                        ),
+                      );
+                    }
+
+                    // ── Lista ──────────────────────────────
+                    return ListView.builder(
+                      itemCount: locais.length,
+                      itemBuilder: (context, index) {
+                        final item = locais[index];
+                        return _itemCard(
+                          context,
+                          titulo: item['name'] ?? 'Sem nome',
+                          img: item['coverPhoto'] ?? '',
+                          nota: (item['nota'] as num?)?.toInt() ?? 0,
+                        );
+                      },
                     );
                   },
                 ),
@@ -78,8 +123,9 @@ class RoutesPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+        boxShadow: const [
+          BoxShadow(
+              color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
         ],
       ),
       child: Padding(
@@ -113,28 +159,26 @@ class RoutesPage extends StatelessWidget {
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (_) {
-            return DetailLocalSheet(titulo: titulo, img: img, nota: nota);
-          },
+          builder: (_) =>
+              DetailLocalSheet(titulo: titulo, img: img, nota: nota),
         );
       },
-
       child: Container(
         margin: const EdgeInsets.only(bottom: 15),
         height: 95,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: Colors.black12,
-              blurRadius: 5,
-              offset: Offset(0, 3),
-            ),
+                color: Colors.black12,
+                blurRadius: 5,
+                offset: Offset(0, 3)),
           ],
         ),
         child: Row(
           children: [
+            // Imagem — usa network se for URL, asset se for caminho local
             Container(
               width: 90,
               height: double.infinity,
@@ -143,11 +187,18 @@ class RoutesPage extends StatelessWidget {
                   topLeft: Radius.circular(16),
                   bottomLeft: Radius.circular(16),
                 ),
-                image: DecorationImage(
-                  image: AssetImage(img),
-                  fit: BoxFit.cover,
-                ),
+                color: Colors.grey[200],
               ),
+              clipBehavior: Clip.antiAlias,
+              child: img.startsWith('http')
+                  ? Image.network(img, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey))
+                  : Image.asset(img, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey)),
             ),
 
             const SizedBox(width: 12),
@@ -160,32 +211,29 @@ class RoutesPage extends StatelessWidget {
                   Text(
                     titulo,
                     style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
+                        fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 5),
                   Row(
                     children: List.generate(
                       5,
-                      (i) => Icon(
-                        Icons.star,
-                        size: 18,
-                        color: i < nota ? Colors.orange : Colors.grey[300],
-                      ),
+                      (i) => Icon(Icons.star,
+                          size: 18,
+                          color: i < nota
+                              ? Colors.orange
+                              : Colors.grey[300]),
                     ),
                   ),
                   const SizedBox(height: 5),
-                  const Text(
-                    "307 Favoritos",
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
+                  const Text("307 Favoritos",
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.black54)),
                 ],
               ),
             ),
 
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
               child: Icon(Icons.favorite_border, size: 25),
             ),
           ],
@@ -202,10 +250,7 @@ class RoutesPage extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
+              color: Colors.black12, blurRadius: 8, offset: Offset(0, -2)),
         ],
       ),
       child: Row(
@@ -233,24 +278,8 @@ class _NavItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(icon),
-        Text(label, style: TextStyle(fontSize: 12)),
+        Text(label, style: const TextStyle(fontSize: 12)),
       ],
-    );
-  }
-}
-
-class DetailLocalPage extends StatelessWidget {
-  final String titulo;
-
-  const DetailLocalPage({super.key, required this.titulo});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(titulo)),
-      body: Center(
-        child: Text("Página do local: $titulo", style: TextStyle(fontSize: 20)),
-      ),
     );
   }
 }

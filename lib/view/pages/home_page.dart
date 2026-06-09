@@ -391,7 +391,8 @@ class _HomePageState extends State<HomePage> {
               final cat = categoriasBoraNE[i];
               return GestureDetector(
                 onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => RoutesPage())),
+                    MaterialPageRoute(builder: (_) => RoutesPage(categoria: cat.name), // Passa o nome
+                    ),),
                 child: Container(
                   margin: const EdgeInsets.only(right: 12),
                   child: Column(
@@ -557,7 +558,7 @@ class _HomePageState extends State<HomePage> {
             child: ElevatedButton(
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const RoutesPage()),
+                MaterialPageRoute(builder: (_) => const RoutesPage(categoria: 'teste')), // Alteração necessária para teste. Corrigir depois.
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
