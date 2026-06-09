@@ -50,9 +50,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
     'Cultural',
     'Histórico',
     'Natural',
-    'Compras',
     'Hospedagem',
-    'Serviços',
   ];
 
   final List<String> _ufs = [
@@ -65,25 +63,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
     'PI',
     'RN',
     'SE',
-    'AC',
-    'AP',
-    'AM',
-    'PA',
-    'RO',
-    'RR',
-    'TO',
-    'DF',
-    'GO',
-    'MS',
-    'MT',
-    'ES',
-    'MG',
-    'RJ',
-    'SP',
-    'PR',
-    'RS',
-    'SC',
-  ];
+    ];
 
   // Controller do CEP — separado pois não é gerenciado pelo controller MVC
   final TextEditingController _cepController = TextEditingController();
@@ -204,7 +184,25 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                     const SizedBox(height: 12),
                     _buildFotos(controller),
                     const SizedBox(height: 24),
-                    _sectionTitle("Nome do Destino"),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(child: _sectionTitle("Nome do Destino")),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 220),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                if (controller.nome.isEmpty) _chip("Nome obrigatório"),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     TextField(
                       onChanged: controller.setNome,
                       decoration: _inputStyle(
@@ -224,13 +222,53 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    _sectionTitle("Categorias"),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(child: _sectionTitle("Categorias")),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 220),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                if (controller.categoriasSelecionadas.isEmpty) _chip("Categoria obrigatória"),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     _buildCategoriasField(controller),
                     const SizedBox(height: 20),
                     const Divider(height: 32),
-                    _sectionTitle(
-                      "Endereço",
-                      subtitle: "Digite o CEP para preencher automaticamente",
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _sectionTitle(
+                            "Endereço",
+                            subtitle: "Digite o CEP para preencher automaticamente",
+                          ),
+                        ),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 220),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                if (controller.city.isEmpty) _chip("Cidade obrigatória"),
+                                if (controller.uf.isEmpty) _chip("UF obrigatória"),
+                                if (controller.latitude == 0.0) _chip("Localização obrigatória"),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     _buildEndereco(controller),
                     const SizedBox(height: 30),
@@ -934,23 +972,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
             ),
           ),
 
-        if (!controller.isValid)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                if (controller.nome.isEmpty) _chip("Nome obrigatório"),
-                if (controller.categoriasSelecionadas.isEmpty)
-                  _chip("Categoria obrigatória"),
-                if (controller.city.isEmpty) _chip("Cidade obrigatória"),
-                if (controller.uf.isEmpty) _chip("UF obrigatória"),
-                if (controller.latitude == 0.0)
-                  _chip("Localização obrigatória"),
-              ],
-            ),
-          ),
+        // Per-field required chips are shown next to each input instead of here.
 
         Row(
           children: [
