@@ -1,3 +1,5 @@
+import 'package:boranemobile/controllers/destination_controller.dart';
+import 'package:boranemobile/controllers/destination_creation_controller.dart';
 import 'package:boranemobile/controllers/route_creation_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -220,19 +222,69 @@ class _RotasWidgetState extends State<RotasWidget> {
 /// WIDGET DE DESTINOS
 /// Substituir pelo widget
 ///
-class DestinosWidget extends StatelessWidget {
+class DestinosWidget extends StatefulWidget {
   const DestinosWidget({super.key});
 
   @override
+  State<DestinosWidget> createState() => _DestinosWidgetState();
+}
+
+class _DestinosWidgetState extends State<DestinosWidget> {
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      context.read<DestinationCreationController>().carregarDestinos();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        "WIDGET DE DESTINOS",
-        style: TextStyle(
-          fontSize: 18,
-          color: Colors.grey,
-        ),
-      ),
+    return Consumer<DestinationCreationController>(
+      builder: (context, controller, child) {
+
+        if (controller.isLoading) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        if (controller.destinos.isEmpty) {
+          return const Center(
+            child: Text('Nenhum destino encontrado'),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: controller.destinos.length,
+          itemBuilder: (context, index) {
+
+            final destino = controller.destinos[index];
+
+            return Card(
+              margin: const EdgeInsets.all(8),
+              child: ListTile(
+                leading: destino.coverPhoto.isNotEmpty
+                    ? Image.network(
+                        destino.coverPhoto,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+
+                title: Text(destino.name),
+
+                subtitle: Text(
+                  '${destino.city} - ${destino.state}',
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

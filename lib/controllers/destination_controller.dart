@@ -16,6 +16,9 @@ class DestinationController extends ChangeNotifier {
   bool _estaCarregando = false;
   bool get estaCarregando => _estaCarregando;
 
+   
+
+
   // FUNÇÃO PRINCIPAL: Busca os Destinos e atualiza a lista
   void carregarDestinations() {
     _estaCarregando = true;
