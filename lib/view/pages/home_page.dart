@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/routedestinos_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
@@ -373,7 +374,7 @@ class _HomePageState extends State<HomePage> {
             child: ElevatedButton(
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const ListaReligiososPage()),
+                MaterialPageRoute(builder: (_) => const RouteDestinosPage()),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,

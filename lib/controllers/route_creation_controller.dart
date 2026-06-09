@@ -10,6 +10,11 @@ class RouteCreationController extends ChangeNotifier {
   final NewRouteService _routeService = NewRouteService();
   final DestinationService _DestinationService = DestinationService();
 
+  
+  List<Map<String, dynamic>> _rotas = [];
+
+  List<Map<String, dynamic>> get rotas => _rotas;
+
   RouteCreationModel newRoute = RouteCreationModel();
 
   // ── Estados ──────────────────────────────────────────────────────────────
@@ -71,6 +76,20 @@ class RouteCreationController extends ChangeNotifier {
 
   void setUrlFotoCapa(String url) {
     urlFotoCapaManual = url;
+    notifyListeners();
+  }
+
+  Future<void> carregarRotas() async {
+    _isSearching = true;
+    notifyListeners();
+
+    try {
+      _rotas = await _routeService.getAllRoutes();
+    } catch (e) {
+      print('Erro ao carregar rotas: $e');
+    }
+
+    _isSearching = false;
     notifyListeners();
   }
 

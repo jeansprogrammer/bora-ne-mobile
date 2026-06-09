@@ -1,4 +1,6 @@
+import 'package:boranemobile/controllers/route_creation_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class RouteDestinosPage extends StatefulWidget {
   const RouteDestinosPage({super.key});
@@ -146,28 +148,77 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
 
 ///
 /// WIDGET DE ROTAS
-/// Substitua pelo seu widget real depois.
+/// Substituir pelo widget
 ///
-class RotasWidget extends StatelessWidget {
+///
+
+class RotasWidget extends StatefulWidget {
   const RotasWidget({super.key});
 
   @override
+  State<RotasWidget> createState() => _RotasWidgetState();
+}
+
+class _RotasWidgetState extends State<RotasWidget> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      context.read<RouteCreationController>().carregarRotas();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        "WIDGET DE ROTAS",
-        style: TextStyle(
-          fontSize: 18,
-          color: Colors.grey,
-        ),
-      ),
+    return Consumer<RouteCreationController>(
+      builder: (context, controller, child) {
+        if (controller.isSearching) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        if (controller.rotas.isEmpty) {
+          return const Center(
+            child: Text("Nenhuma rota encontrada"),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: controller.rotas.length,
+          itemBuilder: (context, index) {
+            final rota = controller.rotas[index];
+
+            return Card(
+              margin: const EdgeInsets.all(8),
+              child: ListTile(
+                leading: rota['fotoCapa'] != null
+                    ? Image.network(
+                        rota['fotoCapa'],
+                        width: 60,
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+                title: Text(
+                  rota['name'] ?? 'Sem nome',
+                ),
+                subtitle: Text(
+                  rota['description'] ?? '',
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
 
+
 ///
 /// WIDGET DE DESTINOS
-/// Substitua pelo seu widget real depois.
+/// Substituir pelo widget
 ///
 class DestinosWidget extends StatelessWidget {
   const DestinosWidget({super.key});
