@@ -60,7 +60,25 @@ class DestinationCreationController extends ChangeNotifier {
     notifyListeners();
   }
 
+ List<DestinationModel> _destinos = [];
+  bool _isLoading = false;
 
+  List<DestinationModel> get destinos => _destinos;
+  bool get isLoading => _isLoading;
+
+  Future<void> carregarDestinos() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _destinos = await _service.getAllDestinations();
+    } catch (e) {
+      print('Erro ao carregar destinos: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
   // ── Busca CEP via ViaCEP ─────────────────────────────────────────────────
 
   Future<void> buscarCep(String cepDigitado) async {

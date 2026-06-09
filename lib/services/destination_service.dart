@@ -15,6 +15,20 @@ class DestinationService {
             .toList());
   }
 
+Future<List<DestinationModel>> getAllDestinations() async {
+  try {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('destinations')
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return DestinationModel.fromMap(doc.data());
+    }).toList();
+  } catch (e) {
+    print('Erro ao buscar destinos: $e');
+    return [];
+  }
+}
   // ── Busca por nome + cidade (para criação de rota) ───────────────────────
   Future<List<DestinationModel>> buscarDestinationsPorNomeECidade(
       String query, String cidade) async {
@@ -116,3 +130,4 @@ class DestinationService {
     await _firestore.collection('destinations').add(Destination.toMap());
   }
 }
+
