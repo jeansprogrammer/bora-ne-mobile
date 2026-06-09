@@ -17,13 +17,13 @@ class DestinationService {
 
   // ── Busca por nome + cidade (para criação de rota) ───────────────────────
   Future<List<DestinationModel>> buscarDestinationsPorNomeECidade(
-      String query, String cidade) async {
+      String query, String city) async {
     final queryLower = query.toLowerCase();
 
     // Busca pelo campo cidade primeiro (Firestore suporta where + where)
     final snapshot = await _firestore
         .collection('destinations')
-        .where('city', isEqualTo: cidade)
+        .where('city', isEqualTo: city)
         .get();
 
     // Filtra localmente pelo nome

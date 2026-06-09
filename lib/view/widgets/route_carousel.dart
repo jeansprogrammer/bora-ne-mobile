@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 
 class RouteCarousel extends StatefulWidget {
   final String? city;
+  final Function(Map<String, dynamic> rota)? onTapRota;
 
-  const RouteCarousel({super.key, this.city});
+  const RouteCarousel({super.key, this.city, this.onTapRota});
+  
+  get onRouteTap => null;
 
   @override
   State<RouteCarousel> createState() => _RouteCarouselState();
@@ -70,6 +73,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
       _pageController.animateToPage(
         _currentIndex,
         duration: const Duration(milliseconds: 500),
+
         curve: Curves.easeInOut,
       );
       setState(() {});
@@ -127,11 +131,18 @@ class _RouteCarouselState extends State<RouteCarousel> {
     );
   }
 
+  List<String> _parseCats(dynamic valor) {
+    if (valor == null) return [];
+    if (valor is List) return List<String>.from(valor);
+    if (valor is String && valor.isNotEmpty) return [valor];
+    return [];
+  }
+
   Widget _buildCard(Map<String, dynamic> rota) {
     final nome = rota['name'] ?? 'Sem título';
-    final fotoCapa = rota['fotoCapa'] ?? '';
-    final categorias = List<String>.from(rota['categorias'] ?? []);
-    final categoria = categorias.isNotEmpty ? categorias.first : '';
+    final coverPhoto = rota['coverPhoto'] ?? '';
+    final categories = _parseCats(rota['categories']);
+    final categoria = categories.isNotEmpty ? categories.first : '';
 
     // Favoritos
     final favoritadoPor = List<String>.from(rota['favoritadoPor'] ?? []);
@@ -139,15 +150,19 @@ class _RouteCarouselState extends State<RouteCarousel> {
     final isFavorito = favoritadoPor.contains(uidAtual);
 
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        if (widget.onTapRota != null) {
+          widget.onTapRota!(rota);
+        }
+      },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: Colors.grey.shade300,
-          image: fotoCapa.isNotEmpty
+          image: coverPhoto.isNotEmpty
               ? DecorationImage(
-                  image: NetworkImage(fotoCapa),
+                  image: NetworkImage(coverPhoto),
                   fit: BoxFit.cover,
                 )
               : null,
@@ -216,7 +231,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
                       child: Icon(
                         isFavorito ? Icons.favorite : Icons.favorite_border,
                         color: isFavorito ? Colors.red : Colors.white,
-                        size: 18,
+                        size: 22,
                       ),
                     ),
                   ),
