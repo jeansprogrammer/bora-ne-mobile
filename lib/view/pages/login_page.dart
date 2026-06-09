@@ -27,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/logo_bora_ne.png',
+                'assets/images/LOGO_V2_1.png',
                 width: 80,
                 height: 80,
               ),

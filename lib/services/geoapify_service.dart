@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeoapifyService {
-  static const String _apiKey = '619ba71eaac1450e9b434f7720cc4150';
+  static const String _apiKey = 'aeccc7dd6dea4139a6cf6da8046a2f75';
 
   // Busca locais pelo nome (para criação de rota)
   Future<List<Map<String, dynamic>>> buscarLocaisPorNome(String query) async {

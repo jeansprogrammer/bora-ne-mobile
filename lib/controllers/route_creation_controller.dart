@@ -12,6 +12,11 @@ class RouteCreationController extends ChangeNotifier {
   final DestinationService _DestinationService = DestinationService();
   final ImageUploadService _imageService = ImageUploadService();
 
+  
+  List<Map<String, dynamic>> _rotas = [];
+
+  List<Map<String, dynamic>> get rotas => _rotas;
+
   RouteCreationModel newRoute = RouteCreationModel();
 
   // ── Estados ──────────────────────────────────────────────────────────────
@@ -26,8 +31,9 @@ class RouteCreationController extends ChangeNotifier {
   // ── Múltiplas categorias ──────────────────────────────────────────────────
   List<String> _categoriasSelecionadas = [];
 
-  // ── Cidade ────────────────────────────────────────────────────────────────
+  // ── Cidade + UF ───────────────────────────────────────────────────────────
   String _cidadeSelecionada = '';
+  String _ufSelecionado = '';
 
   // ── Destinos selecionados (modelo completo) ───────────────────────────────
   List<DestinationModel> _DestinationsSelecionados = [];
@@ -37,6 +43,7 @@ class RouteCreationController extends ChangeNotifier {
   bool get isSearching => _isSearching;
   List<String> get categoriasSelecionadas => _categoriasSelecionadas;
   String get cidadeSelecionada => _cidadeSelecionada;
+  String get ufSelecionado => _ufSelecionado;
   List<DestinationModel> get DestinationsSelecionados => _DestinationsSelecionados;
   bool get canAddMorePlaces => _DestinationsSelecionados.length < 10;
 
@@ -44,6 +51,7 @@ class RouteCreationController extends ChangeNotifier {
       newRoute.name.isNotEmpty &&
       _categoriasSelecionadas.isNotEmpty &&
       _cidadeSelecionada.isNotEmpty &&
+      _ufSelecionado.isNotEmpty &&
       _DestinationsSelecionados.length >= 3;
 
   final ImagePicker _picker = ImagePicker();
@@ -73,6 +81,20 @@ class RouteCreationController extends ChangeNotifier {
 
   void setUrlFotoCapa(String url) {
     urlFotoCapaManual = url;
+    notifyListeners();
+  }
+
+  Future<void> carregarRotas() async {
+    _isSearching = true;
+    notifyListeners();
+
+    try {
+      _rotas = await _routeService.getAllRoutes();
+    } catch (e) {
+      print('Erro ao carregar rotas: $e');
+    }
+
+    _isSearching = false;
     notifyListeners();
   }
 
@@ -117,6 +139,18 @@ class RouteCreationController extends ChangeNotifier {
 
   void setCidade(String city) {
     _cidadeSelecionada = city;
+    // Limpa destinos ao trocar cidade
+    _DestinationsSelecionados = [];
+    newRoute.destinations = [];
+    notifyListeners();
+  }
+
+  void setUf(String uf) {
+    _ufSelecionado = uf;
+    // Reseta cidade e destinos ao trocar estado
+    _cidadeSelecionada = '';
+    _DestinationsSelecionados = [];
+    newRoute.destinations = [];
     notifyListeners();
   }
 
@@ -124,10 +158,21 @@ class RouteCreationController extends ChangeNotifier {
     if (!canAddMorePlaces) return;
     if (_DestinationsSelecionados.any((d) => d.name == Destination.name)) return;
     _DestinationsSelecionados.add(Destination);
-    newRoute.destinations.add(PlaceModel(
+    newRoute.destinations.add(DestinationModel(
       name: Destination.name,
-      lat: Destination.latitude,
-      lon: Destination.longitude,
+      description: Destination.description,
+      photos: Destination.photos,
+      coverPhoto: Destination.coverPhoto,
+      categories: Destination.categories,
+      street: Destination.street,
+      number: Destination.number,
+      neighborhood: Destination.neighborhood,
+      cep: Destination.cep,
+      city: Destination.city, 
+      state: Destination.state,
+      latitude: Destination.latitude,
+      longitude: Destination.longitude,
+      favoritedBy: Destination.favoritedBy,
     ));
     notifyListeners();
   }
@@ -168,8 +213,10 @@ class RouteCreationController extends ChangeNotifier {
 
       final Map<String, dynamic> dadosParaSalvar = newRoute.toMap();
       dadosParaSalvar['coverPhoto'] = urlCapa;
-      dadosParaSalvar['categories'] = _categoriasSelecionadas;
+      dadosParaSalvar['categories'] = _categoriasSelecionadas; // List<String>
       dadosParaSalvar['city'] = _cidadeSelecionada;
+      dadosParaSalvar['state'] = _ufSelecionado;
+      dadosParaSalvar['favoritedBy'] = [];  // inicia vazio
 
       final success = await _routeService.saveRouteToFirestore(dadosParaSalvar);
 
@@ -203,6 +250,7 @@ class RouteCreationController extends ChangeNotifier {
     urlFotoCapaManual = '';
     _categoriasSelecionadas = [];
     _cidadeSelecionada = '';
+    _ufSelecionado = '';
     _DestinationsSelecionados = [];
     notifyListeners();
   }

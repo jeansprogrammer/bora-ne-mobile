@@ -1,56 +1,53 @@
-class PlaceModel {
-  final String name;
-  final double lat;
-  final double lon;
-
-  PlaceModel({required this.name, required this.lat, required this.lon});
-
-  Map<String, dynamic> toMap() => {
-    'name': name,
-    'lat': lat,
-    'lon': lon,
-  };
-
-  factory PlaceModel.fromMap(Map<String, dynamic> map) => PlaceModel(
-    name: map['name'],
-    lat: map['lat'],
-    lon: map['lon'],
-  );
-}
+import 'package:boranemobile/models/destination_model.dart';
 
 class RouteCreationModel {
   String name;
-  String categories;
+  List<String> categories;  // ← sempre List, nunca String
   String description;
   String imageUrl;
-  List<PlaceModel> destinations;
+  String state;
+  List<DestinationModel> destinations;
+  List<String> favoritedBy; // ← adicionado
 
   RouteCreationModel({
     this.name = '',
-    this.categories = '',
+    this.categories = const [],
     this.description = '',
     this.imageUrl = '',
-    List<PlaceModel>? destinations,
+    this.state = '',
+    List<DestinationModel>? destinations,
+    this.favoritedBy = const [],
   }) : destinations = destinations ?? [];
 
   Map<String, dynamic> toMap() => {
     'name': name,
-    'categories': categories,
+    'categories': categories,   // salva como List
     'description': description,
     'imageUrl': imageUrl,
+    'state': state,
     'destinations': destinations.map((p) => p.toMap()).toList(),
+    'favoritedBy': favoritedBy,
   };
 
   factory RouteCreationModel.fromMap(Map<String, dynamic> map) {
+    // Suporte a dados antigos onde categories era String
+    final rawCats = map['categories'];
+    final List<String> cats = rawCats == null
+        ? []
+        : rawCats is List
+            ? List<String>.from(rawCats)
+            : [rawCats.toString()];
+
     return RouteCreationModel(
       name: map['name'] ?? '',
-      categories: map['categories'] ?? '',
+      categories: cats,
       description: map['description'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
-      // Mapeia a lista interna de PlaceModel
+      state: map['state'] ?? '',
+      favoritedBy: List<String>.from(map['favoritedBy'] ?? []),
       destinations: map['destinations'] != null
           ? (map['destinations'] as List)
-              .map((p) => PlaceModel.fromMap(p as Map<String, dynamic>))
+              .map((p) => DestinationModel.fromMap(p as Map<String, dynamic>))
               .toList()
           : [],
     );

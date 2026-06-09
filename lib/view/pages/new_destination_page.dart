@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/destination_creation_controller.dart';
-import '../../../view/widgets/confirm_exit_dialog.dart';
+import '../widgets/confirm_exit_dialog.dart';
+import '../../data/category_data.dart';
+import '../../data/nordeste_data.dart';
 
 class NewDestinationPage extends StatefulWidget {
   const NewDestinationPage({super.key});
@@ -42,28 +44,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
     return sair;
   }
 
-  final List<String> _categoriasDisponiveis = [
-    'Religioso',
-    'Lazer',
-    'Gastronomia',
-    'Aventura',
-    'Cultural',
-    'Histórico',
-    'Natural',
-    'Hospedagem',
-  ];
-
-  final List<String> _ufs = [
-    'AL',
-    'BA',
-    'CE',
-    'MA',
-    'PB',
-    'PE',
-    'PI',
-    'RN',
-    'SE',
-    ];
+ final categorias = nomesCategorias;
 
   // Controller do CEP — separado pois não é gerenciado pelo controller MVC
   final TextEditingController _cepController = TextEditingController();
@@ -170,7 +151,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                 ),
                 title: Center(
                   child: Image.asset(
-                    'assets/images/logo_bora_ne.png',
+                    'assets/images/LOGO_V2_1.png',
                     height: 40,
                   ),
                 ),
@@ -521,7 +502,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: _categoriasDisponiveis.map((cat) {
+                children: categorias.map((cat) {
                   final sel = controller.categoriasSelecionadas.contains(cat);
                   return GestureDetector(
                     onTap: () {
@@ -609,168 +590,76 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
   // ── ENDEREÇO ─────────────────────────────────────────────────────────────
 
   Widget _buildEndereco(DestinationCreationController controller) {
+    final cidades = controller.uf.isNotEmpty
+        ? cidadesDoEstado(controller.uf)
+        : <String>[];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Toggle CEP / Manual ───────────────────────────────────────────
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => controller.setModoEndereco(false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: !controller.modoManual
-                          ? Colors.orangeAccent
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.markunread_mailbox_outlined,
-                          size: 16,
-                          color: !controller.modoManual
-                              ? Colors.white
-                              : Colors.grey,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Por CEP',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: !controller.modoManual
-                                ? Colors.white
-                                : Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => controller.setModoEndereco(true),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: controller.modoManual
-                          ? Colors.orangeAccent
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.edit_outlined,
-                          size: 16,
-                          color: controller.modoManual
-                              ? Colors.white
-                              : Colors.grey,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Manual',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: controller.modoManual
-                                ? Colors.white
-                                : Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+
+        // ── CEP ───────────────────────────────────────────────────────────
+        const SizedBox(height: 6),
+        TextField(
+          controller: _cepController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(8),
+          ],
+          onChanged: (val) {
+            if (val.length == 8) controller.buscarCep(val);
+          },
+          decoration: _inputStyle(
+            'CEP (opcional)',
+            Icons.markunread_mailbox_outlined,
+            suffix: controller.isBuscandoCep
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 18, height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.orangeAccent),
+                    ))
+                : controller.erroCep != null
+                    ? const Icon(Icons.error_outline, color: Colors.red)
+                    : controller.rua.isNotEmpty
+                        ? const Icon(Icons.check_circle, color: Colors.green)
+                        : null,
           ),
         ),
-
+        if (controller.erroCep != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 4),
+            child: Row(children: [
+              const Icon(Icons.error_outline, size: 14, color: Colors.red),
+              const SizedBox(width: 4),
+              Text(controller.erroCep!,
+                  style: const TextStyle(fontSize: 12, color: Colors.red)),
+            ]),
+          ),
         const SizedBox(height: 12),
 
-        // ── Modo CEP ──────────────────────────────────────────────────────
-        if (!controller.modoManual) ...[
-          TextField(
-            controller: _cepController,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(8),
-            ],
-            onChanged: (val) {
-              if (val.length == 8) controller.buscarCep(val);
-            },
-            decoration: _inputStyle(
-              "CEP (somente números)",
-              Icons.markunread_mailbox_outlined,
-              suffix: controller.isBuscandoCep
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.orangeAccent,
-                        ),
-                      ),
-                    )
-                  : controller.erroCep != null
-                  ? const Icon(Icons.error_outline, color: Colors.red)
-                  : controller.rua.isNotEmpty
-                  ? const Icon(Icons.check_circle, color: Colors.green)
-                  : null,
-            ),
-          ),
-          if (controller.erroCep != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6, left: 4),
-              child: Row(
-                children: [
-                  const Icon(Icons.error_outline, size: 14, color: Colors.red),
-                  const SizedBox(width: 4),
-                  Text(
-                    controller.erroCep!,
-                    style: const TextStyle(fontSize: 12, color: Colors.red),
-                  ),
-                ],
-              ),
-            ),
-          const SizedBox(height: 12),
-        ],
-
-        // ── Rua + Número (ambos os modos) ─────────────────────────────────
+        // ── Rua + Número ──────────────────────────────────────────────────
         Row(
           children: [
             Expanded(
-              flex: 3,
+              flex: 4,
               child: TextField(
                 controller: controller.ruaController,
                 onChanged: controller.setRua,
-                decoration: controller.rua.isNotEmpty && !controller.modoManual
-                    ? _inputAutoStyle("Rua / Av.", Icons.signpost_outlined)
-                    : _inputStyle("Rua / Av.", Icons.signpost_outlined),
+                decoration: controller.rua.isNotEmpty
+                    ? _inputAutoStyle('Rua / Av.', Icons.signpost_outlined)
+                    : _inputStyle('Rua / Av.', Icons.signpost_outlined),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: TextField(
                 onChanged: controller.setNumero,
                 keyboardType: TextInputType.number,
-                decoration: _inputStyle("Nº", Icons.tag),
+                decoration: _inputStyle('Nº', Icons.tag),
               ),
             ),
           ],
@@ -781,9 +670,9 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
         TextField(
           controller: controller.bairroController,
           onChanged: controller.setBairro,
-          decoration: controller.bairro.isNotEmpty && !controller.modoManual
-              ? _inputAutoStyle("Bairro", Icons.location_city_outlined)
-              : _inputStyle("Bairro", Icons.location_city_outlined),
+          decoration: controller.bairro.isNotEmpty
+              ? _inputAutoStyle('Bairro', Icons.location_city_outlined)
+              : _inputStyle('Bairro', Icons.location_city_outlined),
         ),
         const SizedBox(height: 12),
 
@@ -791,155 +680,53 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
         Row(
           children: [
             Expanded(
-              flex: 3,
-              child: TextField(
-                controller: controller.cidadeController,
-                onChanged: controller.setCidade,
-                decoration: controller.city.isNotEmpty && !controller.modoManual
-                    ? _inputAutoStyle("Cidade", Icons.location_on_outlined)
-                    : _inputStyle("Cidade", Icons.location_on_outlined),
+              flex: 4,
+              child: Opacity(
+                opacity: controller.uf.isEmpty ? 0.4 : 1.0,
+                child: AbsorbPointer(
+                  absorbing: controller.uf.isEmpty,
+                  child: DropdownButtonFormField<String>(
+                    value: controller.city.isEmpty ? null : controller.city,
+                    isExpanded: true,
+                    decoration: _inputStyle(
+                      controller.uf.isEmpty
+                          ? 'Selecione o UF primeiro'
+                          : 'Cidade',
+                      Icons.location_on_outlined,
+                    ),
+                    items: cidades.map((c) {
+                      return DropdownMenuItem(
+                        value: c,
+                        child: Text(c,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1),
+                      );
+                    }).toList(),
+                    onChanged: (v) { if (v != null) controller.setCidade(v); },
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: DropdownButtonFormField<String>(
                 value: controller.uf.isEmpty ? null : controller.uf,
-                decoration: InputDecoration(
-                  hintText: "UF",
-                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-                  prefixIcon: Icon(
-                    Icons.map_outlined,
-                    color: controller.uf.isNotEmpty
-                        ? Colors.green
-                        : Colors.orangeAccent,
-                    size: 20,
-                  ),
-                  filled: true,
-                  fillColor: controller.uf.isNotEmpty && !controller.modoManual
-                      ? const Color(0xFFF0FFF4)
-                      : Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                    horizontal: 8,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: controller.uf.isNotEmpty && !controller.modoManual
-                          ? Colors.green
-                          : Colors.black12,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: controller.uf.isNotEmpty && !controller.modoManual
-                          ? Colors.green
-                          : Colors.black12,
-                    ),
-                  ),
-                ),
-                items: _ufs
-                    .map((uf) => DropdownMenuItem(value: uf, child: Text(uf)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) controller.setUf(v);
-                },
+                isExpanded: true,
+                decoration: _inputStyle('UF', Icons.map_outlined),
+                items: siglaEstados.map((uf) {
+                  return DropdownMenuItem(value: uf, child: Text(uf));
+                }).toList(),
+                onChanged: (v) { if (v != null) controller.setUf(v); },
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-
-        // ── Botão localizar ───────────────────────────────────────────────
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed:
-                controller.isBuscandoCoordenadas ||
-                    controller.rua.isEmpty ||
-                    controller.city.isEmpty
-                ? null
-                : () async {
-                    await controller.buscarCoordenadas();
-                    if (!mounted) return;
-                    if (controller.latitude != 0.0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("📍 Coordenadas encontradas!"),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "⚠️ Endereço não encontrado. Verifique os dados.",
-                          ),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    }
-                  },
-            icon: controller.isBuscandoCoordenadas
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.black,
-                    ),
-                  )
-                : Icon(
-                    controller.latitude != 0.0
-                        ? Icons.check_circle
-                        : Icons.my_location,
-                    color: Colors.black,
-                    size: 18,
-                  ),
-            label: Text(
-              controller.isBuscandoCoordenadas
-                  ? "Buscando localização..."
-                  : controller.latitude != 0.0
-                  ? "✅ Localização encontrada"
-                  : "Localizar no mapa",
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: controller.latitude != 0.0
-                  ? Colors.green.shade100
-                  : Colors.orangeAccent,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-          ),
-        ),
-
-        if (controller.latitude != 0.0)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.gps_fixed, size: 13, color: Colors.green),
-                const SizedBox(width: 4),
-                Text(
-                  "${controller.latitude.toStringAsFixed(5)}, ${controller.longitude.toStringAsFixed(5)}",
-                  style: const TextStyle(fontSize: 12, color: Colors.green),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }
+
 
   // ── BOTÕES ───────────────────────────────────────────────────────────────
 
@@ -972,7 +759,21 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
             ),
           ),
 
-        // Per-field required chips are shown next to each input instead of here.
+        if (!controller.isValid)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                if (controller.nome.isEmpty) _chip("Nome obrigatório"),
+                if (controller.categoriasSelecionadas.isEmpty)
+                  _chip("Categoria obrigatória"),
+                if (controller.uf.isEmpty) _chip("Estado obrigatório"),
+                if (controller.city.isEmpty) _chip("Cidade obrigatória"),
+              ],
+            ),
+          ),
 
         Row(
           children: [
@@ -999,48 +800,57 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
             const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton.icon(
-                icon: controller.isSaving
+                icon: controller.isSaving || controller.isBuscandoCoordenadas
                     ? const SizedBox(
-                        width: 20,
-                        height: 20,
+                        width: 20, height: 20,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.black,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.check_circle_outline,
-                        color: Colors.black,
-                      ),
+                            strokeWidth: 2, color: Colors.black))
+                    : const Icon(Icons.check_circle_outline, color: Colors.black),
                 label: Text(
-                  controller.isSaving ? "Salvando..." : "Criar Destino",
+                  controller.isBuscandoCoordenadas
+                      ? 'Verificando endereço...'
+                      : controller.isSaving
+                          ? 'Salvando...'
+                          : 'Criar Destino',
                   style: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
+                      color: Colors.black, fontWeight: FontWeight.bold),
                 ),
-                // ← bloqueado se não tiver coordenadas ou campos inválidos
-                onPressed:
-                    (controller.isSaving ||
-                        !controller.isValid ||
-                        controller.latitude == 0.0)
+                onPressed: (controller.isSaving ||
+                        controller.isBuscandoCoordenadas ||
+                        !controller.isValid)
                     ? null
                     : () async {
+                        // 1. Verifica o endereço primeiro
+                        await controller.buscarCoordenadas();
+                        if (!mounted) return;
+
+                        if (!controller.enderecoVerificado) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(controller.erroEndereco ??
+                                  '⚠️ Endereço não encontrado. Verifique os dados.'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return; // não salva se endereço inválido
+                        }
+
+                        // 2. Salva o destino
                         final sucesso = await controller.salvar();
+                        if (!mounted) return;
                         if (sucesso) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text("✅ Destino criado com sucesso!"),
+                              content: Text('✅ Destino criado com sucesso!'),
                               backgroundColor: Colors.green,
                             ),
                           );
-                          // Fecha a tela de criação e volta para a anterior
                           Navigator.pop(context);
                         } else {
-                          // Opcional: mostrar erro caso controller.erroMensagem não seja nulo
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("⚠️ Erro ao salvar destino."),
+                            SnackBar(
+                              content: Text(controller.erroMensagem ??
+                                  '⚠️ Erro ao salvar destino.'),
                               backgroundColor: Colors.red,
                             ),
                           );
