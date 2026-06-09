@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/destination_creation_controller.dart';
-import '../../../view/widgets/confirm_exit_dialog.dart';
+import '../widgets/confirm_exit_dialog.dart';
 import '../../data/category_data.dart';
 import '../../data/nordeste_data.dart';
 
@@ -151,7 +151,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                 ),
                 title: Center(
                   child: Image.asset(
-                    'assets/images/logo_bora_ne.png',
+                    'assets/images/LOGO_V2_1.png',
                     height: 40,
                   ),
                 ),

@@ -240,7 +240,7 @@ class _HomePageState extends State<HomePage> {
               Center(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: Image.asset('assets/images/logo_nome1.png', height: 44),
+                  child: Image.asset('assets/images/LOGO_V2_1.png', height: 44),
                 ),
               ),
 

@@ -72,8 +72,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
       child: Column(
         children: [
           // Logo
-          Image.asset('assets/images/logo_bora_ne.png',
-              height: 36, color: Colors.black),
+          Image.asset('assets/images/LOGO_V2_3.png',
+              height: 36),
           const SizedBox(height: 20),
 
           // Avatar
