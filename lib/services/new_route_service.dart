@@ -16,4 +16,22 @@ class NewRouteService {
       return false;
     }
   }
+  
+   Future<List<Map<String, dynamic>>> getAllRoutes() async {
+    try {
+      final snapshot = await _firestore
+          .collection('routes')
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          ...doc.data(),
+        };
+      }).toList();
+    } catch (e) {
+      print('Erro ao buscar rotas: $e');
+      return [];
+    }
+  }
 }
