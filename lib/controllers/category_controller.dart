@@ -1,36 +1,63 @@
-import 'package:boranemobile/models/category_model.dart';
 import 'package:flutter/material.dart';
+import '../data/category_data.dart';
+import '../models/category_model.dart';
 
 class CategoryController extends ChangeNotifier {
-  final List<CategoryModel> categories = [
-    CategoryModel(
-      title: "Religioso",
-      image: "assets/images/bible.png",
-      route: "/religioso",
-    ),
-    CategoryModel(
-      title: "Gastronômico",
-      image: "assets/images/burger.png",
-      route: "/gastronomico",
-    ),
-    CategoryModel(
-      title: "Histórico",
-      image: "assets/images/hieroglyph.png",
-      route: "/historico",
-    ),
-    CategoryModel(
-      title: "Aventuras",
-      image: "assets/images/tent.png",
-      route: "/aventuras",
-    ),
-    CategoryModel(
-      title: "Outros",
-      image: "assets/images/searching.png",
-      route: "/outros",
-    ),
-  ];
+  List<String> _selecionadas = [];
+  String _filtro = '';
 
-  void navigateToCategory(BuildContext context, String route) {
-    Navigator.pushNamed(context, route);
+  // ── Getters ───────────────────────────────────────────────────────────────
+
+  List<String> get selecionadas => List.unmodifiable(_selecionadas);
+
+  List<CategoryModel> get todasCategorias => categoriasBoraNE;
+
+  List<CategoryModel> get categoriasFiltradas =>
+      _filtro.isEmpty ? categoriasBoraNE : buscarCategorias(_filtro);
+
+  bool isSelecionada(String nome) => _selecionadas.contains(nome);
+
+  // ── Seleção ───────────────────────────────────────────────────────────────
+
+  void toggle(String nome) {
+    if (_selecionadas.contains(nome)) {
+      _selecionadas.remove(nome);
+    } else {
+      _selecionadas.add(nome);
+    }
+    notifyListeners();
+  }
+
+  void setSelecionadas(List<String> categorias) {
+    _selecionadas = List.from(categorias);
+    notifyListeners();
+  }
+
+  void limpar() {
+    _selecionadas.clear();
+    notifyListeners();
+  }
+
+  // ── Filtro de busca ───────────────────────────────────────────────────────
+
+  void setFiltro(String query) {
+    _filtro = query;
+    notifyListeners();
+  }
+
+  // ── Busca expandida com sinônimos ─────────────────────────────────────────
+
+  /// Retorna os termos expandidos para busca full-text
+  List<String> expandirQuery(String query) =>
+      expandirQueryComSinonimos(query);
+
+  /// Verifica se um destino/rota pertence a uma categoria pelo nome ou sinônimo
+  bool destinoPertenceACategoria(List<String> categoriaDestino, String filtro) {
+    return categoriaDestino.any((cat) {
+      final model = categoriasBoraNE
+          .where((c) => c.name == cat)
+          .firstOrNull;
+      return model?.matches(filtro) ?? cat.toLowerCase().contains(filtro.toLowerCase());
+    });
   }
 }

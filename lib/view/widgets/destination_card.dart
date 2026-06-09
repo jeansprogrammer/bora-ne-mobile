@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class RouteCard extends StatelessWidget {
+class DestinationCard extends StatelessWidget {
   final String id;
   final Map<String, dynamic> data;
   final String currentUid;
   final VoidCallback? onTap;
 
-  const RouteCard({
+  const DestinationCard({
     super.key,
     required this.id,
     required this.data,
@@ -16,7 +16,7 @@ class RouteCard extends StatelessWidget {
   });
 
   Future<void> _toggleFavorito(List<String> favoritedBy) async {
-    final ref = FirebaseFirestore.instance.collection('routes').doc(id);
+    final ref = FirebaseFirestore.instance.collection('destinations').doc(id);
     final lista = List<String>.from(favoritedBy);
     if (lista.contains(currentUid)) {
       lista.remove(currentUid);
@@ -26,21 +26,17 @@ class RouteCard extends StatelessWidget {
     await ref.update({'favoritedBy': lista});
   }
 
-  List<String> _parseCats(dynamic valor) {
-    if (valor == null) return [];
-    if (valor is List) return List<String>.from(valor);
-    if (valor is String && valor.isNotEmpty) return [valor];
-    return [];
-  }
-
   @override
   Widget build(BuildContext context) {
-    final nome        = data['name']        ?? 'Sem título';
-    final coverPhoto  = data['coverPhoto']  ?? '';
-    final categories  = _parseCats(data['categories']);
-    final city        = data['city']        ?? '';
-    final destinations = data['destinations'] as List? ?? [];
-    final totalDestinos = destinations.length;
+    final nome        = data['name']         ?? 'Sem título';
+    final descricao   = data['description']  ?? '';
+    final coverPhoto  = data['coverPhoto']   ?? '';
+    final categories  = List<String>.from(data['categories'] ?? []);
+    final neighborhood = data['neighborhood'] ?? '';
+    final city        = data['city']         ?? '';
+    final state       = data['state']        ?? '';
+    final local =
+        '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city – $state';
 
     final favoritedBy = List<String>.from(data['favoritedBy'] ?? []);
     final isFavorito  = favoritedBy.contains(currentUid);
@@ -64,7 +60,7 @@ class RouteCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                // ── Imagem ────────────────────────────────────────────────
+                // ── Imagem ──────────────────────────────────────────────
                 ClipRRect(
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
@@ -108,38 +104,31 @@ class RouteCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
-                        const SizedBox(height: 4),
-                        // Quantidade de destinos no lugar da descrição
+                        const SizedBox(height: 2),
+                        Text(
+                          descricao,
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 12),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.place_outlined,
-                                size: 13, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$totalDestinos destino${totalDestinos != 1 ? 's' : ''}',
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 12),
+                            const Icon(Icons.location_on_outlined,
+                                size: 12, color: Colors.grey),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                local,
+                                style: const TextStyle(
+                                    fontSize: 11, color: Colors.grey),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        if (city.isNotEmpty)
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on_outlined,
-                                  size: 12, color: Colors.grey),
-                              const SizedBox(width: 3),
-                              Expanded(
-                                child: Text(
-                                  city,
-                                  style: const TextStyle(
-                                      fontSize: 11, color: Colors.grey),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
                       ],
                     ),
                   ),
@@ -147,7 +136,7 @@ class RouteCard extends StatelessWidget {
               ],
             ),
 
-            // ── Coração no topo direito ────────────────────────────────────
+            // ── Coração no topo direito ──────────────────────────────────
             Positioned(
               top: 8,
               right: 8,

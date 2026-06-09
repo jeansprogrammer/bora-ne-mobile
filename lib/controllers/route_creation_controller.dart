@@ -3,12 +3,14 @@ import '../models/route_creation_model.dart';
 import '../models/destination_model.dart';
 import '../services/new_route_service.dart';
 import '../services/destination_service.dart';
+import '../services/image_upload_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 class RouteCreationController extends ChangeNotifier {
   final NewRouteService _routeService = NewRouteService();
   final DestinationService _DestinationService = DestinationService();
+  final ImageUploadService _imageService = ImageUploadService();
 
   
   List<Map<String, dynamic>> _rotas = [];
@@ -29,8 +31,9 @@ class RouteCreationController extends ChangeNotifier {
   // ── Múltiplas categorias ──────────────────────────────────────────────────
   List<String> _categoriasSelecionadas = [];
 
-  // ── Cidade ────────────────────────────────────────────────────────────────
+  // ── Cidade + UF ───────────────────────────────────────────────────────────
   String _cidadeSelecionada = '';
+  String _ufSelecionado = '';
 
   // ── Destinos selecionados (modelo completo) ───────────────────────────────
   List<DestinationModel> _DestinationsSelecionados = [];
@@ -40,6 +43,7 @@ class RouteCreationController extends ChangeNotifier {
   bool get isSearching => _isSearching;
   List<String> get categoriasSelecionadas => _categoriasSelecionadas;
   String get cidadeSelecionada => _cidadeSelecionada;
+  String get ufSelecionado => _ufSelecionado;
   List<DestinationModel> get DestinationsSelecionados => _DestinationsSelecionados;
   bool get canAddMorePlaces => _DestinationsSelecionados.length < 10;
 
@@ -47,6 +51,7 @@ class RouteCreationController extends ChangeNotifier {
       newRoute.name.isNotEmpty &&
       _categoriasSelecionadas.isNotEmpty &&
       _cidadeSelecionada.isNotEmpty &&
+      _ufSelecionado.isNotEmpty &&
       _DestinationsSelecionados.length >= 3;
 
   final ImagePicker _picker = ImagePicker();
@@ -132,8 +137,20 @@ class RouteCreationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setCidade(String cidade) {
-    _cidadeSelecionada = cidade;
+  void setCidade(String city) {
+    _cidadeSelecionada = city;
+    // Limpa destinos ao trocar cidade
+    _DestinationsSelecionados = [];
+    newRoute.destinations = [];
+    notifyListeners();
+  }
+
+  void setUf(String uf) {
+    _ufSelecionado = uf;
+    // Reseta cidade e destinos ao trocar estado
+    _cidadeSelecionada = '';
+    _DestinationsSelecionados = [];
+    newRoute.destinations = [];
     notifyListeners();
   }
 
@@ -141,25 +158,36 @@ class RouteCreationController extends ChangeNotifier {
     if (!canAddMorePlaces) return;
     if (_DestinationsSelecionados.any((d) => d.name == Destination.name)) return;
     _DestinationsSelecionados.add(Destination);
-    newRoute.places.add(PlaceModel(
+    newRoute.destinations.add(DestinationModel(
       name: Destination.name,
-      lat: Destination.latitude,
-      lon: Destination.longitude,
+      description: Destination.description,
+      photos: Destination.photos,
+      coverPhoto: Destination.coverPhoto,
+      categories: Destination.categories,
+      street: Destination.street,
+      number: Destination.number,
+      neighborhood: Destination.neighborhood,
+      cep: Destination.cep,
+      city: Destination.city, 
+      state: Destination.state,
+      latitude: Destination.latitude,
+      longitude: Destination.longitude,
+      favoritedBy: Destination.favoritedBy,
     ));
     notifyListeners();
   }
 
   void removeDestination(int index) {
     _DestinationsSelecionados.removeAt(index);
-    newRoute.places.removeAt(index);
+    newRoute.destinations.removeAt(index);
     notifyListeners();
   }
 
   void reordenarDestination(int oldIndex, int newIndex) {
     final Destination = _DestinationsSelecionados.removeAt(oldIndex);
     _DestinationsSelecionados.insert(newIndex, Destination);
-    final place = newRoute.places.removeAt(oldIndex);
-    newRoute.places.insert(newIndex, place);
+    final place = newRoute.destinations.removeAt(oldIndex);
+    newRoute.destinations.insert(newIndex, place);
     notifyListeners();
   }
 
@@ -172,10 +200,10 @@ class RouteCreationController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Foto capa: tenta upload se tiver arquivo, senão usa URL manual
+      // Foto capa: upload via Cloudinary se tiver arquivo, senão usa URL manual
       String urlCapa = '';
       if (fotos.isNotEmpty) {
-        final urls = await _routeService.uploadImages(fotos);
+        final urls = await _imageService.uploadImagens(fotos);
         urlCapa = urls.isNotEmpty
             ? urls[indiceFotoCapa.clamp(0, urls.length - 1)]
             : urlFotoCapaManual;
@@ -184,9 +212,11 @@ class RouteCreationController extends ChangeNotifier {
       }
 
       final Map<String, dynamic> dadosParaSalvar = newRoute.toMap();
-      dadosParaSalvar['fotoCapa'] = urlCapa;
-      dadosParaSalvar['categorias'] = _categoriasSelecionadas;
-      dadosParaSalvar['cidade'] = _cidadeSelecionada;
+      dadosParaSalvar['coverPhoto'] = urlCapa;
+      dadosParaSalvar['categories'] = _categoriasSelecionadas; // List<String>
+      dadosParaSalvar['city'] = _cidadeSelecionada;
+      dadosParaSalvar['state'] = _ufSelecionado;
+      dadosParaSalvar['favoritedBy'] = [];  // inicia vazio
 
       final success = await _routeService.saveRouteToFirestore(dadosParaSalvar);
 
@@ -220,6 +250,7 @@ class RouteCreationController extends ChangeNotifier {
     urlFotoCapaManual = '';
     _categoriasSelecionadas = [];
     _cidadeSelecionada = '';
+    _ufSelecionado = '';
     _DestinationsSelecionados = [];
     notifyListeners();
   }

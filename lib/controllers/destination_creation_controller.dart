@@ -6,9 +6,11 @@ import 'package:image_picker/image_picker.dart';
 import '../models/destination_model.dart';
 import '../services/destination_service.dart';
 import '../services/geoapify_service.dart';
+import '../services/image_upload_service.dart';
 
 class DestinationCreationController extends ChangeNotifier {
   final DestinationService _service = DestinationService();
+  final ImageUploadService _imageService = ImageUploadService();
   final ImagePicker _picker = ImagePicker();
 
   // ── Fotos ────────────────────────────────────────────────────────────────
@@ -26,7 +28,7 @@ class DestinationCreationController extends ChangeNotifier {
   String numero = '';
   String bairro = '';
   String cep = '';
-  String cidade = '';
+  String city = '';
   String uf = '';
 
   // Coordenadas
@@ -37,9 +39,10 @@ class DestinationCreationController extends ChangeNotifier {
   bool isSaving = false;
   bool isBuscandoCoordenadas = false;
   bool isBuscandoCep = false;
-  bool modoManual = false; // false = CEP, true = manual
+  bool enderecoVerificado = false; // true quando Geoapify confirmou o endereço
   String? erroMensagem;
   String? erroCep;
+  String? erroEndereco;
 
   // Controllers para atualizar os campos de texto via código
   final TextEditingController ruaController = TextEditingController();
@@ -49,15 +52,15 @@ class DestinationCreationController extends ChangeNotifier {
   bool get isValid =>
       nome.isNotEmpty &&
       categoriasSelecionadas.isNotEmpty &&
-      cidade.isNotEmpty &&
+      city.isNotEmpty &&
       uf.isNotEmpty;
 
-  void setModoEndereco(bool manual) {
-    modoManual = manual;
-    // Limpa coordenadas ao trocar de modo para forçar nova verificação
+  // Limpa coordenadas ao trocar estado/cidade para forçar nova verificação
+  void _resetarEndereco() {
     latitude = 0.0;
     longitude = 0.0;
-    notifyListeners();
+    enderecoVerificado = false;
+    erroEndereco = null;
   }
 
  List<DestinationModel> _destinos = [];
@@ -103,13 +106,13 @@ class DestinationCreationController extends ChangeNotifier {
           // Preenche os campos automaticamente
           rua    = data['logradouro'] ?? '';
           bairro = data['bairro']     ?? '';
-          cidade = data['localidade'] ?? '';
+          city = data['localidade'] ?? '';
           uf     = data['uf']         ?? '';
 
           // Atualiza os TextEditingControllers para refletir na tela
           ruaController.text    = rua;
           bairroController.text = bairro;
-          cidadeController.text = cidade;
+          cidadeController.text = city;
 
           erroCep = null;
         }
@@ -149,15 +152,39 @@ class DestinationCreationController extends ChangeNotifier {
 
   // ── Setters ──────────────────────────────────────────────────────────────
 
-  void setNome(String v)      { nome = v;              notifyListeners(); }
-  void setDescricao(String v) { descricao = v;         notifyListeners(); }
-  void setRua(String v)       { rua = v;               notifyListeners(); }
-  void setNumero(String v)    { numero = v;            notifyListeners(); }
-  void setBairro(String v)    { bairro = v;            notifyListeners(); }
-  void setCep(String v)       { cep = v;               notifyListeners(); }
-  void setCidade(String v)    { cidade = v;            notifyListeners(); }
-  void setUf(String v)        { uf = v.toUpperCase();  notifyListeners(); }
-  void setUrlImagem(String v) { urlImagemManual = v; notifyListeners(); }
+  void setNome(String v)      { nome = v;             notifyListeners(); }
+  void setDescricao(String v) { descricao = v;        notifyListeners(); }
+  void setRua(String v)       { rua = v;   _resetarEndereco(); notifyListeners(); }
+  void setNumero(String v)    { numero = v;           notifyListeners(); }
+  void setBairro(String v)    { bairro = v; _resetarEndereco(); notifyListeners(); }
+  void setCep(String v)       { cep = v;              notifyListeners(); }
+  void setUrlImagem(String v) { urlImagemManual = v;  notifyListeners(); }
+
+  void setCidade(String v) {
+    city = v;
+    _resetarEndereco();
+    // Limpa rua/bairro ao trocar cidade
+    rua = '';
+    bairro = '';
+    numero = '';
+    ruaController.clear();
+    bairroController.clear();
+    notifyListeners();
+  }
+
+  void setUf(String v) {
+    uf = v.toUpperCase();
+    // Reseta cidade ao trocar estado
+    city = '';
+    cidadeController.clear();
+    _resetarEndereco();
+    rua = '';
+    bairro = '';
+    numero = '';
+    ruaController.clear();
+    bairroController.clear();
+    notifyListeners();
+  }
 
 
   void toggleCategoria(String cat) {
@@ -169,40 +196,46 @@ class DestinationCreationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Busca coordenadas pelo endereço via Geoapify ─────────────────────────
+  Future<void> buscarCoordenadas() async {
+    if (city.isEmpty || uf.isEmpty) return;
+    // Precisa de pelo menos rua ou bairro para verificar
+    if (rua.isEmpty && bairro.isEmpty) return;
 
-  // Destination_creation_controller.dart — método buscarCoordenadas()
-Future<void> buscarCoordenadas() async {
-  if (rua.isEmpty || cidade.isEmpty) return;
+    isBuscandoCoordenadas = true;
+    enderecoVerificado = false;
+    erroEndereco = null;
+    notifyListeners();
 
-  isBuscandoCoordenadas = true;
-  notifyListeners();
+    final partes = [
+      if (rua.isNotEmpty) rua,
+      if (numero.isNotEmpty) numero,
+      if (bairro.isNotEmpty) bairro,
+      city,
+      uf,
+      'Brasil',
+    ];
+    final endereco = partes.join(', ');
+    print('🔍 Verificando endereço: $endereco');
 
-  // Monta sem campos vazios
-  final partes = [
-    if (rua.isNotEmpty) rua,
-    if (numero.isNotEmpty) numero,
-    if (bairro.isNotEmpty) bairro,
-    if (cidade.isNotEmpty) cidade,
-    if (uf.isNotEmpty) uf,
-    'Brasil',
-  ];
-  final endereco = partes.join(', ');
-  print('🔍 Buscando coordenadas para: $endereco'); // ← veja no terminal
+    final resultado = await GeoapifyService().geocodificarEndereco(endereco);
 
-  final resultado = await GeoapifyService().geocodificarEndereco(endereco);
+    if (resultado != null) {
+      latitude  = resultado['lat']!;
+      longitude = resultado['lon']!;
+      enderecoVerificado = true;
+      erroEndereco = null;
+      print('✅ Endereço confirmado: $latitude, $longitude');
+    } else {
+      latitude  = 0.0;
+      longitude = 0.0;
+      enderecoVerificado = false;
+      erroEndereco = 'Endereço não encontrado. Verifique os dados.';
+      print('❌ Endereço não encontrado');
+    }
 
-  if (resultado != null) {
-    latitude  = resultado['lat']!;
-    longitude = resultado['lon']!;
-    print('✅ Coordenadas: $latitude, $longitude');
-  } else {
-    print('❌ Nenhum resultado encontrado');
+    isBuscandoCoordenadas = false;
+    notifyListeners();
   }
-
-  isBuscandoCoordenadas = false;
-  notifyListeners();
-}
 
   // ── Salvar ───────────────────────────────────────────────────────────────
 
@@ -215,19 +248,19 @@ Future<void> buscarCoordenadas() async {
 
     try {
       List<String> urls = [];
-String urlCapa = '';
+      String urlCapa = '';
 
-if (fotos.isNotEmpty) {
-  // Tenta upload se tiver foto selecionada
-  urls = await _service.uploadFotos(fotos);
-  urlCapa = urls.isNotEmpty
-      ? urls[indiceFotoCapa.clamp(0, urls.length - 1)]
-      : urlImagemManual;
-} else {
-  // Usa URL manual se informada
-  urlCapa = urlImagemManual;
-  if (urlCapa.isNotEmpty) urls = [urlCapa];
-}
+      if (fotos.isNotEmpty) {
+        // Upload via Cloudinary com compressão automática
+        urls = await _imageService.uploadImagens(fotos);
+        urlCapa = urls.isNotEmpty
+            ? urls[indiceFotoCapa.clamp(0, urls.length - 1)]
+            : urlImagemManual;
+      } else {
+        // Usa URL manual se informada
+        urlCapa = urlImagemManual;
+        if (urlCapa.isNotEmpty) urls = [urlCapa];
+      }
 
       final Destination = DestinationModel(
         name: nome,
@@ -239,7 +272,7 @@ if (fotos.isNotEmpty) {
         number: numero,
         neighborhood: bairro,
         cep: cep,
-        city: cidade,
+        city: city,
         state: uf,
         latitude: latitude,
         longitude: longitude,
@@ -275,16 +308,17 @@ if (fotos.isNotEmpty) {
     numero = '';
     bairro = '';
     cep = '';
-    cidade = '';
+    city = '';
     uf = '';
     latitude = 0.0;
     longitude = 0.0;
+    enderecoVerificado = false;
+    erroMensagem = null;
+    erroCep = null;
+    erroEndereco = null;
     ruaController.clear();
     bairroController.clear();
     cidadeController.clear();
-    modoManual = false;
-    erroMensagem = null;
-    erroCep = null;
     notifyListeners();
   }
 
