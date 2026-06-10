@@ -156,7 +156,13 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
             iconActive: Icons.notifications,
             label: 'Notificações',
             isActive: active == BottomNavTab.notificacoes,
-            onTap: () {},
+           onTap: () => Navigator.pushReplacement(  // ← estava vazio!
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NotificationsPage(),
+                settings: const RouteSettings(name: '/notificacoes'),
+              ),
+            ),
           ),
           _NavItem(
             icon: Icons.person_outline,
@@ -195,14 +201,7 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const NotificationsPage(),
-          ),
-        );
-      },
+      onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 60,

@@ -9,10 +9,6 @@ class NotificationsPage extends StatelessWidget {
     return Scaffold(
       
       backgroundColor: const Color.fromRGBO(245, 245, 245, 1),
-      
-      
-      bottomNavigationBar: const CustomBottomNav(),
-      
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -21,12 +17,7 @@ class NotificationsPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Image.asset(
-          'assets/images/logo_bora_ne.png', 
-          width: 75, 
-          height: 35,
-          fit: BoxFit.contain,
-        ),
+        
         centerTitle: true,
       ),
       
@@ -34,7 +25,7 @@ class NotificationsPage extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           children: [
-            // Título Principal
+            
             const Text(
               "Notificações",
               style: TextStyle(
@@ -45,7 +36,6 @@ class NotificationsPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             
-            // Subtítulo descritivo
             const Text(
               "Fique por dentro de tudo o que acontece na sua conta e nos seus roteiros.",
               style: TextStyle(
@@ -56,14 +46,13 @@ class NotificationsPage extends StatelessWidget {
             ),
             const SizedBox(height: 25),
 
-            // SEÇÃO: Hoje
             const _SectionHeader(title: "Hoje"),
             const SizedBox(height: 12),
             const _NotificationCard(
               title: "Roteiro salvo",
               subtitle: "Praia de Maracaípe foi adicionado aos seus favoritos.",
               time: "19:45",
-              icon: Icons.favorite, // Ícone de coração (laranja suave de fundo)
+              icon: Icons.favorite,
             ),
             _NotificationCard(
               title: "Novidade no destino",
@@ -78,7 +67,6 @@ class NotificationsPage extends StatelessWidget {
               icon: Icons.map,
             ),
             
-            // SEÇÃO: Ontem
             const SizedBox(height: 10),
             const _SectionHeader(title: "Ontem"),
             const SizedBox(height: 12),
@@ -88,8 +76,7 @@ class NotificationsPage extends StatelessWidget {
               time: "20:20",
               icon: Icons.local_offer,
             ),
-            
-            // SEÇÃO: 10 de maio
+      
             const SizedBox(height: 10),
             const _SectionHeader(title: "10 de maio"),
             const SizedBox(height: 12),
@@ -100,7 +87,6 @@ class NotificationsPage extends StatelessWidget {
               icon: Icons.star,
             ),
             
-            // SEÇÃO: 8 de maio
             const SizedBox(height: 10),
             const _SectionHeader(title: "8 de maio"),
             const SizedBox(height: 12),
@@ -111,16 +97,17 @@ class NotificationsPage extends StatelessWidget {
               icon: Icons.campaign, // Ícone de megafone/dica
             ),
             
-            // Espaçamento final para o scroll não ficar colado por baixo da CustomBottomNav
             const SizedBox(height: 20),
           ],
         ),
       ),
+       bottomNavigationBar: const CustomBottomNav(activeTab: BottomNavTab.notificacoes)
     );
+    
+      
   }
 }
 
-/// Widget interno para os rótulos temporais das seções (Hoje, Ontem, etc.)
 class _SectionHeader extends StatelessWidget {
   final String title;
   const _SectionHeader({required this.title});
@@ -138,7 +125,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Card de Notificação Customizado baseado estritamente na imagem t.png
 class _NotificationCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -159,7 +145,7 @@ class _NotificationCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        // Seguindo o padrão de cantos arredondados de 16-18 dp usado no app
+
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -172,7 +158,7 @@ class _NotificationCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Círculo com o Ícone (Fundo laranja super leve com elementos em Laranja/Amarelo do app)
+
           Container(
             width: 50,
             height: 50,
@@ -188,7 +174,6 @@ class _NotificationCard extends StatelessWidget {
           ),
           const SizedBox(width: 14),
           
-          // Bloco Central de Textos
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +212,6 @@ class _NotificationCard extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           
-          // Seta Indicadora Direita (Chevron)
           const Padding(
             padding: EdgeInsets.only(top: 2),
             child: Icon(
