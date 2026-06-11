@@ -1,16 +1,17 @@
-import 'package:boranemobile/view/pages/routedestinos_page.dart';
 import 'package:boranemobile/view/pages/destination_detail.dart';
 import 'package:boranemobile/view/pages/route_detail.dart';
+import 'package:boranemobile/view/pages/routedestinos_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/view/widgets/route_carousel.dart';
 import 'package:boranemobile/view/widgets/destination_card.dart';
-import 'package:boranemobile/view/pages/routes_page.dart';
 import 'package:boranemobile/view/pages/search_page.dart';
 import 'package:boranemobile/services/location_service.dart';
 import 'package:boranemobile/services/geoapify_service.dart';
 import 'package:boranemobile/data/category_data.dart';
+import 'package:provider/provider.dart';
+import 'package:boranemobile/controllers/auth_controller.dart';
 import 'package:boranemobile/view/pages/notifications_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -237,35 +238,13 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Logo e Botão de Notificações Integrado ────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Row(
-                  children: [
-                    // Espaçador do lado esquerdo para manter o alinhamento central da logo
-                    const SizedBox(width: 48),
-                    Expanded(
-                      child: Center(
-                        child: Image.asset('assets/images/LOGO_V2_1.png', height: 44),
-                      ),
-                    ),
-                    // Botão de Notificação Real e Elegante
-                    IconButton(
-                      icon: const Icon(Icons.notifications_none, color: Colors.black87, size: 26),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => NotificationsPage(), // Sem const para evitar o erro anterior
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+              // ── Logo ──────────────────────────────────────────────────────
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Image.asset('assets/images/LOGO_V2_1.png', height: 44),
                 ),
               ),
-
-              const SizedBox(height: 8),
 
               // ── Barra de Localização (clicável) ──────────────────────────
               Center(
@@ -401,51 +380,75 @@ class _HomePageState extends State<HomePage> {
 
   // ── SEÇÃO CATEGORIAS ──────────────────────────────────────────────────────
 
+  // Mapeamento nome → arquivo de ícone em assets/images/
+  static const Map<String, String> _iconeCategoria = {
+    'Cultural':       'cultural_icon.png',
+    'Histórico':      'historico_icon.png',
+    'Religioso':      'religioso_icon.png',
+    'Natureza':       'natureza_icon.png',
+    'Lazer':          'lazer_icon.png',
+    'Entretenimento': 'entretenimento_icon.png',
+    'Aventura':       'aventura_icon.png',
+    'Esportes':       'esportes_icon.png',
+    'Gastronomia':    'gastronomia_icon.png',
+    'Compras':        'compras_icon.png',
+    'Hospedagem':     'hospedagem_icon.png',
+    'Eventos':        'eventos_icon.png',
+    'Experiências':   'experiencias_icon.png',
+  };
+
   Widget _buildCategoriasSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: categoriasBoraNE.length,
-            itemBuilder: (_, i) {
-              final cat = categoriasBoraNE[i];
-              return GestureDetector(
-                onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => RoutesPage())),
-                child: Container(
-                  margin: const EdgeInsets.only(right: 12),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: _corCategoria(cat.name).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Center(
+    return SizedBox(
+      height: 105,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: categoriasBoraNE.length,
+        itemBuilder: (_, i) {
+          final cat = categoriasBoraNE[i];
+          final icone = _iconeCategoria[cat.name] ?? 'aventura_icon.png';
+
+          return GestureDetector(
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute(builder: (_) => RouteDestinosPage())),
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              child: Column(
+                children: [
+                  Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      color: _corCategoria(cat.name).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: Image.asset(
+                        'assets/images/$icone',
+                        width: 68,
+                        height: 68,
+                        fit: BoxFit.cover,
+                        // fallback para emoji se a imagem não existir
+                        errorBuilder: (_, __, ___) => Center(
                           child: Text(cat.emoji,
-                              style: const TextStyle(fontSize: 28)),
+                              style: const TextStyle(fontSize: 30)),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        cat.name,
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w500),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+                  const SizedBox(height: 6),
+                  Text(
+                    cat.name,
+                    style: const TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -560,6 +563,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildDestinosList(List<QueryDocumentSnapshot> docs) {
+    final authController = Provider.of<AuthController>(context, listen: false);
+    final currentUid = authController.user?.uid ?? 'usuario_teste';
+
     return Column(
       children: [
         ListView.builder(
@@ -570,7 +576,7 @@ class _HomePageState extends State<HomePage> {
           itemBuilder: (_, i) {
             final doc  = docs[i];
             final data = doc.data() as Map<String, dynamic>;
-            return DestinationCard(id: doc.id, data: data);
+            return DestinationCard(id: doc.id, data: data, currentUid: currentUid);
           },
         ),
         const SizedBox(height: 8),
@@ -581,7 +587,7 @@ class _HomePageState extends State<HomePage> {
             child: ElevatedButton(
               onPressed: () => Navigator.push(
                 context,
-                 MaterialPageRoute(builder: (_) => const RouteDestinosPage()),
+                MaterialPageRoute(builder: (_) => const RouteDestinosPage()),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,

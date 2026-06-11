@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:boranemobile/services/favorites_service.dart';
+import 'package:boranemobile/controllers/favorites_controller.dart';
+import 'package:boranemobile/models/destination_model.dart';
+import 'package:boranemobile/view/pages/destination_detail.dart';
 
-class DestinationCard extends StatelessWidget {
+class DestinationCard extends StatefulWidget {
   final String id;
   final Map<String, dynamic> data;
   final String currentUid;
@@ -15,34 +20,119 @@ class DestinationCard extends StatelessWidget {
     this.onTap,
   });
 
-  Future<void> _toggleFavorito(List<String> favoritedBy) async {
-    final ref = FirebaseFirestore.instance.collection('destinations').doc(id);
-    final lista = List<String>.from(favoritedBy);
-    if (lista.contains(currentUid)) {
-      lista.remove(currentUid);
-    } else {
-      lista.add(currentUid);
+  @override
+  State<DestinationCard> createState() => _DestinationCardState();
+}
+
+class _DestinationCardState extends State<DestinationCard> {
+  late bool _isFavorito;
+  late List<String> _favoritedBy;
+
+  @override
+  void initState() {
+    super.initState();
+    _favoritedBy = List<String>.from(widget.data['favoritedBy'] ?? []);
+    _isFavorito = _favoritedBy.contains(widget.currentUid);
+    try {
+      final favController = Provider.of<FavoritesController>(context, listen: false);
+      if (favController.favorites != null) {
+        final nome = widget.data['name'] ?? '';
+        _isFavorito = favController.isDestinoFavorito(widget.id, nome: nome);
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void didUpdateWidget(covariant DestinationCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data != widget.data || oldWidget.currentUid != widget.currentUid) {
+      _favoritedBy = List<String>.from(widget.data['favoritedBy'] ?? []);
+      _isFavorito = _favoritedBy.contains(widget.currentUid);
+      try {
+        final favController = Provider.of<FavoritesController>(context, listen: false);
+        if (favController.favorites != null) {
+          final nome = widget.data['name'] ?? '';
+          _isFavorito = favController.isDestinoFavorito(widget.id, nome: nome);
+        }
+      } catch (_) {}
     }
-    await ref.update({'favoritedBy': lista});
+  }
+
+  Future<void> _toggleFavorito(BuildContext context) async {
+    final isAdd = !_isFavorito;
+
+    // 1. Atualiza o estado visual local imediatamente
+    setState(() {
+      _isFavorito = isAdd;
+      if (isAdd) {
+        _favoritedBy.add(widget.currentUid);
+      } else {
+        _favoritedBy.remove(widget.currentUid);
+      }
+    });
+
+    // 2. Atualiza o FavoritesController PRIMEIRO para que a tela de favoritos
+    //    atualize imediatamente (remove/adiciona o item da lista visível)
+    final destino = DestinationModel.fromMap(widget.data, id: widget.id);
+    try {
+      final favController = Provider.of<FavoritesController>(context, listen: false);
+      if (favController.favorites != null) {
+        if (isAdd) {
+          favController.favorites!.destinations.add(destino);
+        } else {
+          final nome = widget.data['name'] ?? '';
+          favController.favorites!.destinations.removeWhere((d) =>
+            (widget.id.isNotEmpty && d.id == widget.id) ||
+            (nome.isNotEmpty && d.name == nome)
+          );
+        }
+        favController.forceNotifyListeners();
+      }
+    } catch (_) {
+      // Controller pode não estar na árvore de provedores
+    }
+
+    // 3. Sincroniza com o Firebase em background (não bloqueia a UI)
+    try {
+      if (widget.id.isNotEmpty) {
+        final ref = FirebaseFirestore.instance.collection('destinations').doc(widget.id);
+        await ref.update({'favoritedBy': _favoritedBy});
+      }
+
+      final favService = FavoritesService();
+      if (isAdd) {
+        await favService.favoritarDestino(widget.currentUid, destino);
+      } else {
+        await favService.desfavoritarDestino(widget.currentUid, widget.id, nome: widget.data['name'] ?? '');
+      }
+    } catch (e) {
+      debugPrint('Erro ao sincronizar favorito com Firebase: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final nome        = data['name']         ?? 'Sem título';
-    final descricao   = data['description']  ?? '';
-    final coverPhoto  = data['coverPhoto']   ?? '';
-    final categories  = List<String>.from(data['categories'] ?? []);
-    final neighborhood = data['neighborhood'] ?? '';
-    final city        = data['city']         ?? '';
-    final state       = data['state']        ?? '';
+    final nome        = widget.data['name']         ?? 'Sem título';
+    final descricao   = widget.data['description']  ?? '';
+    final coverPhoto  = widget.data['coverPhoto']   ?? '';
+    final categories  = List<String>.from(widget.data['categories'] ?? []);
+    final neighborhood = widget.data['neighborhood'] ?? '';
+    final city        = widget.data['city']         ?? '';
+    final state       = widget.data['state']        ?? '';
     final local =
         '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city – $state';
 
-    final favoritedBy = List<String>.from(data['favoritedBy'] ?? []);
-    final isFavorito  = favoritedBy.contains(currentUid);
-
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap ??
+          () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DestinationDetail(
+                    id: widget.id,
+                    data: widget.data,
+                  ),
+                ),
+              ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -141,7 +231,7 @@ class DestinationCard extends StatelessWidget {
               top: 8,
               right: 8,
               child: GestureDetector(
-                onTap: () => _toggleFavorito(favoritedBy),
+                onTap: () => _toggleFavorito(context),
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
@@ -156,8 +246,8 @@ class DestinationCard extends StatelessWidget {
                     ],
                   ),
                   child: Icon(
-                    isFavorito ? Icons.favorite : Icons.favorite_border,
-                    color: isFavorito ? Colors.red : Colors.grey,
+                    _isFavorito ? Icons.favorite : Icons.favorite_border,
+                    color: _isFavorito ? Colors.red : Colors.grey,
                     size: 18,
                   ),
                 ),

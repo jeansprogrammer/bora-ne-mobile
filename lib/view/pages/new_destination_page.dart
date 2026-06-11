@@ -140,6 +140,31 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
             onWillPop: _confirmarSaida,
             child: Scaffold(
               backgroundColor: Colors.white,
+              bottomNavigationBar: (controller.isSaving ||
+                      controller.isBuscandoCoordenadas)
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        LinearProgressIndicator(
+                          backgroundColor: Colors.grey.shade200,
+                          color: Colors.orangeAccent,
+                          minHeight: 4,
+                        ),
+                        Container(
+                          color: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Text(
+                            controller.isBuscandoCoordenadas
+                                ? 'Verificando endereço...'
+                                : 'Fazendo upload das imagens...',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                fontSize: 13, color: Colors.black54),
+                          ),
+                        ),
+                      ],
+                    )
+                  : null,
               appBar: AppBar(
                 backgroundColor: Colors.white,
                 elevation: 0,

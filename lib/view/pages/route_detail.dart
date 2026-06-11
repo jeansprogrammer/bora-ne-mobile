@@ -1,6 +1,7 @@
-import 'package:readmore/readmore.dart'; // 1. IMPORTADO O PACOTE AQUI
+import 'package:readmore/readmore.dart';
 import 'package:boranemobile/view/pages/destination_detail.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
+import 'package:boranemobile/view/widgets/photo_carousel.dart';
 import 'package:flutter/material.dart';
 
 class RouteDetailPage extends StatefulWidget {
@@ -27,6 +28,15 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     // Extraindo as informações básicas da Rota Principal
     final String nomeRota = widget.rota!['name'] ?? 'Sem título';
     final String coverPhotoRota = widget.rota!['coverPhoto'] ?? '';
+    // Suporte a dados antigos onde photos era String
+    final rawPhotos = widget.rota!['photos'];
+    final List<String> photosRota = rawPhotos == null
+        ? []
+        : rawPhotos is List
+            ? List<String>.from(rawPhotos)
+            : (rawPhotos as String).isNotEmpty
+                ? [rawPhotos as String]
+                : [];
     final String descricaoRota = widget.rota!['description'] ?? 'Sem descrição disponível.';
     final List<dynamic> destinosRaw = widget.rota!['destinations'] ?? [];
 
@@ -94,21 +104,15 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                         clipBehavior: Clip.antiAlias,
                         child: Column(
                           children: [
-                            if (coverPhotoRota.isNotEmpty)
-                              Image.network(
-                                coverPhotoRota,
-                                width: double.infinity,
-                                height: 200,
-                                fit: BoxFit.cover,
-                                // Tratamento caso a imagem do Firebase falhe ou demore a carregar
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    height: 200,
-                                    color: Colors.grey.shade300,
-                                    child: const Icon(Icons.broken_image, size: 40),
-                                  );
-                                },
+                            PhotoCarousel(
+                              coverPhoto: coverPhotoRota,
+                              photos: photosRota,
+                              height: 200,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(24),
+                                topRight: Radius.circular(24),
                               ),
+                            ),
                             
                             // ── ALTERAÇÃO FEITA AQUI ─────────────────────────
                             Padding(

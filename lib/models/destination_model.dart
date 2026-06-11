@@ -50,7 +50,7 @@ class DestinationModel {
 
   factory DestinationModel.fromMap(Map<String, dynamic> data, {String? id}) {
     return DestinationModel(
-      id: id,
+      id: id ?? data['id'],
       name: data['name'] ?? '',
       description: data['description'] ?? '',
       photos: List<String>.from(data['photos'] ?? []),
@@ -70,6 +70,7 @@ class DestinationModel {
 
   Map<String, dynamic> toMap() {
     return {
+      if (id != null) 'id': id,
       'name': name,
       'description': description,
       'photos': photos,

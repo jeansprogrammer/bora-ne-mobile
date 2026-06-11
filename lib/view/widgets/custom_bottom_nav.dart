@@ -129,26 +129,34 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
             iconActive: Icons.home,
             label: 'Início',
             isActive: active == BottomNavTab.home,
-            onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const HomePage(),
-                settings: const RouteSettings(name: '/home'),
-              ),
-            ),
+            onTap: () {
+              if (active == BottomNavTab.home) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const HomePage(),
+                  settings: const RouteSettings(name: '/home'),
+                ),
+                (route) => false,
+              );
+            },
           ),
           _NavItem(
             icon: Icons.favorite_border,
             iconActive: Icons.favorite,
             label: 'Favoritos',
             isActive: active == BottomNavTab.favoritos,
-            onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const FavoritesPage(),
-                settings: const RouteSettings(name: '/favoritos'),
-              ),
-            ),
+            onTap: () {
+              if (active == BottomNavTab.favoritos) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const FavoritesPage(),
+                  settings: const RouteSettings(name: '/favoritos'),
+                ),
+                (route) => false,
+              );
+            },
           ),
           _NavItemCenter(onTap: () => _abrirMenuAdicionar()),
           _NavItem(
@@ -156,26 +164,34 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
             iconActive: Icons.notifications,
             label: 'Notificações',
             isActive: active == BottomNavTab.notificacoes,
-           onTap: () => Navigator.pushReplacement(  // ← estava vazio!
-              context,
-              MaterialPageRoute(
-                builder: (_) => const NotificationsPage(),
-                settings: const RouteSettings(name: '/notificacoes'),
-              ),
-            ),
+            onTap: () {
+              if (active == BottomNavTab.notificacoes) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NotificationsPage(),
+                  settings: const RouteSettings(name: '/notificacoes'),
+                ),
+                (route) => false,
+              );
+            },
           ),
           _NavItem(
             icon: Icons.person_outline,
             iconActive: Icons.person,
             label: 'Perfil',
             isActive: active == BottomNavTab.perfil,
-            onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const UserProfilePage(),
-                settings: const RouteSettings(name: '/perfil'),
-              ),
-            ),
+            onTap: () {
+              if (active == BottomNavTab.perfil) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const UserProfilePage(),
+                  settings: const RouteSettings(name: '/perfil'),
+                ),
+                (route) => false,
+              );
+            },
           ),
         ],
       ),

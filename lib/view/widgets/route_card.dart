@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:boranemobile/services/favorites_service.dart';
+import 'package:boranemobile/controllers/favorites_controller.dart';
+import 'package:boranemobile/models/route_creation_model.dart';
+import 'package:boranemobile/view/pages/route_detail.dart';
 
-class RouteCard extends StatelessWidget {
+class RouteCard extends StatefulWidget {
   final String id;
   final Map<String, dynamic> data;
   final String currentUid;
@@ -15,15 +20,92 @@ class RouteCard extends StatelessWidget {
     this.onTap,
   });
 
-  Future<void> _toggleFavorito(List<String> favoritedBy) async {
-    final ref = FirebaseFirestore.instance.collection('routes').doc(id);
-    final lista = List<String>.from(favoritedBy);
-    if (lista.contains(currentUid)) {
-      lista.remove(currentUid);
-    } else {
-      lista.add(currentUid);
+  @override
+  State<RouteCard> createState() => _RouteCardState();
+}
+
+class _RouteCardState extends State<RouteCard> {
+  late bool _isFavorito;
+  late List<String> _favoritedBy;
+
+  @override
+  void initState() {
+    super.initState();
+    _favoritedBy = List<String>.from(widget.data['favoritedBy'] ?? []);
+    _isFavorito = _favoritedBy.contains(widget.currentUid);
+    try {
+      final favController = Provider.of<FavoritesController>(context, listen: false);
+      if (favController.favorites != null) {
+        final name = widget.data['name'] ?? '';
+        _isFavorito = favController.isRotaFavorita(name);
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void didUpdateWidget(covariant RouteCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data != widget.data || oldWidget.currentUid != widget.currentUid) {
+      _favoritedBy = List<String>.from(widget.data['favoritedBy'] ?? []);
+      _isFavorito = _favoritedBy.contains(widget.currentUid);
+      try {
+        final favController = Provider.of<FavoritesController>(context, listen: false);
+        if (favController.favorites != null) {
+          final name = widget.data['name'] ?? '';
+          _isFavorito = favController.isRotaFavorita(name);
+        }
+      } catch (_) {}
     }
-    await ref.update({'favoritedBy': lista});
+  }
+
+  Future<void> _toggleFavorito(BuildContext context) async {
+    final isAdd = !_isFavorito;
+
+    // 1. Atualiza o estado visual local imediatamente
+    setState(() {
+      _isFavorito = isAdd;
+      if (isAdd) {
+        _favoritedBy.add(widget.currentUid);
+      } else {
+        _favoritedBy.remove(widget.currentUid);
+      }
+    });
+
+    // 2. Atualiza o FavoritesController PRIMEIRO para que a tela de favoritos
+    //    atualize imediatamente (remove/adiciona o item da lista visível)
+    final map = Map<String, dynamic>.from(widget.data);
+    map['id'] = widget.id;
+    final rota = RouteCreationModel.fromMap(map);
+    try {
+      final favController = Provider.of<FavoritesController>(context, listen: false);
+      if (favController.favorites != null) {
+        if (isAdd) {
+          favController.favorites!.routes.add(rota);
+        } else {
+          favController.favorites!.routes.removeWhere((r) => r.name == rota.name);
+        }
+        favController.forceNotifyListeners();
+      }
+    } catch (_) {
+      // Controller pode não estar na árvore de provedores
+    }
+
+    // 3. Sincroniza com o Firebase em background (não bloqueia a UI)
+    try {
+      if (widget.id.isNotEmpty) {
+        final ref = FirebaseFirestore.instance.collection('routes').doc(widget.id);
+        await ref.update({'favoritedBy': _favoritedBy});
+      }
+
+      final favService = FavoritesService();
+      if (isAdd) {
+        await favService.favoritarRota(widget.currentUid, rota);
+      } else {
+        await favService.desfavoritarRota(widget.currentUid, rota.name);
+      }
+    } catch (e) {
+      debugPrint('Erro ao sincronizar favorito de rota com Firebase: $e');
+    }
   }
 
   List<String> _parseCats(dynamic valor) {
@@ -35,18 +117,23 @@ class RouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nome        = data['name']        ?? 'Sem título';
-    final coverPhoto  = data['coverPhoto']  ?? '';
-    final categories  = _parseCats(data['categories']);
-    final city        = data['city']        ?? '';
-    final destinations = data['destinations'] as List? ?? [];
+    final nome        = widget.data['name']        ?? 'Sem título';
+    final coverPhoto  = widget.data['coverPhoto']  ?? '';
+    final categories  = _parseCats(widget.data['categories']);
+    final city        = widget.data['city']        ?? '';
+    final destinations = widget.data['destinations'] as List? ?? [];
     final totalDestinos = destinations.length;
 
-    final favoritedBy = List<String>.from(data['favoritedBy'] ?? []);
-    final isFavorito  = favoritedBy.contains(currentUid);
-
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap ??
+          () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => RouteDetailPage(
+                    rota: {...widget.data, 'id': widget.id},
+                  ),
+                ),
+              ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -152,7 +239,7 @@ class RouteCard extends StatelessWidget {
               top: 8,
               right: 8,
               child: GestureDetector(
-                onTap: () => _toggleFavorito(favoritedBy),
+                onTap: () => _toggleFavorito(context),
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
@@ -167,8 +254,8 @@ class RouteCard extends StatelessWidget {
                     ],
                   ),
                   child: Icon(
-                    isFavorito ? Icons.favorite : Icons.favorite_border,
-                    color: isFavorito ? Colors.red : Colors.grey,
+                    _isFavorito ? Icons.favorite : Icons.favorite_border,
+                    color: _isFavorito ? Colors.red : Colors.grey,
                     size: 18,
                   ),
                 ),

@@ -78,6 +78,27 @@ class _NewRoutePageState extends State<NewRoutePage> {
       onWillPop: () => _confirmarSaida(controller),
       child: Scaffold(
       backgroundColor: Colors.white,
+      bottomNavigationBar: controller.isSaving
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LinearProgressIndicator(
+                  backgroundColor: Colors.grey.shade200,
+                  color: Colors.orangeAccent,
+                  minHeight: 4,
+                ),
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: const Text(
+                    'Fazendo upload das imagens...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
+                ),
+              ],
+            )
+          : null,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,

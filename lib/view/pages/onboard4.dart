@@ -19,7 +19,8 @@ class Onboard4 extends StatelessWidget {
       onNext: () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const LoginPage()),
+          MaterialPageRoute(
+              builder: (_) => const LoginPage(fromOnboarding: true)),
         );
       },
     );

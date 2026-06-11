@@ -1,36 +1,38 @@
 import 'package:boranemobile/models/destination_model.dart';
 
 class RouteCreationModel {
+  String? id;
   String name;
-  List<String> categories;  // ← sempre List, nunca String
+  List<String> categories;
   String description;
-  String imageUrl;
+  List<String> photos;      // ← corrigido: era String, agora List<String>
   String state;
   List<DestinationModel> destinations;
-  List<String> favoritedBy; // ← adicionado
+  List<String> favoritedBy;
 
   RouteCreationModel({
+    this.id,
     this.name = '',
     this.categories = const [],
     this.description = '',
-    this.imageUrl = '',
+    this.photos = const [],  // ← default vazio
     this.state = '',
     List<DestinationModel>? destinations,
     this.favoritedBy = const [],
   }) : destinations = destinations ?? [];
 
   Map<String, dynamic> toMap() => {
+    if (id != null) 'id': id,
     'name': name,
-    'categories': categories,   // salva como List
+    'categories': categories,
     'description': description,
-    'imageUrl': imageUrl,
+    'photos': photos,         // ← salva como List
     'state': state,
     'destinations': destinations.map((p) => p.toMap()).toList(),
     'favoritedBy': favoritedBy,
   };
 
-  factory RouteCreationModel.fromMap(Map<String, dynamic> map) {
-    // Suporte a dados antigos onde categories era String
+  factory RouteCreationModel.fromMap(Map<String, dynamic> map, {String? id}) {
     final rawCats = map['categories'];
     final List<String> cats = rawCats == null
         ? []
@@ -38,11 +40,22 @@ class RouteCreationModel {
             ? List<String>.from(rawCats)
             : [rawCats.toString()];
 
+    // Suporte a dados antigos onde photos era String
+    final rawPhotos = map['photos'];
+    final List<String> photos = rawPhotos == null
+        ? []
+        : rawPhotos is List
+            ? List<String>.from(rawPhotos)
+            : rawPhotos.toString().isNotEmpty
+                ? [rawPhotos.toString()]
+                : [];
+
     return RouteCreationModel(
+      id: id ?? map['id'],
       name: map['name'] ?? '',
       categories: cats,
       description: map['description'] ?? '',
-      imageUrl: map['imageUrl'] ?? '',
+      photos: photos,
       state: map['state'] ?? '',
       favoritedBy: List<String>.from(map['favoritedBy'] ?? []),
       destinations: map['destinations'] != null

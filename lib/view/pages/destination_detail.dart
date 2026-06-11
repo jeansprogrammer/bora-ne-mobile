@@ -1,4 +1,5 @@
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
+import 'package:boranemobile/view/widgets/photo_carousel.dart';
 import 'package:flutter/material.dart';
 
 class DestinationDetail extends StatefulWidget {
@@ -19,6 +20,7 @@ class _DestinationDetailState extends State<DestinationDetail> {
     final String nome = widget.data['name'] ?? 'Sem título';
     final String descricao = widget.data['description'] ?? 'Sem descrição disponível.';
     final String coverPhoto = widget.data['coverPhoto'] ?? '';
+    final List<String> photos = List<String>.from(widget.data['photos'] ?? []);
     final List<String> categories = List<String>.from(widget.data['categories'] ?? []);
     final String neighborhood = widget.data['neighborhood'] ?? '';
     final String city = widget.data['city'] ?? '';
@@ -27,147 +29,162 @@ class _DestinationDetailState extends State<DestinationDetail> {
     final String local = '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city - $state';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), 
+      backgroundColor: const Color(0xFFF8F9FA),
+      bottomNavigationBar: const CustomBottomNav(),
       body: Stack(
         children: [
-          // ── 1. IMAGEM DE COBERTURA ─────────────────────────────────────────
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 340, 
-            child: coverPhoto.isNotEmpty
-                ? Image.network(
-                    coverPhoto,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildPlaceholder(),
-                  )
-                : _buildPlaceholder(),
-          ),
+          // ── SCROLL PRINCIPAL ──────────────────────────────────────────────
+          SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              children: [
+                // Foto — dentro do scroll, nada sobreposto
+                PhotoCarousel(
+                  coverPhoto: coverPhoto,
+                  photos: photos,
+                  height: 340,
+                ),
 
-          // ── 2. CONTEÚDO EM SCROLL ──────────────────────────────────────────
-          Positioned.fill(
-            child: SingleChildScrollView(
-              // Aumentamos um pouco o padding inferior para o texto não sumir atrás do botão
-              padding: const EdgeInsets.only(bottom: 100), 
-              child: Column(
-                children: [
-                  const SizedBox(height: 240), 
-
-                  // Card Branco
-                  Container(
-                    width: double.infinity,
-                    height: MediaQuery.of(context).size.height - 340,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(32),
-                        topRight: Radius.circular(32),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  nome,
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  _isFavorited ? Icons.favorite : Icons.favorite_border,
-                                  color: _isFavorited ? Colors.red : Colors.black87,
-                                  size: 30,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _isFavorited = !_isFavorited;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  local,
-                                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          if (categories.isNotEmpty)
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: categories.map((c) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F3F5),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Text(
-                                    c,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black54,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-
-                          const SizedBox(height: 24),
-
-                          const Text(
-                            'Descrição',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            descricao,
-                            textAlign: TextAlign.justify,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
+                // Card branco com conteúdo
+                Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      topRight: Radius.circular(32),
                     ),
                   ),
-                ],
-              ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                nome,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                _isFavorited
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: _isFavorited
+                                    ? Colors.red
+                                    : Colors.black87,
+                                size: 30,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _isFavorited = !_isFavorited),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined,
+                                size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                local,
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.grey),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        if (categories.isNotEmpty)
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: categories.map((c) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F3F5),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  c,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+
+                        const SizedBox(height: 24),
+
+                        const Text(
+                          'Descrição',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          descricao,
+                          textAlign: TextAlign.justify,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                            height: 1.5,
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // ── Botão Ver no mapa dentro do scroll ─────────────
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF1B81A),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                              elevation: 4,
+                            ),
+                            onPressed: () {},
+                            child: const Text(
+                              'Ver no mapa',
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
-          // ── 3. BOTÃO VOLTAR (Superior Esquerdo) ────────────────────────────
+          // ── BOTÃO VOLTAR (único overlay) ──────────────────────────────────
           Positioned(
             top: MediaQuery.of(context).padding.top + 12,
             left: 16,
@@ -176,46 +193,14 @@ class _DestinationDetailState extends State<DestinationDetail> {
               radius: 22,
               child: IconButton(
                 padding: EdgeInsets.zero,
-                icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+                icon: const Icon(Icons.arrow_back,
+                    color: Colors.black, size: 24),
                 onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ),
-
-          // ── 4. BOTÃO FIXO "VER NO MAPA" (Logo acima do menu inferior) ──────
-          Positioned(
-            bottom: 16, // Ajustado para ficar colado acima da CustomBottomNav
-            left: 24,   
-            right: 24,  
-            child: SizedBox(
-              height: 52,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF1B81A), 
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 4, 
-                ),
-                onPressed: () {
-                  // Integração futura com o Maps
-                },
-                child: const Text(
-                  'Ver no mapa',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
               ),
             ),
           ),
         ],
       ),
-
-      // ── 5. SUA BARRA DE MENU INFERIOR DE VOLTA AQUI ────────────────────────
-      bottomNavigationBar: const CustomBottomNav(),
     );
   }
 
@@ -223,7 +208,8 @@ class _DestinationDetailState extends State<DestinationDetail> {
     return Container(
       color: const Color(0xFFFFF9E7),
       child: const Center(
-        child: Icon(Icons.image_outlined, color: Color(0xFFF1B81A), size: 48),
+        child: Icon(Icons.image_outlined,
+            color: Color(0xFFF1B81A), size: 48),
       ),
     );
   }
