@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:boranemobile/services/favorites_service.dart';
 import 'package:boranemobile/controllers/favorites_controller.dart';
 import 'package:boranemobile/models/destination_model.dart';
+import 'package:boranemobile/view/pages/destination_detail.dart';
 
 class DestinationCard extends StatefulWidget {
   final String id;
@@ -122,7 +123,16 @@ class _DestinationCardState extends State<DestinationCard> {
         '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city – $state';
 
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: widget.onTap ??
+          () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DestinationDetail(
+                    id: widget.id,
+                    data: widget.data,
+                  ),
+                ),
+              ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(

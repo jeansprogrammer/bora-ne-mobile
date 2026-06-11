@@ -1,74 +1,69 @@
 import 'dart:io';
 import 'dart:convert';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:image/image.dart' as img;
 
 class ImageUploadService {
-  // ─── Configure aqui ──────────────────────────────────────────────────────
-  static const String _cloudName   = 'dnp6fvcht';    // ex: dxyz123abc
-  static const String _uploadPreset = 'borane_unsigned'; // ex: borane_unsigned
+  // ─── Configure aqui ───────────────────────────────────────────────────────
+  static const String _cloudName    = 'dnp6fvcht';
+  static const String _uploadPreset = 'borane_unsigned';
   // ─────────────────────────────────────────────────────────────────────────
 
-  static const int _maxWidth     = 1080;
-  static const int _maxHeight    = 1080;
-  static const int _qualidade    = 75;
-  static const int _tamanhoMaxKb = 800;   // 800KB → bem abaixo do 10MB do Cloudinary
+  static const int _maxDimensao  = 1080; // px máximo
+  static const int _tamanhoMaxKb = 800;  // KB máximo antes do upload
 
-  // ── Comprime progressivamente até atingir o limite ────────────────────────
+  // ── Compressão usando pacote `image` (funciona em todas as plataformas) ───
 
   Future<File> _comprimir(File imagem) async {
-    final tamanhoKb = await imagem.length() / 1024;
+    final tamanhoKb = imagem.lengthSync() / 1024;
     print('📦 Tamanho original: ${tamanhoKb.toStringAsFixed(1)}KB');
 
-    // Primeiro redimensiona para 1080px independente do tamanho
-    File? resultado = await _redimensionar(imagem, _maxWidth, _maxHeight, _qualidade);
-    resultado ??= imagem;
-
-    double kb = await resultado.length() / 1024;
-    print('🗜️ Após redimensionar: ${kb.toStringAsFixed(1)}KB');
-
-    // Se ainda grande, reduz qualidade progressivamente
-    int qualidade = _qualidade - 10;
-    while (kb > _tamanhoMaxKb && qualidade >= 10) {
-      resultado = await _redimensionar(imagem, _maxWidth, _maxHeight, qualidade) ?? resultado!;
-      kb = await resultado.length() / 1024;
-      print('🗜️ Qualidade $qualidade% → ${kb.toStringAsFixed(1)}KB');
-      qualidade -= 10;
-    }
-
-    // Se ainda muito grande, reduz resolução também
-    int resolucao = 800;
-    while (kb > _tamanhoMaxKb && resolucao >= 400) {
-      resultado = await _redimensionar(imagem, resolucao, resolucao, 30) ?? resultado!;
-      kb = await resultado.length() / 1024;
-      print('🗜️ Resolução ${resolucao}px → ${kb.toStringAsFixed(1)}KB');
-      resolucao -= 200;
-    }
-
-    print('✅ Tamanho final: ${kb.toStringAsFixed(1)}KB');
-    return resultado!;
-  }
-
-  Future<File?> _redimensionar(File imagem, int maxW, int maxH, int qualidade) async {
     try {
+      final bytes = await imagem.readAsBytes();
+      img.Image? decoded = img.decodeImage(bytes);
+
+      if (decoded == null) {
+        print('⚠️ Não foi possível decodificar, enviando original');
+        return imagem;
+      }
+
+      // Redimensiona se necessário
+      if (decoded.width > _maxDimensao || decoded.height > _maxDimensao) {
+        decoded = img.copyResize(
+          decoded,
+          width:  decoded.width >= decoded.height ? _maxDimensao : null,
+          height: decoded.height > decoded.width  ? _maxDimensao : null,
+        );
+        print('📐 Redimensionado para ${decoded.width}x${decoded.height}px');
+      }
+
+      // Comprime progressivamente até atingir o limite
+      int qualidade = 85;
+      List<int> comprimido = [];
+
+      while (qualidade >= 10) {
+        comprimido = img.encodeJpg(decoded, quality: qualidade);
+        final kb = comprimido.length / 1024;
+        print('🗜️ Qualidade $qualidade% → ${kb.toStringAsFixed(1)}KB');
+        if (kb <= _tamanhoMaxKb) break;
+        qualidade -= 10;
+      }
+
+      // Salva em arquivo temporário
       final dir  = await getTemporaryDirectory();
       final dest = path.join(
           dir.path, '${DateTime.now().millisecondsSinceEpoch}_comp.jpg');
-      final xfile = await FlutterImageCompress.compressAndGetFile(
-        imagem.absolute.path,
-        dest,
-        minWidth: maxW,   // flutter_image_compress usa minWidth como max de fato
-        minHeight: maxH,
-        quality: qualidade,
-        format: CompressFormat.jpeg,
-        keepExif: false,  // remove metadados EXIF (reduz tamanho)
-      );
-      return xfile != null ? File(xfile.path) : null;
+      final arquivo = File(dest);
+      await arquivo.writeAsBytes(comprimido);
+
+      final finalKb = comprimido.length / 1024;
+      print('✅ Tamanho final: ${finalKb.toStringAsFixed(1)}KB');
+      return arquivo;
     } catch (e) {
-      print('Erro na compressão: $e');
-      return null;
+      print('⚠️ Erro na compressão: $e — enviando original');
+      return imagem;
     }
   }
 
@@ -77,7 +72,7 @@ class ImageUploadService {
   Future<String?> uploadImagem(File imagem) async {
     try {
       final comprimida = await _comprimir(imagem);
-      final kb = await comprimida.length() / 1024;
+      final kb = comprimida.lengthSync() / 1024;
       print('📤 Enviando: ${kb.toStringAsFixed(1)}KB');
 
       final uri = Uri.parse(

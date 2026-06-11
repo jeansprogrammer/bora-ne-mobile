@@ -200,23 +200,27 @@ class RouteCreationController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Foto capa: upload via Cloudinary se tiver arquivo, senão usa URL manual
+      // Fotos: upload de todas via Cloudinary
+      List<String> urlsFotos = [];
       String urlCapa = '';
+
       if (fotos.isNotEmpty) {
-        final urls = await _imageService.uploadImagens(fotos);
-        urlCapa = urls.isNotEmpty
-            ? urls[indiceFotoCapa.clamp(0, urls.length - 1)]
+        urlsFotos = await _imageService.uploadImagens(fotos);
+        urlCapa = urlsFotos.isNotEmpty
+            ? urlsFotos[indiceFotoCapa.clamp(0, urlsFotos.length - 1)]
             : urlFotoCapaManual;
       } else {
         urlCapa = urlFotoCapaManual;
+        if (urlCapa.isNotEmpty) urlsFotos = [urlCapa];
       }
 
       final Map<String, dynamic> dadosParaSalvar = newRoute.toMap();
-      dadosParaSalvar['coverPhoto'] = urlCapa;
-      dadosParaSalvar['categories'] = _categoriasSelecionadas; // List<String>
+      dadosParaSalvar['photos'] = urlsFotos;        // ← todas as fotos
+      dadosParaSalvar['coverPhoto'] = urlCapa;       // ← foto capa
+      dadosParaSalvar['categories'] = _categoriasSelecionadas;
       dadosParaSalvar['city'] = _cidadeSelecionada;
       dadosParaSalvar['state'] = _ufSelecionado;
-      dadosParaSalvar['favoritedBy'] = [];  // inicia vazio
+      dadosParaSalvar['favoritedBy'] = [];
 
       final success = await _routeService.saveRouteToFirestore(dadosParaSalvar);
 

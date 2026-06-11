@@ -43,7 +43,7 @@ class OnboardBase extends StatelessWidget {
                     inset: 0,
                   ),
                   child: Container(
-                    color: const Color(0xEFEFEFEF),
+                    color: const Color(0xFFEBB22F), // ← amarelo igual ao login
                     width: double.infinity,
                     height: topHeight,
                   ),
