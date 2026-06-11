@@ -5,15 +5,15 @@ import 'package:boranemobile/models/route_creation_model.dart';
 
 class FavoritesModel {
   final String userId;
-  final List<DestinationModel> destinos; // Coleção de objetos DestinoModel
-  final List<RouteCreationModel> rotas;     // Coleção de objetos RouteCreationModel
-  final DateTime dataCriacao;
+  final List<DestinationModel> destinations; // Coleção de objetos DestinoModel
+  final List<RouteCreationModel> routes;     // Coleção de objetos RouteCreationModel
+  final DateTime createdat;
 
   FavoritesModel({
     required this.userId,
-    required this.destinos,
-    required this.rotas,
-    required this.dataCriacao,
+    required this.destinations,
+    required this.routes,
+    required this.createdat,
   });
 
   // Converte o DocumentSnapshot do Firestore para o modelo Dart
@@ -22,34 +22,46 @@ class FavoritesModel {
 
     // Converte a lista de Maps do Firestore em instâncias de DestinoModel
     List<DestinationModel> listaDestinos = [];
-    if (data['destinos'] != null) {
-      listaDestinos = (data['destinos'] as List)
-          .map((item) => DestinationModel.fromMap(item as Map<String, dynamic>))
+    final rawDestinations = data['destinations'] ?? data['destinos'];
+    if (rawDestinations != null) {
+      listaDestinos = (rawDestinations as List)
+          .map((item) {
+            final map = item as Map<String, dynamic>;
+            return DestinationModel.fromMap(map, id: map['id']);
+          })
           .toList();
     }
 
     // Converte a lista de Maps do Firestore em instâncias de RouteCreationModel
     List<RouteCreationModel> listaRotas = [];
-    if (data['rotas'] != null) {
-      listaRotas = (data['rotas'] as List)
-          .map((item) => RouteCreationModel.fromMap(item as Map<String, dynamic>))
+    final rawRoutes = data['routes'] ?? data['rotas'];
+    if (rawRoutes != null) {
+      listaRotas = (rawRoutes as List)
+          .map((item) {
+            final map = item as Map<String, dynamic>;
+            return RouteCreationModel.fromMap(map, id: map['id']);
+          })
           .toList();
     }
 
+    // Suporta chaves createdat, createdAt e dataCriacao
+    final timestamp = data['createdat'] ?? data['createdAt'] ?? data['dataCriacao'];
+    final DateTime date = timestamp is Timestamp ? timestamp.toDate() : DateTime.now();
+
     return FavoritesModel(
       userId: doc.id, // O ID do documento é o hash/UID do usuário
-      destinos: listaDestinos,
-      rotas: listaRotas,
-      dataCriacao: (data['dataCriacao'] as Timestamp).toDate(),
+      destinations: listaDestinos,
+      routes: listaRotas,
+      createdat: date,
     );
   }
 
   // Converte as propriedades para salvar no formato correto do Firestore
   Map<String, dynamic> toMap() {
     return {
-      'destinos': destinos.map((e) => e.toMap()).toList(),
-      'rotas': rotas.map((e) => e.toMap()).toList(),
-      'dataCriacao': Timestamp.fromDate(dataCriacao),
+      'destinations': destinations.map((e) => e.toMap()).toList(),
+      'routes': routes.map((e) => e.toMap()).toList(),
+      'createdat': Timestamp.fromDate(createdat),
     };
   }
 }
