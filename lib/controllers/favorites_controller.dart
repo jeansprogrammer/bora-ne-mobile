@@ -16,11 +16,14 @@ class FavoritesController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  List<DestinationModel> get destinosFavoritos => _favorites?.destinos ?? [];
-  List<RouteCreationModel> get rotasFavoritas => _favorites?.rotas ?? []; 
+  List<DestinationModel> get destinosFavoritos => _favorites?.destinations ?? [];
+  List<RouteCreationModel> get rotasFavoritas => _favorites?.routes ?? []; 
 
+  void forceNotifyListeners() {
+    notifyListeners();
+  }
 
-Future<void> fetchFavorites(String userId) async {
+  Future<void> fetchFavorites(String userId) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -45,16 +48,19 @@ Future<void> fetchFavorites(String userId) async {
   Future<void> _inicializarNovoUsuario(String userId) async {
     final novoRegistro = FavoritesModel(
       userId: userId,
-      destinos: [],
-      rotas: [],
-      dataCriacao: DateTime.now(),
+      destinations: [],
+      routes: [],
+      createdat: DateTime.now(),
     );
     await _service.salvarFavoritos(novoRegistro);
     _favorites = novoRegistro;
   }
 
-  bool isDestinoFavorito(String destinoId) {
-    return destinosFavoritos.any((d) => d.id == destinoId);
+  bool isDestinoFavorito(String destinoId, {String? nome}) {
+    return destinosFavoritos.any((d) =>
+      (destinoId.isNotEmpty && d.id == destinoId) ||
+      (nome != null && nome.isNotEmpty && d.name == nome)
+    );
   }
 
   Future<void> toggleDestinoFavorito(String userId, DestinationModel destino) async {
@@ -65,12 +71,15 @@ Future<void> fetchFavorites(String userId) async {
     try {
       if (existe) {
         // Remove do banco e da lista local
-        await _service.desfavoritarDestino(userId, destino);
-        _favorites!.destinos.removeWhere((d) => d.id == destino.id);
+        await _service.desfavoritarDestino(userId, destino.id!);
+        _favorites!.destinations.removeWhere((d) =>
+          (destino.id != null && destino.id!.isNotEmpty && d.id == destino.id) ||
+          (destino.name.isNotEmpty && d.name == destino.name)
+        );
       } else {
         // Adiciona no banco e na lista local
         await _service.favoritarDestino(userId, destino);
-        _favorites!.destinos.add(destino);
+        _favorites!.destinations.add(destino);
       }
       notifyListeners();
     } catch (e) {
@@ -90,14 +99,13 @@ Future<void> fetchFavorites(String userId) async {
 
     try {
       if (existe) {
-        // Encontra a rota exata guardada localmente para garantir a consistência do DateTime no array do Firebase
-        final rotaParaRemover = _favorites!.rotas.firstWhere((r) => r.name == rota.name);
-        await _service.desfavoritarRota(userId, rotaParaRemover);
-        _favorites!.rotas.removeWhere((r) => r.name == rota.name);
+        // Encontra a rota exata guardada localmente para garantir a consistência no array do Firebase
+        final rotaParaRemover = _favorites!.routes.firstWhere((r) => r.name == rota.name);
+        await _service.desfavoritarRota(userId, rotaParaRemover.name);
+        _favorites!.routes.removeWhere((r) => r.name == rota.name);
       } else {
-        // Se a rota ainda não tem data de criação definida, atribui agora antes de salvar
         await _service.favoritarRota(userId, rota);
-        _favorites!.rotas.add(rota);
+        _favorites!.routes.add(rota);
       }
       notifyListeners();
     } catch (e) {

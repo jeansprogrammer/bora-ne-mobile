@@ -1,6 +1,7 @@
 import 'package:boranemobile/models/destination_model.dart';
 
 class RouteCreationModel {
+  String? id;
   String name;
   List<String> categories;  // ← sempre List, nunca String
   String description;
@@ -10,6 +11,7 @@ class RouteCreationModel {
   List<String> favoritedBy; // ← adicionado
 
   RouteCreationModel({
+    this.id,
     this.name = '',
     this.categories = const [],
     this.description = '',
@@ -20,6 +22,7 @@ class RouteCreationModel {
   }) : destinations = destinations ?? [];
 
   Map<String, dynamic> toMap() => {
+    if (id != null) 'id': id,
     'name': name,
     'categories': categories,   // salva como List
     'description': description,
@@ -29,7 +32,7 @@ class RouteCreationModel {
     'favoritedBy': favoritedBy,
   };
 
-  factory RouteCreationModel.fromMap(Map<String, dynamic> map) {
+  factory RouteCreationModel.fromMap(Map<String, dynamic> map, {String? id}) {
     // Suporte a dados antigos onde categories era String
     final rawCats = map['categories'];
     final List<String> cats = rawCats == null
@@ -39,6 +42,7 @@ class RouteCreationModel {
             : [rawCats.toString()];
 
     return RouteCreationModel(
+      id: id ?? map['id'],
       name: map['name'] ?? '',
       categories: cats,
       description: map['description'] ?? '',

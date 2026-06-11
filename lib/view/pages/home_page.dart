@@ -10,6 +10,9 @@ import 'package:boranemobile/view/pages/search_page.dart';
 import 'package:boranemobile/services/location_service.dart';
 import 'package:boranemobile/services/geoapify_service.dart';
 import 'package:boranemobile/data/category_data.dart';
+import 'package:provider/provider.dart';
+import 'package:boranemobile/controllers/auth_controller.dart';
+import 'package:boranemobile/view/pages/notifications_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -560,6 +563,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildDestinosList(List<QueryDocumentSnapshot> docs) {
+    final authController = Provider.of<AuthController>(context, listen: false);
+    final currentUid = authController.user?.uid ?? 'usuario_teste';
+
     return Column(
       children: [
         ListView.builder(
@@ -570,7 +576,7 @@ class _HomePageState extends State<HomePage> {
           itemBuilder: (_, i) {
             final doc  = docs[i];
             final data = doc.data() as Map<String, dynamic>;
-            return DestinationCard(id: doc.id, data: data);
+            return DestinationCard(id: doc.id, data: data, currentUid: currentUid);
           },
         ),
         const SizedBox(height: 8),

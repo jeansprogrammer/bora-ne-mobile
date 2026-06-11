@@ -4,6 +4,7 @@ import 'package:boranemobile/controllers/search_controller.dart' as sc;
 import 'package:boranemobile/data/category_data.dart';
 import 'package:boranemobile/view/widgets/destination_card.dart';
 import 'package:boranemobile/view/widgets/route_card.dart';
+import 'package:boranemobile/controllers/auth_controller.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -302,6 +303,8 @@ class _SearchPageState extends State<SearchPage> {
     final totalDestinos = ctrl.resultadosDestinos.length;
     final totalRotas = ctrl.resultadosRotas.length;
     final total = totalDestinos + totalRotas;
+    final authController = Provider.of<AuthController>(context, listen: false);
+    final currentUid = authController.user?.uid ?? 'usuario_teste';
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -322,6 +325,7 @@ class _SearchPageState extends State<SearchPage> {
           ...ctrl.resultadosDestinos.map((data) => DestinationCard(
                 id: data['id'] ?? '',
                 data: data,
+                currentUid: currentUid,
               )),
           const SizedBox(height: 16),
         ],
@@ -333,6 +337,7 @@ class _SearchPageState extends State<SearchPage> {
           ...ctrl.resultadosRotas.map((data) => RouteCard(
                 id: data['id'] ?? '',
                 data: data,
+                currentUid: currentUid,
               )),
         ],
       ],
