@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
+import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:boranemobile/view/pages/profile_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -17,83 +18,204 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthController>(context);
+    final screenHeight = MediaQuery.of(context).size.height;
+    final topHeight = screenHeight * 0.62;
+    const chevronHeight = 50.0;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/LOGO_V2_1.png',
-                width: 80,
-                height: 80,
-              ),
-              const SizedBox(height: 20),
+      backgroundColor: const Color(0xFF1A1A1A),
+      body: Column(
+        children: [
 
-              Text(
-                "Bem-vindo!",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+          // ── Área superior clara com chevron ──────────────────────────────
+          SizedBox(
+            height: topHeight,
+            width: double.infinity,
+            child: Stack(
+              children: [
+                // Borda amarela do chevron
+                ClipPath(
+                  clipper: _ChevronClipper(chevronHeight: chevronHeight, inset: 0),
+                  child: Container(
+                    color: const Color(0xFFEBB22F),
+                    width: double.infinity,
+                    height: topHeight,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 30),
-
-              SocialButton(
-                text: 'Entrar com Google',
-                color: Colors.white,
-                textColor: Colors.black87,
-                icon: FontAwesomeIcons.google,
-                isLoading: _isLoading,
-                onPressed: _isLoading
-                    ? null
-                    : () async {
-                        setState(() => _isLoading = true);
-                        try {
-                          final res = await auth.signInWithGoogle();
-                          if (res != null && mounted) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ProfilePage(),
+                // Área branca principal
+                ClipPath(
+                  clipper: _ChevronClipper(chevronHeight: chevronHeight, inset: 10),
+                  child: Container(
+                    color: Colors.white,
+                    width: double.infinity,
+                    height: topHeight,
+                    child: SafeArea(
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 16),
+                          // Logo
+                          Image.asset(
+                            'assets/images/LOGO_V2_1.png',
+                            height: 40,
+                          ),
+                          // Ilustração
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                  32, 8, 32, chevronHeight + 8),
+                              child: Image.asset(
+                                'assets/images/LOGIN.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => const SizedBox(),
                               ),
-                            );
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Erro no login: $e')),
-                            );
-                            setState(() => _isLoading = false);
-                          }
-                        }
-                      },
-              ),
-
-              const SizedBox(height: 16),
-
-              /*SocialButton(
-                text: 'Entrar com Facebook',
-                color: const Color(0xFF1877F2),
-                textColor: Colors.white,
-                icon: FontAwesomeIcons.facebookF,
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomePage()),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),*/
-            ],
+              ],
+            ),
           ),
-        ),
+
+          // ── Área inferior escura ──────────────────────────────────────────
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Botões
+                  Column(
+                    children: [
+                      // Botão Google
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: _isLoading
+                              ? null
+                              : () async {
+                                  setState(() => _isLoading = true);
+                                  try {
+                                    final res = await auth.signInWithGoogle();
+                                    if (res != null && mounted) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) => const ProfilePage()),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                            content: Text('Erro no login: $e')),
+                                      );
+                                    }
+                                  } finally {
+                                    if (mounted) setState(() => _isLoading = false);
+                                  }
+                                },
+                          icon: _isLoading
+                              ? const SizedBox(
+                                  width: 20, height: 20,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.black54))
+                              : const FaIcon(FontAwesomeIcons.google,
+                                  size: 18, color: Colors.black87),
+                          label: Text(
+                            _isLoading ? 'Carregando...' : 'Sign up with Google',
+                            style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Botão Convidado
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => const HomePage()),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2C2C2C),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30)),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Convidado',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Texto descritivo na parte de baixo
+                  const Text(
+                    'Faça login para guardar destinos, criar\nroteiros e viver o Nordeste do seu jeito.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        height: 1.6),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
+// ── Clipper reutilizado do onboard_base ───────────────────────────────────────
+
+class _ChevronClipper extends CustomClipper<Path> {
+  final double chevronHeight;
+  final double inset;
+
+  const _ChevronClipper({required this.chevronHeight, required this.inset});
+
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    return Path()
+      ..moveTo(0, 0)
+      ..lineTo(w, 0)
+      ..lineTo(w, h - chevronHeight)
+      ..lineTo(w / 2, h - inset)
+      ..lineTo(0, h - chevronHeight)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant _ChevronClipper old) =>
+      old.chevronHeight != chevronHeight || old.inset != inset;
+}
+
+// SocialButton mantido para compatibilidade com outros usos
 class SocialButton extends StatelessWidget {
   final String text;
   final Color color;
@@ -129,26 +251,21 @@ class SocialButton extends StatelessWidget {
         onPressed: isLoading ? null : onPressed,
         icon: isLoading
             ? SizedBox(
-                width: 20,
-                height: 20,
+                width: 20, height: 20,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(textColor),
-                ),
-              )
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(textColor)))
             : leading,
-        label: Text(
-          isLoading ? 'Carregando...' : text,
-          style: TextStyle(color: textColor, fontSize: 16),
-        ),
+        label: Text(isLoading ? 'Carregando...' : text,
+            style: TextStyle(color: textColor, fontSize: 16)),
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+              borderRadius: BorderRadius.circular(12)),
           elevation: 1,
-          disabledBackgroundColor: color.withAlpha((color.alpha * 0.6).toInt()),
+          disabledBackgroundColor:
+              color.withAlpha((color.alpha * 0.6).toInt()),
         ),
       ),
     );
