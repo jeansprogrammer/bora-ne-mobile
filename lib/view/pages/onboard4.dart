@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
 import '../widgets/onboard_base.dart';
+import 'login_page.dart';
 
 class Onboard4 extends StatelessWidget {
   final VoidCallback onBack;
@@ -10,35 +10,18 @@ class Onboard4 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OnboardBase(
-      imagePath: 'assets/images/image_on4.png',
-      dark: false,
-      title: RichText(
-        text: const TextSpan(
-          style: TextStyle(fontSize: 30, color: Colors.black, height: 1.3),
-          children: [
-            TextSpan(
-              text: 'Conecte-se ',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFEBB22F),
-              ),
-            ),
-            TextSpan(text: 'e\nfortaleça o local.'),
-          ],
-        ),
-      ),
-      subtitle: 'Valorize pequenos empreendedores e\nviva experiências autênticas.',
-      bottomAction: OnboardNavRow(
-        onBack: onBack,
-        isLast: true,
-        onNext: () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const HomePage()),
-            (route) => false,
-          );
-        },
-      ),
+      imagePath: 'assets/images/FORTALECA.png',
+        title: 'Fortaleça',
+      subtitle: 'Acompanhe eventos, festivais,\nsabores e cultura local\nem tempo real.',
+      showBack: true,
+      isLast: true,
+      onBack: onBack,
+      onNext: () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+        );
+      },
     );
   }
 }

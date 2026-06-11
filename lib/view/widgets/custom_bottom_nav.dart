@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/notifications_page.dart';
 import 'package:boranemobile/view/pages/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
@@ -155,7 +156,13 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
             iconActive: Icons.notifications,
             label: 'Notificações',
             isActive: active == BottomNavTab.notificacoes,
-            onTap: () {},
+           onTap: () => Navigator.pushReplacement(  // ← estava vazio!
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NotificationsPage(),
+                settings: const RouteSettings(name: '/notificacoes'),
+              ),
+            ),
           ),
           _NavItem(
             icon: Icons.person_outline,
