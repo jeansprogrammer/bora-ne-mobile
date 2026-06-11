@@ -10,24 +10,12 @@ class Onboard2 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OnboardBase(
-      imagePath: 'assets/images/image_on2.png',
-      dark: false,
-      title: RichText(
-        text: const TextSpan(
-          style: TextStyle(fontSize: 30, color: Colors.black, height: 1.3),
-          children: [
-            TextSpan(text: 'Seu mapa de\n'),
-            TextSpan(
-              text: 'descobertas.',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFEBB22F),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomAction: OnboardNavRow(onBack: onBack, onNext: onNext),
+      imagePath: 'assets/images/PLANEJE.png',
+      title: 'Planeje',
+      subtitle: 'Crie roteiros personalizados\ne organize sua viagem\ndo seu jeito.',
+      showBack: true,
+      onNext: onNext,
+      onBack: onBack,
     );
   }
 }

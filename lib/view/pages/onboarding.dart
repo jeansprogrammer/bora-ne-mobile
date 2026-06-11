@@ -43,16 +43,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return PageView(
-      controller: _controller,
-      physics: const NeverScrollableScrollPhysics(),
-      onPageChanged: (i) => setState(() => _currentPage = i),
-      children: [
-        Onboard1(onNext: _next),
-        Onboard2(onNext: _next, onBack: _back),
-        Onboard3(onNext: _next, onBack: _back),
-        Onboard4(onBack: _back),
-      ],
+    return Scaffold(
+      body: PageView(
+        controller: _controller,
+        physics: const NeverScrollableScrollPhysics(),
+        onPageChanged: (i) => setState(() => _currentPage = i),
+        children: [
+          Onboard1(onNext: _next),
+          Onboard2(onNext: _next, onBack: _back),
+          Onboard3(onNext: _next, onBack: _back),
+          Onboard4(onBack: _back),
+        ],
+      ),
     );
   }
 }
