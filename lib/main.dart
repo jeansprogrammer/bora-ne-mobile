@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'controllers/destination_creation_controller.dart';
 import 'controllers/category_controller.dart';
+import 'controllers/favorites_controller.dart';
 //import 'view/pages/onboard1.dart';
 //import 'view/pages/onboarding.dart';
 //import 'services/carga_dados_service.dart';
@@ -28,6 +29,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => RouteCreationController()),
         ChangeNotifierProvider(create: (_) => CategoryController()),
         ChangeNotifierProvider(create: (_) => DestinationCreationController()),
+        ChangeNotifierProvider(create: (_) => FavoritesController()),
       ],
       child: const BoraNE(),
     ),

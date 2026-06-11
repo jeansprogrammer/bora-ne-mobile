@@ -1,6 +1,11 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:boranemobile/controllers/auth_controller.dart';
+import 'package:boranemobile/controllers/favorites_controller.dart';
+import 'package:boranemobile/services/favorites_service.dart';
+import 'package:boranemobile/models/route_creation_model.dart';
 
 class RouteCarousel extends StatefulWidget {
   final String? city;
@@ -145,8 +150,9 @@ class _RouteCarouselState extends State<RouteCarousel> {
     final categoria = categories.isNotEmpty ? categories.first : '';
 
     // Favoritos
-    final favoritadoPor = List<String>.from(rota['favoritadoPor'] ?? []);
-    const String uidAtual = 'usuario_teste';
+    final authController = Provider.of<AuthController>(context);
+    final String uidAtual = authController.user?.uid ?? 'usuario_teste';
+    final favoritadoPor = List<String>.from(rota['favoritedBy'] ?? []);
     final isFavorito = favoritadoPor.contains(uidAtual);
 
     return GestureDetector(
@@ -214,12 +220,46 @@ class _RouteCarouselState extends State<RouteCarousel> {
                           .collection('routes')
                           .doc(rota['id']);
                       final lista = List<String>.from(favoritadoPor);
-                      if (lista.contains(uidAtual)) {
-                        lista.remove(uidAtual);
+                      final isAdd = !lista.contains(uidAtual);
+
+                      // Atualização visual instantânea local
+                      setState(() {
+                        if (isAdd) {
+                          lista.add(uidAtual);
+                        } else {
+                          lista.remove(uidAtual);
+                        }
+                        rota['favoritedBy'] = lista;
+                      });
+                      
+                      // 1. Atualiza na coleção global de rotas
+                      await ref.update({'favoritedBy': lista});
+                      
+                      // 2. Atualiza na sublista de favoritos do usuário
+                      final favService = FavoritesService();
+                      final model = RouteCreationModel.fromMap(rota);
+                      if (isAdd) {
+                        await favService.favoritarRota(uidAtual, model);
                       } else {
-                        lista.add(uidAtual);
+                        await favService.desfavoritarRota(uidAtual, model.name);
                       }
-                      await ref.update({'favoritadoPor': lista});
+
+                      // 3. Atualiza o controller se estiver disponível na árvore
+                      if (!mounted) return;
+                      try {
+                        final favController = Provider.of<FavoritesController>(context, listen: false);
+                        if (favController.favorites != null) {
+                          if (isAdd) {
+                            favController.favorites!.routes.add(model);
+                          } else {
+                            favController.favorites!.routes.removeWhere((r) => r.name == model.name);
+                          }
+                          favController.forceNotifyListeners();
+                        }
+                      } catch (e) {
+                        // ignore
+                      }
+
                       _carregarRotas();
                     },
                     child: Container(
