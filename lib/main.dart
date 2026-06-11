@@ -50,7 +50,7 @@ class BoraNE extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         fontFamily: 'Poppins',
       ),
-      home: const HomePage(),
+      home: const SplashScreen(),
     );
   }
 }

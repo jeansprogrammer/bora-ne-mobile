@@ -1,4 +1,3 @@
-import 'package:boranemobile/controllers/destination_controller.dart';
 import 'package:boranemobile/controllers/destination_creation_controller.dart';
 import 'package:boranemobile/controllers/route_creation_controller.dart';
 import 'package:flutter/material.dart';
