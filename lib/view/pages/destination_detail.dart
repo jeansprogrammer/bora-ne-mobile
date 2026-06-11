@@ -1,93 +1,230 @@
-// destination_detail.dart
+import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:flutter/material.dart';
 
-class DestinationDetail extends StatelessWidget {
+class DestinationDetail extends StatefulWidget {
   final String id;
   final Map<String, dynamic> data;
 
   const DestinationDetail({super.key, required this.id, required this.data});
 
   @override
+  State<DestinationDetail> createState() => _DestinationDetailState();
+}
+
+class _DestinationDetailState extends State<DestinationDetail> {
+  bool _isFavorited = false; 
+
+  @override
   Widget build(BuildContext context) {
-    final nome        = data['name']        ?? 'Sem título';
-    final descricao   = data['description'] ?? '';
-    final coverPhoto  = data['coverPhoto']  ?? '';
-    final categories  = List<String>.from(data['categories'] ?? []);
-    final neighborhood = data['neighborhood'] ?? '';
-    final city        = data['city']        ?? '';
-    final state       = data['state']       ?? '';
-    final local = '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city – $state';
+    final String nome = widget.data['name'] ?? 'Sem título';
+    final String descricao = widget.data['description'] ?? 'Sem descrição disponível.';
+    final String coverPhoto = widget.data['coverPhoto'] ?? '';
+    final List<String> categories = List<String>.from(widget.data['categories'] ?? []);
+    final String neighborhood = widget.data['neighborhood'] ?? '';
+    final String city = widget.data['city'] ?? '';
+    final String state = widget.data['state'] ?? '';
+    
+    final String local = '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city - $state';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 280,
-            pinned: true,
-            backgroundColor: Colors.orangeAccent,
-            flexibleSpace: FlexibleSpaceBar(
-              background: coverPhoto.isNotEmpty
-                  ? Image.network(coverPhoto, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _placeholder())
-                  : _placeholder(),
+      backgroundColor: const Color(0xFFF8F9FA), 
+      body: Stack(
+        children: [
+          // ── 1. IMAGEM DE COBERTURA ─────────────────────────────────────────
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 340, 
+            child: coverPhoto.isNotEmpty
+                ? Image.network(
+                    coverPhoto,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                  )
+                : _buildPlaceholder(),
+          ),
+
+          // ── 2. CONTEÚDO EM SCROLL ──────────────────────────────────────────
+          Positioned.fill(
+            child: SingleChildScrollView(
+              // Aumentamos um pouco o padding inferior para o texto não sumir atrás do botão
+              padding: const EdgeInsets.only(bottom: 100), 
+              child: Column(
+                children: [
+                  const SizedBox(height: 240), 
+
+                  // Card Branco
+                  Container(
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.height - 340,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(32),
+                        topRight: Radius.circular(32),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  nome,
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  _isFavorited ? Icons.favorite : Icons.favorite_border,
+                                  color: _isFavorited ? Colors.red : Colors.black87,
+                                  size: 30,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isFavorited = !_isFavorited;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  local,
+                                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          if (categories.isNotEmpty)
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: categories.map((c) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F3F5),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Text(
+                                    c,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+
+                          const SizedBox(height: 24),
+
+                          const Text(
+                            'Descrição',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            descricao,
+                            textAlign: TextAlign.justify,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(nome,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  if (categories.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      children: categories
-                          .map((c) => Chip(
-                                label: Text(c,
-                                    style: const TextStyle(fontSize: 11)),
-                                backgroundColor:
-                                    Colors.orangeAccent.withOpacity(0.15),
-                                side: BorderSide.none,
-                                padding: EdgeInsets.zero,
-                              ))
-                          .toList(),
-                    ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 14, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(local,
-                          style: const TextStyle(
-                              fontSize: 13, color: Colors.grey)),
-                    ],
+
+          // ── 3. BOTÃO VOLTAR (Superior Esquerdo) ────────────────────────────
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 12,
+            left: 16,
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              radius: 22,
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ),
+
+          // ── 4. BOTÃO FIXO "VER NO MAPA" (Logo acima do menu inferior) ──────
+          Positioned(
+            bottom: 16, // Ajustado para ficar colado acima da CustomBottomNav
+            left: 24,   
+            right: 24,  
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF1B81A), 
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  const SizedBox(height: 16),
-                  Text(descricao,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                          height: 1.5)),
-                ],
+                  elevation: 4, 
+                ),
+                onPressed: () {
+                  // Integração futura com o Maps
+                },
+                child: const Text(
+                  'Ver no mapa',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ),
         ],
       ),
+
+      // ── 5. SUA BARRA DE MENU INFERIOR DE VOLTA AQUI ────────────────────────
+      bottomNavigationBar: const CustomBottomNav(),
     );
   }
 
-  Widget _placeholder() => Container(
-        color: const Color(0xFFFFF9E7),
-        child: const Center(
-          child: Icon(Icons.image_outlined,
-              color: Colors.orangeAccent, size: 48),
-        ),
-      );
+  Widget _buildPlaceholder() {
+    return Container(
+      color: const Color(0xFFFFF9E7),
+      child: const Center(
+        child: Icon(Icons.image_outlined, color: Color(0xFFF1B81A), size: 48),
+      ),
+    );
+  }
 }
