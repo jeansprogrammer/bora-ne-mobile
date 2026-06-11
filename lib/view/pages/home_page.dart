@@ -11,6 +11,7 @@ import 'package:boranemobile/view/pages/search_page.dart';
 import 'package:boranemobile/services/location_service.dart';
 import 'package:boranemobile/services/geoapify_service.dart';
 import 'package:boranemobile/data/category_data.dart';
+import 'package:boranemobile/view/pages/notifications_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -236,13 +237,35 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Logo ──────────────────────────────────────────────────────
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Image.asset('assets/images/LOGO_V2_1.png', height: 44),
+              // ── Logo e Botão de Notificações Integrado ────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  children: [
+                    // Espaçador do lado esquerdo para manter o alinhamento central da logo
+                    const SizedBox(width: 48),
+                    Expanded(
+                      child: Center(
+                        child: Image.asset('assets/images/LOGO_V2_1.png', height: 44),
+                      ),
+                    ),
+                    // Botão de Notificação Real e Elegante
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none, color: Colors.black87, size: 26),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NotificationsPage(), // Sem const para evitar o erro anterior
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
+
+              const SizedBox(height: 8),
 
               // ── Barra de Localização (clicável) ──────────────────────────
               Center(
