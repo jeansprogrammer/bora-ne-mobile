@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:boranemobile/services/favorites_service.dart';
 import 'package:boranemobile/controllers/favorites_controller.dart';
 import 'package:boranemobile/models/route_creation_model.dart';
+import 'package:boranemobile/view/pages/route_detail.dart';
 
 class RouteCard extends StatefulWidget {
   final String id;
@@ -124,7 +125,15 @@ class _RouteCardState extends State<RouteCard> {
     final totalDestinos = destinations.length;
 
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: widget.onTap ??
+          () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => RouteDetailPage(
+                    rota: {...widget.data, 'id': widget.id},
+                  ),
+                ),
+              ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:boranemobile/controllers/profile_controller.dart';
 import 'package:boranemobile/view/pages/edit_profile_page.dart';
 import 'package:boranemobile/view/pages/login_page.dart';
+import 'package:boranemobile/view/pages/terms_page.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 
 class UserProfilePage extends StatefulWidget {
@@ -33,7 +34,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
           bottomNavigationBar: const CustomBottomNav(activeTab: BottomNavTab.perfil),
           body: _controller.isLoading
               ? const Center(
-                  child: CircularProgressIndicator(color: Colors.amber))
+                  child: CircularProgressIndicator(color: Color.fromRGBO(245, 183, 10, 1)))
               : Column(
                   children: [
                     // ── Header amarelo ────────────────────────────────────
@@ -57,8 +58,22 @@ class _UserProfilePageState extends State<UserProfilePage> {
   // ── HEADER AMARELO ────────────────────────────────────────────────────────
 
   Widget _buildHeader(BuildContext context) {
-    final usuario   = _controller.currentUser;
-    final isLogged  = _controller.isLoggedIn;
+    final usuario     = _controller.currentUser;
+    final isLogged    = _controller.isLoggedIn;
+    final fbUser      = _controller.firebaseUser; // dados direto do Firebase Auth
+
+    // Foto: prioriza Firestore → fallback para Firebase Auth (Google photo)
+    final String? fotoUrl = (usuario?.photoUrl.isNotEmpty == true)
+        ? usuario!.photoUrl
+        : fbUser?.photoURL;
+
+    // Nome: prioriza Firestore → fallback para Firebase Auth displayName
+    final String nome = (usuario?.name.isNotEmpty == true)
+        ? usuario!.name
+        : (fbUser?.displayName ?? '');
+
+    // Cidade: só do Firestore
+    final String cidade = usuario?.city ?? '';
 
     return Container(
       width: double.infinity,
@@ -72,8 +87,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       child: Column(
         children: [
           // Logo
-          Image.asset('assets/images/LOGO_V2_3.png',
-              height: 36),
+          Image.asset('assets/images/LOGO_V2_3.png', height: 36),
           const SizedBox(height: 20),
 
           // Avatar
@@ -85,16 +99,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
             child: CircleAvatar(
               radius: 46,
               backgroundColor: Colors.white,
-              backgroundImage: (isLogged &&
-                      usuario?.photoUrl != null &&
-                      usuario!.photoUrl.isNotEmpty)
-                  ? NetworkImage(usuario.photoUrl)
+              backgroundImage: (isLogged && fotoUrl != null && fotoUrl.isNotEmpty)
+                  ? NetworkImage(fotoUrl)
                   : null,
-              child: (!isLogged ||
-                      usuario?.photoUrl == null ||
-                      usuario!.photoUrl.isEmpty)
-                  ? Icon(Icons.person,
-                      size: 46, color: Colors.grey.shade400)
+              child: (fotoUrl == null || fotoUrl.isEmpty)
+                  ? Icon(Icons.person, size: 46, color: Colors.grey.shade400)
                   : null,
             ),
           ),
@@ -102,7 +111,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
           // Nome
           Text(
-            isLogged ? (usuario?.name ?? '') : 'Visitante',
+            isLogged ? nome : 'Visitante',
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -110,13 +119,21 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ),
           ),
 
-          // Cidade
-          if (isLogged && (usuario?.city.isNotEmpty ?? false)) ...[
+          // Email (do Firebase Auth quando Firestore não tem cidade)
+          if (isLogged && cidade.isEmpty && fbUser?.email != null) ...[
             const SizedBox(height: 4),
             Text(
-              usuario!.city,
-              style: const TextStyle(
-                  fontSize: 14, color: Colors.black87),
+              fbUser!.email!,
+              style: const TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+          ],
+
+          // Cidade (do Firestore)
+          if (isLogged && cidade.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              cidade,
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
           ],
         ],
@@ -187,7 +204,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
           onTap: () async {
             await _controller.executarLogout();
             if (context.mounted) {
-              Navigator.of(context).popUntil((r) => r.isFirst);
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false,
+              );
             }
           },
         ),
@@ -232,12 +252,15 @@ class _UserProfilePageState extends State<UserProfilePage> {
           child: SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const LoginPage())),
+              onPressed: () async {
+                await Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const LoginPage()));
+                // Recarrega perfil ao voltar (caso tenha feito login)
+                if (context.mounted) _controller.carregarPerfil();
+              },
               icon: Image.network(
                 'https://www.google.com/favicon.ico',
-                width: 20,
-                height: 20,
+                width: 20, height: 20,
                 errorBuilder: (_, __, ___) =>
                     const Icon(Icons.login, size: 20),
               ),
@@ -263,7 +286,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
         _buildTile(
           icon: Icons.description_outlined,
           label: 'Termos de uso',
-          onTap: () {},
+          onTap: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const TermsPage(),
+              ),
+            ),
         ),
         _buildTile(
           icon: Icons.privacy_tip_outlined,

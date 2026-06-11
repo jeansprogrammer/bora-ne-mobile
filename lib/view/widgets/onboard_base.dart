@@ -43,7 +43,7 @@ class OnboardBase extends StatelessWidget {
                     inset: 0,
                   ),
                   child: Container(
-                    color: const Color(0xFFEBB22F),
+                    color: const Color(0xFFEBB22F), // ← amarelo igual ao login
                     width: double.infinity,
                     height: topHeight,
                   ),
@@ -102,7 +102,7 @@ class OnboardBase extends StatelessWidget {
                     subtitle,
                     style: const TextStyle(
                       fontSize: 15,
-                      color: Colors.white70,
+                      color: Color(0xFFF2F2F2),
                       height: 1.55,
                     ),
                     textAlign: TextAlign.center,

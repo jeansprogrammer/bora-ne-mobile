@@ -1,11 +1,11 @@
 import 'package:boranemobile/view/pages/destination_detail.dart';
 import 'package:boranemobile/view/pages/route_detail.dart';
+import 'package:boranemobile/view/pages/routedestinos_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/view/widgets/route_carousel.dart';
 import 'package:boranemobile/view/widgets/destination_card.dart';
-import 'package:boranemobile/view/pages/routes_page.dart';
 import 'package:boranemobile/view/pages/search_page.dart';
 import 'package:boranemobile/services/location_service.dart';
 import 'package:boranemobile/services/geoapify_service.dart';
@@ -410,7 +410,7 @@ class _HomePageState extends State<HomePage> {
 
           return GestureDetector(
             onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => RoutesPage())),
+                context, MaterialPageRoute(builder: (_) => RouteDestinosPage())),
             child: Container(
               margin: const EdgeInsets.only(right: 12),
               child: Column(
@@ -587,7 +587,7 @@ class _HomePageState extends State<HomePage> {
             child: ElevatedButton(
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const RoutesPage()),
+                MaterialPageRoute(builder: (_) => const RouteDestinosPage()),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,

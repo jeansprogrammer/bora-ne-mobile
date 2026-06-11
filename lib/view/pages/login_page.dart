@@ -3,10 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
-import 'package:boranemobile/view/pages/profile_page.dart';
+import 'package:boranemobile/view/pages/user_profile_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  /// true  → veio do onboarding (mostra botão Convidado + sem botão voltar)
+  /// false → aberto dentro do app  (só Google + botão voltar no topo)
+  final bool fromOnboarding;
+
+  const LoginPage({super.key, this.fromOnboarding = false});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -27,7 +31,7 @@ class _LoginPageState extends State<LoginPage> {
       body: Column(
         children: [
 
-          // ── Área superior clara com chevron ──────────────────────────────
+          // ── Área superior clara com chevron ────────────────────────────
           SizedBox(
             height: topHeight,
             width: double.infinity,
@@ -35,7 +39,8 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 // Borda amarela do chevron
                 ClipPath(
-                  clipper: _ChevronClipper(chevronHeight: chevronHeight, inset: 0),
+                  clipper: _ChevronClipper(
+                      chevronHeight: chevronHeight, inset: 0),
                   child: Container(
                     color: const Color(0xFFEBB22F),
                     width: double.infinity,
@@ -44,7 +49,8 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 // Área branca principal
                 ClipPath(
-                  clipper: _ChevronClipper(chevronHeight: chevronHeight, inset: 10),
+                  clipper: _ChevronClipper(
+                      chevronHeight: chevronHeight, inset: 10),
                   child: Container(
                     color: Colors.white,
                     width: double.infinity,
@@ -52,21 +58,38 @@ class _LoginPageState extends State<LoginPage> {
                     child: SafeArea(
                       child: Column(
                         children: [
-                          const SizedBox(height: 16),
+                          // Botão voltar — só quando aberto de dentro do app
+                          if (!widget.fromOnboarding)
+                            Align(
+                              alignment: Alignment.topLeft,
+                              child: IconButton(
+                                icon: const Icon(Icons.arrow_back,
+                                    color: Colors.black),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            )
+                          else
+                            const SizedBox(height: 16),
+
                           // Logo
                           Image.asset(
                             'assets/images/LOGO_V2_1.png',
                             height: 40,
                           ),
+
                           // Ilustração
                           Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                  32, 8, 32, chevronHeight + 8),
+                              padding: EdgeInsets.fromLTRB(
+                                  32,
+                                  8,
+                                  32,
+                                  chevronHeight + (widget.fromOnboarding ? 8 : 4)),
                               child: Image.asset(
                                 'assets/images/LOGIN.png',
                                 fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => const SizedBox(),
+                                errorBuilder: (_, __, ___) =>
+                                    const SizedBox(),
                               ),
                             ),
                           ),
@@ -79,98 +102,103 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // ── Área inferior escura ──────────────────────────────────────────
+          // ── Área inferior escura ────────────────────────────────────────
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
+              padding: const EdgeInsets.fromLTRB(28, 0, 28, 28),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Botões
-                  Column(
-                    children: [
-                      // Botão Google
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton.icon(
-                          onPressed: _isLoading
-                              ? null
-                              : () async {
-                                  setState(() => _isLoading = true);
-                                  try {
-                                    final res = await auth.signInWithGoogle();
-                                    if (res != null && mounted) {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) => const ProfilePage()),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                            content: Text('Erro no login: $e')),
-                                      );
-                                    }
-                                  } finally {
-                                    if (mounted) setState(() => _isLoading = false);
-                                  }
-                                },
-                          icon: _isLoading
-                              ? const SizedBox(
-                                  width: 20, height: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.black54))
-                              : const FaIcon(FontAwesomeIcons.google,
-                                  size: 18, color: Colors.black87),
-                          label: Text(
-                            _isLoading ? 'Carregando...' : 'Sign up with Google',
-                            style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30)),
-                            elevation: 0,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
 
-                      // Botão Convidado
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const HomePage()),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2C2C2C),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30)),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            'Convidado',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
+                  // Botão Google
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: _isLoading
+                          ? null
+                          : () async {
+                              setState(() => _isLoading = true);
+                              try {
+                                final res = await auth.signInWithGoogle();
+                                if (res != null && mounted) {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const UserProfilePage()),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content:
+                                            Text('Erro no login: $e')),
+                                  );
+                                }
+                              } finally {
+                                if (mounted)
+                                  setState(() => _isLoading = false);
+                              }
+                            },
+                      icon: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.black54))
+                          : const FaIcon(FontAwesomeIcons.google,
+                              size: 18, color: Colors.black87),
+                      label: Text(
+                        _isLoading ? 'Carregando...' : 'Entrar com Google',
+                        style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600),
                       ),
-                    ],
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30)),
+                        elevation: 0,
+                      ),
+                    ),
                   ),
 
-                  // Texto descritivo na parte de baixo
+                  // Botão Convidado — só no onboarding
+                  if (widget.fromOnboarding) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const HomePage()),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2C2C2C),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Convidado',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 28),
+
+                  // Texto descritivo
                   const Text(
                     'Faça login para guardar destinos, criar\nroteiros e viver o Nordeste do seu jeito.',
                     textAlign: TextAlign.center,
