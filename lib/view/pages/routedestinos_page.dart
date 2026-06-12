@@ -1,7 +1,12 @@
 import 'package:boranemobile/controllers/destination_creation_controller.dart';
 import 'package:boranemobile/controllers/route_creation_controller.dart';
+import 'package:boranemobile/view/widgets/destination_card.dart';
+import 'package:boranemobile/view/widgets/route_card.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+const Color kPrimaryGold = Color(0xFFEDA200);
 
 class RouteDestinosPage extends StatefulWidget {
   const RouteDestinosPage({super.key});
@@ -16,12 +21,10 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-
+      backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
         child: Column(
           children: [
-            // Cabeçalho
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -30,13 +33,9 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.black,
-                    ),
+                    icon: const Icon(Icons.arrow_back, color: Colors.black),
                     onPressed: () => Navigator.pop(context),
                   ),
-
                   const Expanded(
                     child: Center(
                       child: Text(
@@ -49,53 +48,37 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 48),
                 ],
               ),
             ),
-
-            // Botões Rotas e Destinos
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTabButton(
-                    title: "ROTAS",
-                    selected: selectedIndex == 0,
-                    onTap: () {
-                      setState(() {
-                        selectedIndex = 0;
-                      });
-                    },
+            
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildTabButton(
+                      title: "Rotas",
+                      selected: selectedIndex == 0,
+                      onTap: () => setState(() => selectedIndex = 0),
+                    ),
                   ),
-                ),
-
-                Container(
-                  width: 1,
-                  height: 60,
-                  color: Colors.black26,
-                ),
-
-                Expanded(
-                  child: _buildTabButton(
-                    title: "DESTINOS",
-                    selected: selectedIndex == 1,
-                    onTap: () {
-                      setState(() {
-                        selectedIndex = 1;
-                      });
-                    },
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildTabButton(
+                      title: "Destinos",
+                      selected: selectedIndex == 1,
+                      onTap: () => setState(() => selectedIndex = 1),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-
-            const Divider(
-              height: 1,
-              color: Colors.black26,
-            ),
-
-            // Conteúdo
+            
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
@@ -115,30 +98,23 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
     required bool selected,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 60,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: selected
-                  ? const Color(0xFFD89C00)
-                  : Colors.transparent,
-              width: 3,
-            ),
-          ),
+          color: selected ? kPrimaryGold : Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: kPrimaryGold, width: 2),
         ),
         child: Center(
           child: Text(
             title,
             style: TextStyle(
-              color: selected
-                  ? const Color(0xFFD89C00)
-                  : Colors.black,
-              fontSize: 20,
-              fontWeight:
-                  selected ? FontWeight.bold : FontWeight.w500,
+              color: selected ? Colors.white : kPrimaryGold,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
@@ -146,12 +122,6 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
     );
   }
 }
-
-///
-/// WIDGET DE ROTAS
-/// Substituir pelo widget
-///
-///
 
 class RotasWidget extends StatefulWidget {
   const RotasWidget({super.key});
@@ -164,7 +134,6 @@ class _RotasWidgetState extends State<RotasWidget> {
   @override
   void initState() {
     super.initState();
-
     Future.microtask(() {
       context.read<RouteCreationController>().carregarRotas();
     });
@@ -172,42 +141,34 @@ class _RotasWidgetState extends State<RotasWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste';
+
     return Consumer<RouteCreationController>(
       builder: (context, controller, child) {
         if (controller.isSearching) {
           return const Center(
-            child: CircularProgressIndicator(),
+            child: CircularProgressIndicator(color: kPrimaryGold),
           );
         }
 
         if (controller.rotas.isEmpty) {
-          return const Center(
-            child: Text("Nenhuma rota encontrada"),
-          );
+          return const Center(child: Text("Nenhuma rota encontrada"));
         }
 
         return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           itemCount: controller.rotas.length,
           itemBuilder: (context, index) {
             final rota = controller.rotas[index];
 
-            return Card(
-              margin: const EdgeInsets.all(8),
-              child: ListTile(
-                leading: rota['fotoCapa'] != null
-                    ? Image.network(
-                        rota['fotoCapa'],
-                        width: 60,
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-                title: Text(
-                  rota['name'] ?? 'Sem nome',
-                ),
-                subtitle: Text(
-                  rota['description'] ?? '',
-                ),
-              ),
+            return RouteCard(
+              
+              id: rota['id'] ?? '',
+              data: rota,
+              currentUid: uid,
+              onTap: () {
+                
+              },
             );
           },
         );
@@ -216,11 +177,6 @@ class _RotasWidgetState extends State<RotasWidget> {
   }
 }
 
-
-///
-/// WIDGET DE DESTINOS
-/// Substituir pelo widget
-///
 class DestinosWidget extends StatefulWidget {
   const DestinosWidget({super.key});
 
@@ -229,11 +185,9 @@ class DestinosWidget extends StatefulWidget {
 }
 
 class _DestinosWidgetState extends State<DestinosWidget> {
-
   @override
   void initState() {
     super.initState();
-
     Future.microtask(() {
       context.read<DestinationCreationController>().carregarDestinos();
     });
@@ -241,45 +195,34 @@ class _DestinosWidgetState extends State<DestinosWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste';
+
     return Consumer<DestinationCreationController>(
       builder: (context, controller, child) {
-
         if (controller.isLoading) {
           return const Center(
-            child: CircularProgressIndicator(),
+            child: CircularProgressIndicator(color: kPrimaryGold),
           );
         }
 
         if (controller.destinos.isEmpty) {
-          return const Center(
-            child: Text('Nenhum destino encontrado'),
-          );
+          return const Center(child: Text('Nenhum destino encontrado'));
         }
 
         return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           itemCount: controller.destinos.length,
           itemBuilder: (context, index) {
-
             final destino = controller.destinos[index];
 
-            return Card(
-              margin: const EdgeInsets.all(8),
-              child: ListTile(
-                leading: destino.coverPhoto.isNotEmpty
-                    ? Image.network(
-                        destino.coverPhoto,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-
-                title: Text(destino.name),
-
-                subtitle: Text(
-                  '${destino.city} - ${destino.state}',
-                ),
-              ),
+            return DestinationCard(
+              
+              id: destino.id ?? '',
+              data: destino.toMap(),
+              currentUid: uid,
+              onTap: () {
+                
+              },
             );
           },
         );
