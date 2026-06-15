@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/report_problem_page.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/controllers/profile_controller.dart';
 import 'package:boranemobile/view/pages/edit_profile_page.dart';
@@ -184,7 +185,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
         _buildTile(
           icon: Icons.help_outline,
           label: 'Ajuda / FAQ',
-          onTap: () {},
+          onTap: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ReportProblemPage(),
+              ),
+            ),
         ),
         _buildTile(
           icon: Icons.flag_outlined,
@@ -302,7 +308,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
         _buildTile(
           icon: Icons.help_outline,
           label: 'Ajuda / FAQ',
-          onTap: () {},
+          onTap: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ReportProblemPage(),
+              ),
+            ),
         ),
 
         const SizedBox(height: 32),

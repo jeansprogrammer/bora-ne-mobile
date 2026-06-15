@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
@@ -78,7 +79,13 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const UserProfilePage(),
+                            settings: const RouteSettings(name: '/user'),
+                          ),
+                        ),
         ),
         title: Image.asset(
           'assets/images/LOGO_V2_1.png',
