@@ -121,7 +121,26 @@ class _NewRoutePageState extends State<NewRoutePage> {
             const SizedBox(height: 10),
             _buildFotoCapa(controller),
             const SizedBox(height: 24),
-            _buildSectionTitle("Título da rota"),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: _buildSectionTitle("Título da rota")),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 220),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        if (controller.newRoute.name.isEmpty)
+                          _chip("Título obrigatório"),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
             TextField(
               onChanged: controller.setName,
               decoration: _inputStyle("Ex: Rota Gastronômica de Caruaru", Icons.route_outlined),
@@ -135,14 +154,73 @@ class _NewRoutePageState extends State<NewRoutePage> {
               decoration: _inputStyle("Descreva brevemente sua rota...", Icons.edit_outlined),
             ),
             const SizedBox(height: 4),
-            _buildSectionTitle("Categorias"),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: _buildSectionTitle("Categorias")),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 220),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        if (controller.categoriasSelecionadas.isEmpty)
+                          _chip("Categoria obrigatória"),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
             _buildCategoriasField(controller),
             const SizedBox(height: 20),
-            _buildSectionTitle("Cidade"),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: _buildSectionTitle("Cidade")),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 220),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        if (controller.ufSelecionado.isEmpty)
+                          _chip("UF obrigatório"),
+                        if (controller.cidadeSelecionada.isEmpty)
+                          _chip("Cidade obrigatória"),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
             _buildCidadeDropdown(controller),
             const SizedBox(height: 20),
             const Divider(height: 32),
-            _buildSectionTitle("Destinos (máx. 10)"),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: _buildSectionTitle("Destinos (máx. 10)")),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 220),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        if (controller.DestinationsSelecionados.length < 3)
+                          _chip("Mínimo 3 Destinos (${controller.DestinationsSelecionados.length}/3)"),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
             _buildBuscaDestinations(controller),
             const SizedBox(height: 8),
             _buildDestinationsAdicionados(controller),
@@ -979,27 +1057,6 @@ class _NewRoutePageState extends State<NewRoutePage> {
   Widget _buildActionButtons(BuildContext context, RouteCreationController controller) {
     return Column(
       children: [
-        // Chips de validação
-        if (!controller.isValid)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                if (controller.newRoute.name.isEmpty)
-                  _chip("Título obrigatório"),
-                if (controller.categoriasSelecionadas.isEmpty)
-                  _chip("Categoria obrigatória"),
-                if (controller.ufSelecionado.isEmpty)
-                  _chip("UF obrigatório"),
-                if (controller.cidadeSelecionada.isEmpty)
-                  _chip("Cidade obrigatória"),
-                if (controller.DestinationsSelecionados.length < 3)
-                  _chip("Mínimo 3 Destinos (${controller.DestinationsSelecionados.length}/3)"),
-              ],
-            ),
-          ),
         Row(
           children: [
             Expanded(

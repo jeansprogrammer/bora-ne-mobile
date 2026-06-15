@@ -54,9 +54,9 @@ class _SearchPageState extends State<SearchPage> {
       child: Consumer<sc.SearchController>(
         builder: (context, ctrl, _) {
           return Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: const Color(0xFFF5F5F5),
             appBar: AppBar(
-              backgroundColor: Colors.white,
+              backgroundColor: const Color(0xFFF5F5F5),
               elevation: 0,
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -72,8 +72,14 @@ class _SearchPageState extends State<SearchPage> {
                       child: Container(
                         height: 44,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(22),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2)),
+                          ],
                         ),
                         child: Row(
                           children: [
@@ -127,8 +133,16 @@ class _SearchPageState extends State<SearchPage> {
                         decoration: BoxDecoration(
                           color: ctrl.filter.temFiltroAtivo
                               ? Colors.orangeAccent
-                              : Colors.grey.shade100,
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(22),
+                          boxShadow: ctrl.filter.temFiltroAtivo
+                              ? null
+                              : [
+                                  BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2)),
+                                ],
                         ),
                         child: Icon(
                           Icons.tune,

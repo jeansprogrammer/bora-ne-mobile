@@ -5,7 +5,7 @@ import '../models/category_model.dart';
 const List<CategoryModel> categoriasBoraNE = [
   CategoryModel(
     name: 'Cultural',
-    emoji: '🏛️',
+    emoji: '🎭',
     synonyms: [
       'Arte', 'Folclore', 'Artesanato', 'Tradições', 'Música', 'Dança',
       'Literatura', 'Cinema', 'Teatro', 'Exposição', 'Galeria',
@@ -16,7 +16,7 @@ const List<CategoryModel> categoriasBoraNE = [
   ),
   CategoryModel(
     name: 'Histórico',
-    emoji: '🏰',
+    emoji: '🏛️',
     synonyms: [
       'Monumento', 'Museu Histórico', 'Sítio Histórico',
       'Patrimônio Histórico', 'Ruínas', 'Memorial', 'Centro Histórico',

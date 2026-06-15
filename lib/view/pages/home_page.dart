@@ -15,7 +15,9 @@ import 'package:boranemobile/controllers/auth_controller.dart';
 import 'package:boranemobile/view/pages/notifications_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String? cidadeInicial;
+
+  const HomePage({super.key, this.cidadeInicial});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -23,16 +25,19 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? _cidadeDetectada;
-  String? _cidadeManual; // ← cidade escolhida manualmente pelo usuário
+  String? _cidadeManual;
   bool _estaCarregandoLocalizacao = false;
 
-  // Cidade ativa: manual tem prioridade sobre a detectada
   String? get _cidadeAtiva => _cidadeManual ?? _cidadeDetectada;
 
   @override
   void initState() {
     super.initState();
-    _detectarLocalizacao();
+    if (widget.cidadeInicial != null) {
+      _cidadeDetectada = widget.cidadeInicial;
+    } else {
+      _detectarLocalizacao();
+    }
   }
 
   Future<void> _detectarLocalizacao() async {
@@ -410,7 +415,12 @@ class _HomePageState extends State<HomePage> {
 
           return GestureDetector(
             onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => RouteDestinosPage())),
+                context,
+                MaterialPageRoute(
+                  builder: (_) => RouteDestinosPage(
+                    categoriaInicial: cat.name,
+                  ),
+                )),
             child: Container(
               margin: const EdgeInsets.only(right: 12),
               child: Column(
@@ -419,7 +429,7 @@ class _HomePageState extends State<HomePage> {
                     width: 68,
                     height: 68,
                     decoration: BoxDecoration(
-                      color: _corCategoria(cat.name).withOpacity(0.15),
+                      color: const Color(0xFFFFF9E7),
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: ClipRRect(
@@ -450,25 +460,6 @@ class _HomePageState extends State<HomePage> {
         },
       ),
     );
-  }
-
-  Color _corCategoria(String nome) {
-    const cores = {
-      'Cultural':       Color(0xFFB07BE0),
-      'Histórico':      Color(0xFF7BBBE0),
-      'Religioso':      Color(0xFF7B9FE0),
-      'Natureza':       Color(0xFF5DBE8A),
-      'Lazer':          Color(0xFFD16F6F),
-      'Entretenimento': Color(0xFF696ABD),
-      'Aventura':       Color(0xFFE0A87B),
-      'Esportes':       Color(0xFF47F3FF),
-      'Gastronomia':    Color(0xFFFFB347),
-      'Compras':        Color(0xFFC2CA69),
-      'Hospedagem':     Color(0xFF647DB4),
-      'Eventos':        Color(0xFFC6708A),
-      'Experiências':   Color(0xFFFFE347),
-    };
-    return cores[nome] ?? const Color(0xFFFFB347);
   }
 
   // ── PRÓXIMO A VOCÊ — destinos da cidade ──────────────────────────────────

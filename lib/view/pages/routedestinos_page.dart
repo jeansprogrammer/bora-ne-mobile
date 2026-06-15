@@ -1,10 +1,18 @@
 import 'package:boranemobile/controllers/destination_creation_controller.dart';
 import 'package:boranemobile/controllers/route_creation_controller.dart';
+import 'package:boranemobile/view/widgets/destination_card.dart';
+import 'package:boranemobile/view/widgets/route_card.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+const Color kPrimaryGold = Color(0xFFEDA200);
+
 class RouteDestinosPage extends StatefulWidget {
-  const RouteDestinosPage({super.key});
+  /// Categoria vinda da home — se nula, mostra todas (sem filtro)
+  final String? categoriaInicial;
+
+  const RouteDestinosPage({super.key, this.categoriaInicial});
 
   @override
   State<RouteDestinosPage> createState() => _RouteDestinosPageState();
@@ -15,13 +23,14 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+    final categoria = widget.categoriaInicial;
 
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
         child: Column(
           children: [
-            // Cabeçalho
+            // ── Header ────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -30,78 +39,88 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.black,
-                    ),
+                    icon: const Icon(Icons.arrow_back, color: Colors.black),
                     onPressed: () => Navigator.pop(context),
                   ),
-
-                  const Expanded(
+                  Expanded(
                     child: Center(
-                      child: Text(
-                        "BoraNE",
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Image.asset('assets/images/LOGO_V2_1.png', height: 44),
+                ),
+              ),
                   ),
-
                   const SizedBox(width: 48),
                 ],
               ),
             ),
 
-            // Botões Rotas e Destinos
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTabButton(
-                    title: "ROTAS",
-                    selected: selectedIndex == 0,
-                    onTap: () {
-                      setState(() {
-                        selectedIndex = 0;
-                      });
-                    },
+            // ── Botões Rotas / Destinos (reduzidos) ──────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildTabButton(
+                      title: "Rotas",
+                      selected: selectedIndex == 0,
+                      onTap: () => setState(() => selectedIndex = 0),
+                    ),
                   ),
-                ),
-
-                Container(
-                  width: 1,
-                  height: 60,
-                  color: Colors.black26,
-                ),
-
-                Expanded(
-                  child: _buildTabButton(
-                    title: "DESTINOS",
-                    selected: selectedIndex == 1,
-                    onTap: () {
-                      setState(() {
-                        selectedIndex = 1;
-                      });
-                    },
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildTabButton(
+                      title: "Destinos",
+                      selected: selectedIndex == 1,
+                      onTap: () => setState(() => selectedIndex = 1),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
 
-            const Divider(
-              height: 1,
-              color: Colors.black26,
-            ),
+            const SizedBox(height: 10),
 
-            // Conteúdo
+            // ── Categoria selecionada (vinda da home) ────────────────────────
+            if (categoria != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: kPrimaryGold.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: kPrimaryGold, width: 1),
+                  ),
+                  child: Text(
+                    categoria,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: kPrimaryGold,
+                    ),
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 10),
+
+            // ── Lista de Rotas / Destinos ────────────────────────────────────
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
                 child: selectedIndex == 0
-                    ? const RotasWidget()
-                    : const DestinosWidget(),
+                    ? RotasWidget(
+                        key: const ValueKey('rotas'),
+                        categoriaFiltro: categoria,
+                      )
+                    : DestinosWidget(
+                        key: const ValueKey('destinos'),
+                        categoriaFiltro: categoria,
+                      ),
               ),
             ),
           ],
@@ -115,30 +134,23 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
     required bool selected,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 60,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: selected
-                  ? const Color(0xFFD89C00)
-                  : Colors.transparent,
-              width: 3,
-            ),
-          ),
+          color: selected ? kPrimaryGold : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: kPrimaryGold, width: 1.5),
         ),
         child: Center(
           child: Text(
             title,
             style: TextStyle(
-              color: selected
-                  ? const Color(0xFFD89C00)
-                  : Colors.black,
-              fontSize: 20,
-              fontWeight:
-                  selected ? FontWeight.bold : FontWeight.w500,
+              color: selected ? Colors.white : kPrimaryGold,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
@@ -147,14 +159,25 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
   }
 }
 
-///
-/// WIDGET DE ROTAS
-/// Substituir pelo widget
-///
-///
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+List<String> _parseCats(dynamic valor) {
+  if (valor == null) return [];
+  if (valor is List) return List<String>.from(valor);
+  if (valor is String && valor.isNotEmpty) return [valor];
+  return [];
+}
+
+bool _passaFiltro(List<String> categoriasItem, String? categoria) {
+  if (categoria == null) return true;
+  return categoriasItem.contains(categoria);
+}
+
+// ── ROTAS ──────────────────────────────────────────────────────────────────
 
 class RotasWidget extends StatefulWidget {
-  const RotasWidget({super.key});
+  final String? categoriaFiltro;
+  const RotasWidget({super.key, this.categoriaFiltro});
 
   @override
   State<RotasWidget> createState() => _RotasWidgetState();
@@ -164,7 +187,6 @@ class _RotasWidgetState extends State<RotasWidget> {
   @override
   void initState() {
     super.initState();
-
     Future.microtask(() {
       context.read<RouteCreationController>().carregarRotas();
     });
@@ -172,42 +194,34 @@ class _RotasWidgetState extends State<RotasWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste';
+
     return Consumer<RouteCreationController>(
       builder: (context, controller, child) {
         if (controller.isSearching) {
           return const Center(
-            child: CircularProgressIndicator(),
+            child: CircularProgressIndicator(color: kPrimaryGold),
           );
         }
 
-        if (controller.rotas.isEmpty) {
-          return const Center(
-            child: Text("Nenhuma rota encontrada"),
-          );
+        final rotasFiltradas = controller.rotas.where((rota) {
+          final cats = _parseCats(rota['categories']);
+          return _passaFiltro(cats, widget.categoriaFiltro);
+        }).toList();
+
+        if (rotasFiltradas.isEmpty) {
+          return const Center(child: Text("Nenhuma rota encontrada"));
         }
 
         return ListView.builder(
-          itemCount: controller.rotas.length,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          itemCount: rotasFiltradas.length,
           itemBuilder: (context, index) {
-            final rota = controller.rotas[index];
-
-            return Card(
-              margin: const EdgeInsets.all(8),
-              child: ListTile(
-                leading: rota['fotoCapa'] != null
-                    ? Image.network(
-                        rota['fotoCapa'],
-                        width: 60,
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-                title: Text(
-                  rota['name'] ?? 'Sem nome',
-                ),
-                subtitle: Text(
-                  rota['description'] ?? '',
-                ),
-              ),
+            final rota = rotasFiltradas[index];
+            return RouteCard(
+              id: rota['id'] ?? '',
+              data: rota,
+              currentUid: uid,
             );
           },
         );
@@ -216,24 +230,20 @@ class _RotasWidgetState extends State<RotasWidget> {
   }
 }
 
+// ── DESTINOS ───────────────────────────────────────────────────────────────
 
-///
-/// WIDGET DE DESTINOS
-/// Substituir pelo widget
-///
 class DestinosWidget extends StatefulWidget {
-  const DestinosWidget({super.key});
+  final String? categoriaFiltro;
+  const DestinosWidget({super.key, this.categoriaFiltro});
 
   @override
   State<DestinosWidget> createState() => _DestinosWidgetState();
 }
 
 class _DestinosWidgetState extends State<DestinosWidget> {
-
   @override
   void initState() {
     super.initState();
-
     Future.microtask(() {
       context.read<DestinationCreationController>().carregarDestinos();
     });
@@ -241,45 +251,33 @@ class _DestinosWidgetState extends State<DestinosWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste';
+
     return Consumer<DestinationCreationController>(
       builder: (context, controller, child) {
-
         if (controller.isLoading) {
           return const Center(
-            child: CircularProgressIndicator(),
+            child: CircularProgressIndicator(color: kPrimaryGold),
           );
         }
 
-        if (controller.destinos.isEmpty) {
-          return const Center(
-            child: Text('Nenhum destino encontrado'),
-          );
+        final destinosFiltrados = controller.destinos.where((destino) {
+          return _passaFiltro(destino.categories, widget.categoriaFiltro);
+        }).toList();
+
+        if (destinosFiltrados.isEmpty) {
+          return const Center(child: Text('Nenhum destino encontrado'));
         }
 
         return ListView.builder(
-          itemCount: controller.destinos.length,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          itemCount: destinosFiltrados.length,
           itemBuilder: (context, index) {
-
-            final destino = controller.destinos[index];
-
-            return Card(
-              margin: const EdgeInsets.all(8),
-              child: ListTile(
-                leading: destino.coverPhoto.isNotEmpty
-                    ? Image.network(
-                        destino.coverPhoto,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-
-                title: Text(destino.name),
-
-                subtitle: Text(
-                  '${destino.city} - ${destino.state}',
-                ),
-              ),
+            final destino = destinosFiltrados[index];
+            return DestinationCard(
+              id: destino.id ?? '',
+              data: destino.toMap(),
+              currentUid: uid,
             );
           },
         );
