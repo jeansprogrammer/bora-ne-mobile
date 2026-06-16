@@ -171,7 +171,7 @@ class _RouteCardState extends State<RouteCard> {
                 // ── Info ──────────────────────────────────────────────────
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 36, 10),
+                    padding: const EdgeInsets.fromLTRB(12, 10, 40, 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -182,35 +182,8 @@ class _RouteCardState extends State<RouteCard> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (categories.isNotEmpty) ...[
-                          const SizedBox(height: 3),
-                          Text(
-                            categories.join(', '),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.orangeAccent,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                        const SizedBox(height: 4),
-                        // Quantidade de destinos no lugar da descrição
-                        Row(
-                          children: [
-                            const Icon(Icons.place_outlined,
-                                size: 13, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$totalDestinos destino${totalDestinos != 1 ? 's' : ''}',
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        if (city.isNotEmpty)
+                        if (city.isNotEmpty) ...[
+                          const SizedBox(height: 4),
                           Row(
                             children: [
                               const Icon(Icons.location_on_outlined,
@@ -227,6 +200,45 @@ class _RouteCardState extends State<RouteCard> {
                               ),
                             ],
                           ),
+                        ],
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.place_outlined,
+                                size: 13, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$totalDestinos destino${totalDestinos != 1 ? 's' : ''}',
+                              style: const TextStyle(
+                                  color: Colors.grey, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                        if (categories.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: categories.map((cat) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF3D6),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  cat,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFFF7B119),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -236,28 +248,14 @@ class _RouteCardState extends State<RouteCard> {
 
             // ── Coração no topo direito ────────────────────────────────────
             Positioned(
-              top: 8,
-              right: 8,
+              top: 12,
+              right: 12,
               child: GestureDetector(
                 onTap: () => _toggleFavorito(context),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    _isFavorito ? Icons.favorite : Icons.favorite_border,
-                    color: _isFavorito ? Colors.red : Colors.grey,
-                    size: 18,
-                  ),
+                child: Icon(
+                  _isFavorito ? Icons.favorite : Icons.favorite_border,
+                  color: _isFavorito ? const Color(0xFFF7B119) : Colors.grey,
+                  size: 24,
                 ),
               ),
             ),
