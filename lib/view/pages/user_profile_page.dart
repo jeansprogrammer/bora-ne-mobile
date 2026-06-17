@@ -1,3 +1,4 @@
+import 'package:boranemobile/view/pages/faq_page.dart';
 import 'package:boranemobile/view/pages/report_problem_page.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/controllers/profile_controller.dart';
@@ -38,10 +39,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   child: CircularProgressIndicator(color: Color.fromRGBO(245, 183, 10, 1)))
               : Column(
                   children: [
-                    // ── Header amarelo ────────────────────────────────────
                     _buildHeader(context),
-
-                    // ── Corpo ─────────────────────────────────────────────
                     Expanded(
                       child: SingleChildScrollView(
                         child: _controller.isLoggedIn
@@ -56,24 +54,19 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 
-  // ── HEADER AMARELO ────────────────────────────────────────────────────────
-
   Widget _buildHeader(BuildContext context) {
-    final usuario     = _controller.currentUser;
-    final isLogged    = _controller.isLoggedIn;
-    final fbUser      = _controller.firebaseUser; // dados direto do Firebase Auth
+    final usuario  = _controller.currentUser;
+    final isLogged = _controller.isLoggedIn;
+    final fbUser   = _controller.firebaseUser;
 
-    // Foto: prioriza Firestore → fallback para Firebase Auth (Google photo)
     final String? fotoUrl = (usuario?.photoUrl.isNotEmpty == true)
         ? usuario!.photoUrl
         : fbUser?.photoURL;
 
-    // Nome: prioriza Firestore → fallback para Firebase Auth displayName
     final String nome = (usuario?.name.isNotEmpty == true)
         ? usuario!.name
         : (fbUser?.displayName ?? '');
 
-    // Cidade: só do Firestore
     final String cidade = usuario?.city ?? '';
 
     return Container(
@@ -87,11 +80,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
       ),
       child: Column(
         children: [
-          // Logo
           Image.asset('assets/images/LOGO_V2_3.png', height: 36),
           const SizedBox(height: 20),
-
-          // Avatar
           GestureDetector(
             onTap: isLogged
                 ? () => Navigator.push(context,
@@ -109,8 +99,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // Nome
           Text(
             isLogged ? nome : 'Visitante',
             style: const TextStyle(
@@ -119,30 +107,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
               color: Colors.black,
             ),
           ),
-
-          // Email (do Firebase Auth quando Firestore não tem cidade)
           if (isLogged && cidade.isEmpty && fbUser?.email != null) ...[
             const SizedBox(height: 4),
-            Text(
-              fbUser!.email!,
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
-            ),
+            Text(fbUser!.email!,
+                style: const TextStyle(fontSize: 13, color: Colors.black54)),
           ],
-
-          // Cidade (do Firestore)
           if (isLogged && cidade.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(
-              cidade,
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-            ),
+            Text(cidade,
+                style: const TextStyle(fontSize: 14, color: Colors.black87)),
           ],
         ],
       ),
     );
   }
-
-  // ── BODY LOGADO ───────────────────────────────────────────────────────────
 
   Widget _buildLoggedInBody(BuildContext context) {
     return Column(
@@ -150,27 +128,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
       children: [
         const SizedBox(height: 24),
 
-        // Preferências
         _buildSectionTitle('Preferências'),
-        _buildTile(
-          icon: Icons.route_outlined,
-          label: 'Minhas rotas',
-          onTap: () {},
-        ),
-        _buildTile(
-          icon: Icons.place_outlined,
-          label: 'Meus destinos',
-          onTap: () {},
-        ),
+        _buildTile(icon: Icons.route_outlined, label: 'Minhas rotas', onTap: () {}),
+        _buildTile(icon: Icons.place_outlined, label: 'Meus destinos', onTap: () {}),
 
         const SizedBox(height: 8),
 
-        // Configurações gerais
         _buildSectionTitle('Configurações gerais'),
         _buildTile(
           icon: Icons.description_outlined,
           label: 'Termos de uso',
-          onTap: () {},
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const TermsPage())),
         ),
         _buildTile(
           icon: Icons.privacy_tip_outlined,
@@ -180,27 +149,22 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
         const SizedBox(height: 8),
 
-        // Suporte
         _buildSectionTitle('Suporte'),
         _buildTile(
           icon: Icons.help_outline,
           label: 'Ajuda / FAQ',
-          onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const ReportProblemPage(),
-              ),
-            ),
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const FaqPage())),
         ),
         _buildTile(
           icon: Icons.flag_outlined,
           label: 'Reportar problema',
-          onTap: () {},
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const ReportProblemPage())),
         ),
 
         const SizedBox(height: 8),
 
-        // Sair da conta
         _buildTile(
           icon: Icons.logout,
           label: 'Sair da conta',
@@ -219,29 +183,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
         ),
 
         const SizedBox(height: 32),
-
-        // Versão
         Center(
-          child: Text(
-            'Versão 0.0.1',
-            style: TextStyle(
-                fontSize: 12, color: Colors.grey.shade400),
-          ),
+          child: Text('Versão 0.0.1',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
         ),
         const SizedBox(height: 24),
       ],
     );
   }
 
-  // ── BODY NÃO LOGADO ───────────────────────────────────────────────────────
-
   Widget _buildLoggedOutBody(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 32),
-
-        // Mensagem
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 24),
           child: Text(
@@ -251,8 +206,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
           ),
         ),
         const SizedBox(height: 24),
-
-        // Botão Google
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: SizedBox(
@@ -261,20 +214,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
               onPressed: () async {
                 await Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const LoginPage()));
-                // Recarrega perfil ao voltar (caso tenha feito login)
                 if (context.mounted) _controller.carregarPerfil();
               },
               icon: Image.network(
                 'https://www.google.com/favicon.ico',
                 width: 20, height: 20,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.login, size: 20),
+                errorBuilder: (_, __, ___) => const Icon(Icons.login, size: 20),
               ),
-              label: const Text(
-                'Entrar com Google',
-                style: TextStyle(
-                    color: Colors.black87, fontWeight: FontWeight.w600),
-              ),
+              label: const Text('Entrar com Google',
+                  style: TextStyle(
+                      color: Colors.black87, fontWeight: FontWeight.w600)),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 side: const BorderSide(color: Colors.black12),
@@ -287,48 +236,42 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
         const SizedBox(height: 32),
 
-        // Info do app mesmo sem login
         _buildSectionTitle('Configurações gerais'),
         _buildTile(
           icon: Icons.description_outlined,
           label: 'Termos de uso',
-          onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const TermsPage(),
-              ),
-            ),
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const TermsPage())),
         ),
         _buildTile(
           icon: Icons.privacy_tip_outlined,
           label: 'Política de privacidade',
           onTap: () {},
         ),
+
         _buildSectionTitle('Suporte'),
         _buildTile(
           icon: Icons.help_outline,
           label: 'Ajuda / FAQ',
-          onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const ReportProblemPage(),
-              ),
-            ),
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const FaqPage())),
+        ),
+        _buildTile(
+          icon: Icons.flag_outlined,
+          label: 'Reportar problema',
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const ReportProblemPage())),
         ),
 
         const SizedBox(height: 32),
         Center(
-          child: Text(
-            'Versão 0.0.1',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
-          ),
+          child: Text('Versão 0.0.1',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
         ),
         const SizedBox(height: 24),
       ],
     );
   }
-
-  // ── HELPERS ───────────────────────────────────────────────────────────────
 
   Widget _buildSectionTitle(String title) {
     return Padding(
@@ -355,22 +298,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
     return Material(
       color: Colors.white,
       child: ListTile(
-        leading: Icon(icon,
-            color: iconColor ?? Colors.black54, size: 22),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: labelColor ?? Colors.black87,
-            fontSize: 15,
-          ),
-        ),
+        leading: Icon(icon, color: iconColor ?? Colors.black54, size: 22),
+        title: Text(label,
+            style: TextStyle(color: labelColor ?? Colors.black87, fontSize: 15)),
         trailing: showChevron
-            ? const Icon(Icons.chevron_right,
-                color: Colors.black26, size: 20)
+            ? const Icon(Icons.chevron_right, color: Colors.black26, size: 20)
             : null,
         onTap: onTap,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
       ),
     );
   }
