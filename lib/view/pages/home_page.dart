@@ -12,6 +12,8 @@ import 'package:boranemobile/services/location_service.dart';
 import 'package:boranemobile/services/geoapify_service.dart';
 import 'package:boranemobile/data/category_data.dart';
 import 'package:boranemobile/view/pages/notifications_page.dart';
+// ── Importação do Widget de Notificação Adicionada Aqui ──────────────────────
+import 'package:boranemobile/view/widgets/push_notification_widget.dart'; 
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,10 +30,20 @@ class _HomePageState extends State<HomePage> {
   // Cidade ativa: manual tem prioridade sobre a detectada
   String? get _cidadeAtiva => _cidadeManual ?? _cidadeDetectada;
 
+  // ── Bloco do initState Atualizado com a Notificação Push ────────────────────
   @override
   void initState() {
     super.initState();
     _detectarLocalizacao();
+    
+    // Executa o código imediatamente após o Flutter desenhar o primeiro frame da Home
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushNotificationWidget.show(
+        context,
+        title: "Bem-vindo ao Bora NE! 🚀",
+        body: "Que tal explorar novos roteiros históricos hoje em Recife?",
+      );
+    });
   }
 
   Future<void> _detectarLocalizacao() async {
