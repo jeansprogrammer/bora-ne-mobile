@@ -239,6 +239,7 @@ class RouteCreationController extends ChangeNotifier {
     if (_DestinationsSelecionados.any((d) => d.name == Destination.name)) return;
     _DestinationsSelecionados.add(Destination);
     newRoute.destinations.add(DestinationModel(
+      id: Destination.id, // ← preserva o id do documento para permitir edição depois
       name: Destination.name,
       description: Destination.description,
       photos: Destination.photos,
