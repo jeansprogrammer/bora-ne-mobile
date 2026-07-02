@@ -17,8 +17,6 @@ class RouteDetailPage extends StatefulWidget {
 }
 
 class _RouteDetailPageState extends State<RouteDetailPage> {
-  int _currentIndex = 0; 
-
   @override
   Widget build(BuildContext context) {
     // ── 1. VERIFICAÇÃO DE SEGURANÇA: Se a rota for nula ─────────────────

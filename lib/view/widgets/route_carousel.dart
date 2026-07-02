@@ -12,8 +12,6 @@ class RouteCarousel extends StatefulWidget {
   final Function(Map<String, dynamic> rota)? onTapRota;
 
   const RouteCarousel({super.key, this.city, this.onTapRota});
-  
-  get onRouteTap => null;
 
   @override
   State<RouteCarousel> createState() => _RouteCarouselState();
