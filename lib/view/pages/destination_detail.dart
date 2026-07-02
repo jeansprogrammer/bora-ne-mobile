@@ -1,6 +1,8 @@
 import 'package:boranemobile/models/destination_model.dart';
+import 'package:boranemobile/services/destination_service.dart';
 import 'package:boranemobile/services/location_service.dart';
 import 'package:boranemobile/view/pages/mapa_page.dart';
+import 'package:boranemobile/view/pages/new_destination_page.dart';
 import 'package:boranemobile/controllers/favorites_controller.dart';
 import 'package:boranemobile/services/favorites_service.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
@@ -23,96 +25,107 @@ class DestinationDetail extends StatefulWidget {
 
 class _DestinationDetailState extends State<DestinationDetail> {
   bool _isFavorited = false;
-  late List<String> _favoritedBy;
-  late String _uid;
+
+  // Estado mutável: permite atualizar a tela após uma edição
+  late Map<String, dynamic> _data;
+  late String _id;
 
   @override
   void initState() {
     super.initState();
-    _uid = FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste';
-    _favoritedBy = List<String>.from(widget.data['favoritedBy'] ?? []);
-    _isFavorited = _favoritedBy.contains(_uid);
+    _data = Map<String, dynamic>.from(widget.data);
+    _id = widget.id;
+    // Ao abrir, busca a versão mais recente do destino no Firestore.
+    // Isso garante que, mesmo aberto a partir do "retrato" embutido numa rota,
+    // a tela mostre os dados atuais (refletindo edições feitas antes).
+    _sincronizarComFirestore();
+  }
+
+  // Resolve o id real do destino (usa o id recebido ou busca por nome + cidade)
+  Future<String> _resolverId() async {
+    if (_id.isNotEmpty) return _id;
+
+    final String nome = (_data['name'] ?? '').toString();
+    final String cidade = (_data['city'] ?? '').toString();
+    if (nome.isEmpty || cidade.isEmpty) return '';
+
     try {
-      final favController =
-          Provider.of<FavoritesController>(context, listen: false);
-      if (favController.favorites != null) {
-        final nome = widget.data['name'] ?? '';
-        _isFavorited = favController.isDestinoFavorito(widget.id, nome: nome);
+      final encontrados = await DestinationService()
+          .buscarDestinationsPorNomeECidade(nome, cidade);
+      if (encontrados.isNotEmpty) {
+        final match = encontrados.firstWhere(
+          (d) => d.name.toLowerCase() == nome.toLowerCase(),
+          orElse: () => encontrados.first,
+        );
+        return match.id ?? '';
       }
     } catch (_) {
-      // Controller pode não estar na árvore de provedores
+      // silencioso
+    }
+    return '';
+  }
+
+  // Recarrega o destino canônico do Firestore e atualiza a tela
+  Future<void> _sincronizarComFirestore() async {
+    final id = await _resolverId();
+    if (id.isEmpty) return;
+
+    final atual = await DestinationService().getDestinationById(id);
+    if (!mounted) return;
+    if (atual != null) {
+      setState(() {
+        _data = atual.toMap();
+        _id = id;
+      });
     }
   }
 
-  Future<void> _toggleFavorito() async {
-    final isAdd = !_isFavorited;
+  // ── Abre a tela de edição levando os dados salvos do destino ──────────────
+  Future<void> _editarDestino(BuildContext context) async {
+    final String idParaEditar = await _resolverId();
 
-    // 1. Atualiza o estado visual local imediatamente
-    setState(() {
-      _isFavorited = isAdd;
-      if (isAdd) {
-        _favoritedBy.add(_uid);
-      } else {
-        _favoritedBy.remove(_uid);
-      }
-    });
+    if (!mounted) return;
 
-    // 2. Atualiza o FavoritesController para refletir na tela de favoritos
-    final destino = DestinationModel.fromMap(widget.data, id: widget.id);
-    try {
-      final favController =
-          Provider.of<FavoritesController>(context, listen: false);
-      if (favController.favorites != null) {
-        if (isAdd) {
-          favController.favorites!.destinations.add(destino);
-        } else {
-          final nome = widget.data['name'] ?? '';
-          favController.favorites!.destinations.removeWhere((d) =>
-              (widget.id.isNotEmpty && d.id == widget.id) ||
-              (nome.isNotEmpty && d.name == nome));
-        }
-        favController.forceNotifyListeners();
-      }
-    } catch (_) {
-      // Controller pode não estar na árvore de provedores
+    if (idParaEditar.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Não foi possível identificar este destino para edição.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
 
-    // 3. Sincroniza com o Firebase em background (não bloqueia a UI)
-    try {
-      if (widget.id.isNotEmpty) {
-        final ref =
-            FirebaseFirestore.instance.collection('destinations').doc(widget.id);
-        await ref.update({'favoritedBy': _favoritedBy});
-      }
+    final alterado = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NewDestinationPage(
+          destinoParaEditar: _data,
+          destinoId: idParaEditar,
+        ),
+      ),
+    );
 
-      final favService = FavoritesService();
-      if (isAdd) {
-        await favService.favoritarDestino(_uid, destino);
-      } else {
-        await favService.desfavoritarDestino(
-          _uid,
-          widget.id,
-          nome: widget.data['name'] ?? '',
-        );
-      }
-    } catch (e) {
-      debugPrint('Erro ao sincronizar favorito com Firebase: $e');
+    // Se foi editado, recarrega o destino do Firestore e atualiza a tela
+    if (alterado == true && mounted) {
+      await _sincronizarComFirestore();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final String nome = widget.data['name'] ?? 'Sem título';
+    final String nome = _data['name'] ?? 'Sem título';
     final String descricao =
-        widget.data['description'] ?? 'Sem descrição disponível.';
-    final String coverPhoto = widget.data['coverPhoto'] ?? '';
-    final List<String> photos = List<String>.from(widget.data['photos'] ?? []);
+        _data['description'] ?? 'Sem descrição disponível.';
+    final String coverPhoto = _data['coverPhoto'] ?? '';
+    final List<String> photos = List<String>.from(_data['photos'] ?? []);
     final List<String> categories = List<String>.from(
-      widget.data['categories'] ?? [],
+      _data['categories'] ?? [],
     );
-    final String neighborhood = widget.data['neighborhood'] ?? '';
-    final String city = widget.data['city'] ?? '';
-    final String state = widget.data['state'] ?? '';
+    final String neighborhood = _data['neighborhood'] ?? '';
+    final String city = _data['city'] ?? '';
+    final String state = _data['state'] ?? '';
 
     final String local =
         '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city - $state';
@@ -194,7 +207,8 @@ class _DestinationDetailState extends State<DestinationDetail> {
                                       ),
                                       const SizedBox(width: 8),
                                       GestureDetector(
-                                        onTap: _toggleFavorito,
+                                        onTap: () => setState(
+                                        () => _isFavorited = !_isFavorited),
                                         child: Icon(
                                           _isFavorited
                                               ? Icons.favorite
@@ -251,33 +265,60 @@ class _DestinationDetailState extends State<DestinationDetail> {
 
                         const SizedBox(height: 20),
 
-                        // ── Descrição ────────────────────────────────────────
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    // ── Descrição ────────────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              const Text(
-                                'Descrição',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                              const Expanded(
+                                child: Text(
+                                  'Descrição',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                descricao,
-                                textAlign: TextAlign.justify,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black87,
-                                  height: 1.5,
+                              // ── BOTÃO EDITAR (preto, ao lado de "Descrição") ──
+                              TextButton.icon(
+                                onPressed: () => _editarDestino(context),
+                                icon: const Icon(Icons.edit_outlined,
+                                    color: Colors.black, size: 18),
+                                label: const Text(
+                                  'Editar',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 4),
+                                  minimumSize: const Size(0, 0),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
                               ),
                             ],
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          Text(
+                            descricao,
+                            textAlign: TextAlign.justify,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                         const SizedBox(height: 24),
 
@@ -340,11 +381,11 @@ class _DestinationDetailState extends State<DestinationDetail> {
                                   }
                                 }
 
-                                DestinationModel destinoModel =
-                                    DestinationModel.fromMap(
-                                  widget.data,
-                                  id: widget.id,
-                                );
+                            DestinationModel destinoModel =
+                                DestinationModel.fromMap(
+                              _data,
+                              id: _id,
+                            );
 
                                 // 4. Navega para a Tela do Mapa
                                 if (context.mounted) {

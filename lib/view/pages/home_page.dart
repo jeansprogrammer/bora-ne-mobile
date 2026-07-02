@@ -420,6 +420,7 @@ class _HomePageState extends State<HomePage> {
                 MaterialPageRoute(
                   builder: (_) => RouteDestinosPage(
                     categoriaInicial: cat.name,
+                    cidadeInicial: _cidadeAtiva, 
                   ),
                 )),
             child: Container(
@@ -579,7 +580,7 @@ class _HomePageState extends State<HomePage> {
             child: ElevatedButton(
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const RouteDestinosPage()),
+                MaterialPageRoute(builder: (_) => RouteDestinosPage(cidadeInicial: _cidadeAtiva)),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
