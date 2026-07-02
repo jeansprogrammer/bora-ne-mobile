@@ -364,7 +364,10 @@ class DestinationCreationController extends ChangeNotifier {
       final sucesso =
           await _service.atualizarDestination(editingId!, destinoAtualizado);
 
-      if (sucesso) _resetar();
+      if (sucesso) {
+        _resetar();
+        await carregarDestinos();
+      }
 
       isSaving = false;
       notifyListeners();
@@ -423,7 +426,10 @@ class DestinationCreationController extends ChangeNotifier {
       print('📋 ID retornado: $id'); // null = falhou no Firestore
       final sucesso = id != null;
 
-      if (sucesso) _resetar();
+      if (sucesso) {
+        _resetar();
+        await carregarDestinos();
+      }
 
       isSaving = false;
       notifyListeners();

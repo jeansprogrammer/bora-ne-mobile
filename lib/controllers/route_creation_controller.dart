@@ -331,6 +331,7 @@ class RouteCreationController extends ChangeNotifier {
 
       if (success) {
         resetar();
+        await carregarRotas();
       }
 
       _isSaving = false;
@@ -356,6 +357,7 @@ class RouteCreationController extends ChangeNotifier {
           await _routeService.deleteRouteFromFirestore(editingRouteId!);
       if (success) {
         resetar();
+        await carregarRotas();
       }
       _isSaving = false;
       notifyListeners();

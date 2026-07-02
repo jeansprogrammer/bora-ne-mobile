@@ -22,49 +22,62 @@ class _RouteCarouselState extends State<RouteCarousel> {
   int _currentIndex = 0;
   Timer? _timer;
   List<Map<String, dynamic>> _rotas = [];
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _rotasSubscription;
 
   @override
   void initState() {
     super.initState();
-    _carregarRotas();
+    _escutarRotas();
   }
 
   @override
   void didUpdateWidget(covariant RouteCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.city != widget.city) {
-      _carregarRotas();
+      _escutarRotas();
     }
   }
 
-  Future<void> _carregarRotas() async {
-    Query<Map<String, dynamic>> ref = FirebaseFirestore.instance.collection('routes');
+  // Escuta as rotas em tempo real, para que exclusões/edições feitas em
+  // outras telas (ex: excluir rota, adicionar categoria) reflitam aqui
+  // imediatamente, sem precisar reiniciar o app.
+  void _escutarRotas() {
+    _rotasSubscription?.cancel();
 
-    // Se houver cidade informada, filtramos as rotas por ela
+    Query<Map<String, dynamic>> ref = FirebaseFirestore.instance.collection('routes');
     if (widget.city != null && widget.city!.isNotEmpty) {
       ref = ref.where('city', isEqualTo: widget.city);
     }
 
-    var snap = await ref.limit(5).get();
+    _rotasSubscription = ref.limit(5).snapshots().listen((snap) {
+      if (!mounted) return;
 
-    // Fallback: se buscamos por uma cidade específica e não há rotas nela, mostramos todas as rotas
-    if (snap.docs.isEmpty && widget.city != null && widget.city!.isNotEmpty) {
-      snap = await FirebaseFirestore.instance
-          .collection('routes')
-          .limit(5)
-          .get();
-    }
+      // Fallback: se buscamos por uma cidade específica e não há rotas nela,
+      // passamos a escutar todas as rotas.
+      if (snap.docs.isEmpty && widget.city != null && widget.city!.isNotEmpty) {
+        _rotasSubscription?.cancel();
+        _rotasSubscription = FirebaseFirestore.instance
+            .collection('routes')
+            .limit(5)
+            .snapshots()
+            .listen(_atualizarRotas);
+        return;
+      }
 
-    if (mounted) {
-      setState(() {
-        _rotas = snap.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return data;
-        }).toList();
-      });
-      _iniciarAutoPlay();
-    }
+      _atualizarRotas(snap);
+    });
+  }
+
+  void _atualizarRotas(QuerySnapshot<Map<String, dynamic>> snap) {
+    if (!mounted) return;
+    setState(() {
+      _rotas = snap.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+    _iniciarAutoPlay();
   }
 
   void _iniciarAutoPlay() {
@@ -86,6 +99,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
   @override
   void dispose() {
     _timer?.cancel();
+    _rotasSubscription?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -283,8 +297,6 @@ class _RouteCarouselState extends State<RouteCarousel> {
                       } catch (e) {
                         // ignore
                       }
-
-                      _carregarRotas();
                     },
                     child: Container(
                       padding: const EdgeInsets.all(6),
