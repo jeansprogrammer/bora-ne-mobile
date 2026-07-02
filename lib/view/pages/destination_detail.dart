@@ -1,6 +1,7 @@
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/view/widgets/photo_carousel.dart';
 import 'package:flutter/material.dart';
+import 'package:boranemobile/view/widgets/comments_bottom_sheet.dart';
 
 class DestinationDetail extends StatefulWidget {
   final String id;
@@ -13,20 +14,24 @@ class DestinationDetail extends StatefulWidget {
 }
 
 class _DestinationDetailState extends State<DestinationDetail> {
-  bool _isFavorited = false; 
+  bool _isFavorited = false;
 
   @override
   Widget build(BuildContext context) {
     final String nome = widget.data['name'] ?? 'Sem título';
-    final String descricao = widget.data['description'] ?? 'Sem descrição disponível.';
+    final String descricao =
+        widget.data['description'] ?? 'Sem descrição disponível.';
     final String coverPhoto = widget.data['coverPhoto'] ?? '';
     final List<String> photos = List<String>.from(widget.data['photos'] ?? []);
-    final List<String> categories = List<String>.from(widget.data['categories'] ?? []);
+    final List<String> categories = List<String>.from(
+      widget.data['categories'] ?? [],
+    );
     final String neighborhood = widget.data['neighborhood'] ?? '';
     final String city = widget.data['city'] ?? '';
     final String state = widget.data['state'] ?? '';
-    
-    final String local = '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city - $state';
+
+    final String local =
+        '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city - $state';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -93,14 +98,19 @@ class _DestinationDetailState extends State<DestinationDetail> {
 
                         Row(
                           children: [
-                            const Icon(Icons.location_on_outlined,
-                                size: 16, color: Colors.grey),
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 local,
                                 style: const TextStyle(
-                                    fontSize: 14, color: Colors.grey),
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ),
                           ],
@@ -115,7 +125,9 @@ class _DestinationDetailState extends State<DestinationDetail> {
                             children: categories.map((c) {
                               return Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 6),
+                                  horizontal: 14,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF1F3F5),
                                   borderRadius: BorderRadius.circular(16),
@@ -155,6 +167,35 @@ class _DestinationDetailState extends State<DestinationDetail> {
 
                         const SizedBox(height: 24),
 
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.comment_outlined),
+                            label: const Text(
+                              'Comentários',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onPressed: () {
+                              print("BOTÃO COMENTÁRIOS PRESSIONADO");
+                              print("ID DO DESTINO: ${widget.id}");
+
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (_) => CommentsBottomSheet(
+                                  destinationId: widget.id,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
                         // ── Botão Ver no mapa dentro do scroll ─────────────
                         SizedBox(
                           width: double.infinity,
@@ -163,16 +204,18 @@ class _DestinationDetailState extends State<DestinationDetail> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFF1B81A),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14)),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                               elevation: 4,
                             ),
                             onPressed: () {},
                             child: const Text(
                               'Ver no mapa',
                               style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold),
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -193,8 +236,11 @@ class _DestinationDetailState extends State<DestinationDetail> {
               radius: 22,
               child: IconButton(
                 padding: EdgeInsets.zero,
-                icon: const Icon(Icons.arrow_back,
-                    color: Colors.black, size: 24),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.black,
+                  size: 24,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -208,8 +254,7 @@ class _DestinationDetailState extends State<DestinationDetail> {
     return Container(
       color: const Color(0xFFFFF9E7),
       child: const Center(
-        child: Icon(Icons.image_outlined,
-            color: Color(0xFFF1B81A), size: 48),
+        child: Icon(Icons.image_outlined, color: Color(0xFFF1B81A), size: 48),
       ),
     );
   }

@@ -1,10 +1,10 @@
 class DestinationModel {
-  final String? id;           // ID do documento no Firestore
+  final String? id; // ID do documento no Firestore
   String name;
   String description;
-  List<String> photos;         // Lista de URLs das photos
-  String coverPhoto;            // URL da foto capa (uma das photos acima)
-  List<String> categories;    // Múltiplas categories
+  List<String> photos; // Lista de URLs das photos
+  String coverPhoto; // URL da foto capa (uma das photos acima)
+  List<String> categories;
 
   // Endereço detalhado
   String street;
@@ -20,6 +20,8 @@ class DestinationModel {
 
   // Favoritos: lista de UIDs dos usuários que favoritaram
   List<String> favoritedBy;
+  // Comentários do destino
+  List<String> comments;
 
   DestinationModel({
     this.id,
@@ -37,10 +39,12 @@ class DestinationModel {
     this.latitude = 0.0,
     this.longitude = 0.0,
     this.favoritedBy = const [],
+    this.comments = const [],
   });
 
   // Getter: campo "local" usado para exibição (compatível com código existente)
-  String get local => '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city – $state';
+  String get local =>
+      '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city – $state';
 
   // Getter: contagem de favoritos
   int get totalFavoritos => favoritedBy.length;
@@ -65,6 +69,7 @@ class DestinationModel {
       latitude: (data['latitude'] ?? 0.0).toDouble(),
       longitude: (data['longitude'] ?? 0.0).toDouble(),
       favoritedBy: List<String>.from(data['favoritedBy'] ?? []),
+      comments: List<String>.from(data['comments'] ?? []),
     );
   }
 
@@ -86,6 +91,7 @@ class DestinationModel {
       'latitude': latitude,
       'longitude': longitude,
       'favoritedBy': favoritedBy,
+      'comments': comments,
     };
   }
 
@@ -106,6 +112,7 @@ class DestinationModel {
     double? latitude,
     double? longitude,
     List<String>? favoritedBy,
+    List<String>? comments,
   }) {
     return DestinationModel(
       id: id ?? this.id,
@@ -123,6 +130,7 @@ class DestinationModel {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       favoritedBy: favoritedBy ?? this.favoritedBy,
+      comments: comments ?? this.comments,
     );
   }
 }
