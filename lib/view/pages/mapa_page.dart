@@ -115,6 +115,13 @@ class _TelaMapaState extends State<TelaMapa> {
   }
 
   @override
+  void dispose() {
+    searchController.dispose();
+    mapController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final LatLng destinoLatLng = LatLng(widget.destino.latitude, widget.destino.longitude);
 

@@ -54,30 +54,31 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      print('Erro ao obter localização: $e');
+      debugPrint('Erro ao obter localização: $e');
     } finally {
       if (mounted) setState(() => _estaCarregandoLocalizacao = false);
     }
   }
 
-  // ── Busca cidades únicas do Firestore ─────────────────────────────────────
+  // ── Busca cidades únicas do Firestore (tempo real) ────────────────────────
 
-  Future<List<String>> _buscarCidadesDoFirestore() async {
-    final snapshot = await FirebaseFirestore.instance
+  Stream<List<String>> _streamCidadesDoFirestore() {
+    return FirebaseFirestore.instance
         .collection('routes')
-        .get();
+        .snapshots()
+        .map((snapshot) {
+      final cidades = snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            return (data['city'] as String? ?? '').trim();
+          })
+          .where((c) => c.isNotEmpty)
+          .toSet() // remove duplicatas
+          .toList()
+        ..sort(); // ordena alfabeticamente
 
-    final cidades = snapshot.docs
-        .map((doc) {
-          final data = doc.data();
-          return (data['city'] as String? ?? '').trim();
-        })
-        .where((c) => c.isNotEmpty)
-        .toSet() // remove duplicatas
-        .toList()
-      ..sort(); // ordena alfabeticamente
-
-    return cidades;
+      return cidades;
+    });
   }
 
   // ── Popup de seleção de cidade ────────────────────────────────────────────
@@ -159,8 +160,8 @@ class _HomePageState extends State<HomePage> {
 
               // Lista de cidades do Firestore
               Expanded(
-                child: FutureBuilder<List<String>>(
-                  future: _buscarCidadesDoFirestore(),
+                child: StreamBuilder<List<String>>(
+                  stream: _streamCidadesDoFirestore(),
                   builder: (context, snap) {
                     if (snap.connectionState == ConnectionState.waiting) {
                       return const Center(

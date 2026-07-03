@@ -171,7 +171,7 @@ class RouteCreationController extends ChangeNotifier {
     try {
       _rotas = await _routeService.getAllRoutes();
     } catch (e) {
-      print('Erro ao carregar rotas: $e');
+      debugPrint('Erro ao carregar rotas: $e');
     }
 
     _isSearching = false;
@@ -331,6 +331,7 @@ class RouteCreationController extends ChangeNotifier {
 
       if (success) {
         resetar();
+        await carregarRotas();
       }
 
       _isSaving = false;
@@ -339,7 +340,7 @@ class RouteCreationController extends ChangeNotifier {
     } catch (e) {
       _isSaving = false;
       notifyListeners();
-      print("Erro ao salvar rota: $e");
+      debugPrint("Erro ao salvar rota: $e");
       return false;
     }
   }
@@ -356,6 +357,7 @@ class RouteCreationController extends ChangeNotifier {
           await _routeService.deleteRouteFromFirestore(editingRouteId!);
       if (success) {
         resetar();
+        await carregarRotas();
       }
       _isSaving = false;
       notifyListeners();

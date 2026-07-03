@@ -53,6 +53,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
     _nomeController.dispose();
     _descricaoController.dispose();
     _controller.dispose();
+    _cepController.dispose();
     super.dispose();
   }
 
@@ -933,22 +934,6 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                     style: const TextStyle(color: Colors.red, fontSize: 13),
                   ),
                 ),
-              ],
-            ),
-          ),
-
-        if (!controller.isValid)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                if (controller.nome.isEmpty) _chip("Nome obrigatório"),
-                if (controller.categoriasSelecionadas.isEmpty)
-                  _chip("Categoria obrigatória"),
-                if (controller.uf.isEmpty) _chip("Estado obrigatório"),
-                if (controller.city.isEmpty) _chip("Cidade obrigatória"),
               ],
             ),
           ),

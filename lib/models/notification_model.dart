@@ -14,14 +14,15 @@ class NotificationModel {
   });
 
   factory NotificationModel.fromMap(Map<String, dynamic> map) {
-    final Timestamp timestamp = map['date'] as Timestamp;
+    final rawDate = map['date'];
+    final DateTime date = rawDate is Timestamp ? rawDate.toDate() : DateTime.now();
 
     return NotificationModel(
       icon: map['icon'] ?? '',
       title: map['title'] ?? '',
       description: map['description'] ?? '',
 
-      date: timestamp.toDate(),
+      date: date,
     );
   }
 
