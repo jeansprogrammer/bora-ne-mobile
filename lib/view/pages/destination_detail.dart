@@ -24,21 +24,84 @@ class DestinationDetail extends StatefulWidget {
 }
 
 class _DestinationDetailState extends State<DestinationDetail> {
-  bool _isFavorited = false;
+  late bool _isFavorited;
+  late List<String> _favoritedBy;
 
   // Estado mutável: permite atualizar a tela após uma edição
   late Map<String, dynamic> _data;
   late String _id;
+
+  String get _uid =>
+      FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste';
 
   @override
   void initState() {
     super.initState();
     _data = Map<String, dynamic>.from(widget.data);
     _id = widget.id;
-    // Ao abrir, busca a versão mais recente do destino no Firestore.
-    // Isso garante que, mesmo aberto a partir do "retrato" embutido numa rota,
-    // a tela mostre os dados atuais (refletindo edições feitas antes).
+    // Inicializa favorito — igual ao DestinationCard.initState
+    _favoritedBy = List<String>.from(_data['favoritedBy'] ?? []);
+    _isFavorited = _favoritedBy.contains(_uid);
+    try {
+      final favController =
+          Provider.of<FavoritesController>(context, listen: false);
+      if (favController.favorites != null) {
+        _isFavorited =
+            favController.isDestinoFavorito(_id, nome: _data['name'] ?? '');
+      }
+    } catch (_) {}
     _sincronizarComFirestore();
+  }
+
+  Future<void> _toggleFavorito() async {
+    final isAdd = !_isFavorited;
+
+    // 1. Visual local imediato
+    setState(() {
+      _isFavorited = isAdd;
+      if (isAdd) {
+        _favoritedBy.add(_uid);
+      } else {
+        _favoritedBy.remove(_uid);
+      }
+      _data['favoritedBy'] = List<String>.from(_favoritedBy);
+    });
+
+    // 2. FavoritesController primeiro (igual ao DestinationCard)
+    final destino = DestinationModel.fromMap(_data, id: _id);
+    try {
+      final favController =
+          Provider.of<FavoritesController>(context, listen: false);
+      if (favController.favorites != null) {
+        if (isAdd) {
+          favController.favorites!.destinations.add(destino);
+        } else {
+          favController.favorites!.destinations.removeWhere((d) =>
+              (_id.isNotEmpty && d.id == _id) ||
+              (destino.name.isNotEmpty && d.name == destino.name));
+        }
+        favController.forceNotifyListeners();
+      }
+    } catch (_) {}
+
+    // 3. Firebase em background
+    try {
+      if (_id.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('destinations')
+            .doc(_id)
+            .update({'favoritedBy': _favoritedBy});
+      }
+      final favService = FavoritesService();
+      if (isAdd) {
+        await favService.favoritarDestino(_uid, destino);
+      } else {
+        await favService.desfavoritarDestino(_uid, _id,
+            nome: _data['name'] ?? '');
+      }
+    } catch (e) {
+      debugPrint('Erro ao sincronizar favorito: $e');
+    }
   }
 
   // Resolve o id real do destino (usa o id recebido ou busca por nome + cidade)
@@ -76,6 +139,17 @@ class _DestinationDetailState extends State<DestinationDetail> {
       setState(() {
         _data = atual.toMap();
         _id = id;
+        // Reatualiza o favorito com os dados frescos do Firestore
+        _favoritedBy = List<String>.from(_data['favoritedBy'] ?? []);
+        _isFavorited = _favoritedBy.contains(_uid);
+        try {
+          final favController =
+              Provider.of<FavoritesController>(context, listen: false);
+          if (favController.favorites != null) {
+            _isFavorited =
+                favController.isDestinoFavorito(_id, nome: _data['name'] ?? '');
+          }
+        } catch (_) {}
       });
     }
   }
@@ -207,15 +281,14 @@ class _DestinationDetailState extends State<DestinationDetail> {
                                       ),
                                       const SizedBox(width: 8),
                                       GestureDetector(
-                                        onTap: () => setState(
-                                        () => _isFavorited = !_isFavorited),
+                                        onTap: _toggleFavorito,
                                         child: Icon(
                                           _isFavorited
                                               ? Icons.favorite
                                               : Icons.favorite_border,
                                           color: _isFavorited
-                                              ? Colors.red
-                                              : Colors.black87,
+                                              ? const Color(0xFFF7B119)
+                                              : Colors.grey,
                                           size: 28,
                                         ),
                                       ),

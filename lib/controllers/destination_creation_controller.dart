@@ -442,6 +442,27 @@ class DestinationCreationController extends ChangeNotifier {
     }
   }
 
+  // ── Excluir destino (apenas no modo edição) ──────────────────────────────
+  Future<bool> deleteDestination() async {
+    if (editingId == null) return false;
+
+    isSaving = true;
+    notifyListeners();
+
+    try {
+      final sucesso = await _service.excluirDestination(editingId!);
+      if (sucesso) resetar();
+      isSaving = false;
+      notifyListeners();
+      return sucesso;
+    } catch (e) {
+      print('Erro ao excluir destino: $e');
+      isSaving = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Público para uso externo (ex: ao confirmar saída da tela)
   void resetar() {
     fotos = [];

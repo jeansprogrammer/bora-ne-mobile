@@ -1,6 +1,12 @@
 import 'package:readmore/readmore.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:boranemobile/controllers/auth_controller.dart';
+import 'package:boranemobile/controllers/favorites_controller.dart';
 import 'package:boranemobile/controllers/route_creation_controller.dart';
+import 'package:boranemobile/models/route_creation_model.dart';
+import 'package:boranemobile/services/favorites_service.dart';
 import 'package:boranemobile/view/pages/destination_detail.dart';
 import 'package:boranemobile/view/pages/new_route_page.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
@@ -8,7 +14,7 @@ import 'package:boranemobile/view/widgets/photo_carousel.dart';
 import 'package:flutter/material.dart';
 
 class RouteDetailPage extends StatefulWidget {
-  final Map<String, dynamic>? rota; // Permitindo nulo para evitar que o app quebre
+  final Map<String, dynamic>? rota;
 
   const RouteDetailPage({super.key, this.rota});
 
@@ -17,6 +23,83 @@ class RouteDetailPage extends StatefulWidget {
 }
 
 class _RouteDetailPageState extends State<RouteDetailPage> {
+  late bool _isFavorito;
+  late List<String> _favoritedBy;
+
+  String get _uid =>
+      Provider.of<AuthController>(context, listen: false).user?.uid ??
+      'usuario_teste';
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializa favorito — mesmo padrão do RouteCarousel
+    _favoritedBy =
+        List<String>.from(widget.rota?['favoritedBy'] ?? []);
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste';
+    _isFavorito = _favoritedBy.contains(uid);
+    try {
+      final favController =
+          Provider.of<FavoritesController>(context, listen: false);
+      if (favController.favorites != null) {
+        final nome = (widget.rota?['name'] ?? '').toString();
+        _isFavorito = favController.isRotaFavorita(nome);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFavorito() async {
+    final String uidAtual = _uid;
+    final isAdd = !_isFavorito;
+
+    // 1. Visual local imediato
+    setState(() {
+      _isFavorito = isAdd;
+      if (isAdd) {
+        _favoritedBy.add(uidAtual);
+      } else {
+        _favoritedBy.remove(uidAtual);
+      }
+      widget.rota?['favoritedBy'] = List<String>.from(_favoritedBy);
+    });
+
+    // 2. FavoritesController primeiro
+    final model = RouteCreationModel.fromMap(
+        Map<String, dynamic>.from(widget.rota ?? {}));
+    try {
+      final favController =
+          Provider.of<FavoritesController>(context, listen: false);
+      if (favController.favorites != null) {
+        if (isAdd) {
+          favController.favorites!.routes.add(model);
+        } else {
+          favController.favorites!.routes
+              .removeWhere((r) => r.name == model.name);
+        }
+        favController.forceNotifyListeners();
+      }
+    } catch (_) {}
+
+    // 3. Firebase em background
+    try {
+      final String id = (widget.rota?['id'] ?? '').toString();
+      if (id.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('routes')
+            .doc(id)
+            .update({'favoritedBy': _favoritedBy});
+      }
+      final favService = FavoritesService();
+      if (isAdd) {
+        await favService.favoritarRota(uidAtual, model);
+      } else {
+        await favService.desfavoritarRota(uidAtual, model.name);
+      }
+    } catch (e) {
+      debugPrint('Erro ao sincronizar favorito de rota: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // ── 1. VERIFICAÇÃO DE SEGURANÇA: Se a rota for nula ─────────────────
@@ -115,15 +198,35 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  // ── Título dentro do card ──────────────────
-                                  Text(
-                                    nomeRota,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
+                                  // ── Título + coração ──────────────────────
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          nomeRota,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: _toggleFavorito,
+                                        child: Icon(
+                                          _isFavorito
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: _isFavorito
+                                              ? const Color(0xFFF7B119)
+                                              : Colors.grey,
+                                          size: 26,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 10),
 
