@@ -1,6 +1,5 @@
 import 'package:boranemobile/models/destination_model.dart';
 import 'package:boranemobile/services/destination_service.dart';
-import 'package:boranemobile/services/location_service.dart';
 import 'package:boranemobile/view/pages/mapa_page.dart';
 import 'package:boranemobile/view/pages/new_destination_page.dart';
 import 'package:boranemobile/controllers/favorites_controller.dart';
@@ -10,7 +9,6 @@ import 'package:boranemobile/view/widgets/photo_carousel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 class DestinationDetail extends StatefulWidget {
@@ -27,7 +25,6 @@ class _DestinationDetailState extends State<DestinationDetail> {
   late bool _isFavorited;
   late List<String> _favoritedBy;
 
-  // Estado mutável: permite atualizar a tela após uma edição
   late Map<String, dynamic> _data;
   late String _id;
 
@@ -39,24 +36,24 @@ class _DestinationDetailState extends State<DestinationDetail> {
     super.initState();
     _data = Map<String, dynamic>.from(widget.data);
     _id = widget.id;
-    // Inicializa favorito — igual ao DestinationCard.initState
     _favoritedBy = List<String>.from(_data['favoritedBy'] ?? []);
     _isFavorited = _favoritedBy.contains(_uid);
-    try {
-      final favController =
-          Provider.of<FavoritesController>(context, listen: false);
-      if (favController.favorites != null) {
-        _isFavorited =
-            favController.isDestinoFavorito(_id, nome: _data['name'] ?? '');
-      }
-    } catch (_) {}
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final fc = Provider.of<FavoritesController>(context, listen: false);
+        if (fc.favorites != null && mounted) {
+          setState(() {
+            _isFavorited =
+                fc.isDestinoFavorito(_id, nome: _data['name'] ?? '');
+          });
+        }
+      } catch (_) {}
+    });
     _sincronizarComFirestore();
   }
 
   Future<void> _toggleFavorito() async {
     final isAdd = !_isFavorited;
-
-    // 1. Visual local imediato
     setState(() {
       _isFavorited = isAdd;
       if (isAdd) {
@@ -67,24 +64,20 @@ class _DestinationDetailState extends State<DestinationDetail> {
       _data['favoritedBy'] = List<String>.from(_favoritedBy);
     });
 
-    // 2. FavoritesController primeiro (igual ao DestinationCard)
     final destino = DestinationModel.fromMap(_data, id: _id);
     try {
-      final favController =
-          Provider.of<FavoritesController>(context, listen: false);
-      if (favController.favorites != null) {
+      final fc = Provider.of<FavoritesController>(context, listen: false);
+      if (fc.favorites != null) {
         if (isAdd) {
-          favController.favorites!.destinations.add(destino);
+          fc.favorites!.destinations.add(destino);
         } else {
-          favController.favorites!.destinations.removeWhere((d) =>
-              (_id.isNotEmpty && d.id == _id) ||
-              (destino.name.isNotEmpty && d.name == destino.name));
+          fc.favorites!.destinations
+              .removeWhere((d) => d.id == _id || d.name == destino.name);
         }
-        favController.forceNotifyListeners();
+        fc.forceNotifyListeners();
       }
     } catch (_) {}
 
-    // 3. Firebase em background
     try {
       if (_id.isNotEmpty) {
         await FirebaseFirestore.instance
@@ -92,12 +85,11 @@ class _DestinationDetailState extends State<DestinationDetail> {
             .doc(_id)
             .update({'favoritedBy': _favoritedBy});
       }
-      final favService = FavoritesService();
+      final fs = FavoritesService();
       if (isAdd) {
-        await favService.favoritarDestino(_uid, destino);
+        await fs.favoritarDestino(_uid, destino);
       } else {
-        await favService.desfavoritarDestino(_uid, _id,
-            nome: _data['name'] ?? '');
+        await fs.desfavoritarDestino(_uid, _id, nome: _data['name'] ?? '');
       }
     } catch (e) {
       debugPrint('Erro ao sincronizar favorito: $e');
@@ -139,18 +131,19 @@ class _DestinationDetailState extends State<DestinationDetail> {
       setState(() {
         _data = atual.toMap();
         _id = id;
-        // Reatualiza o favorito com os dados frescos do Firestore
         _favoritedBy = List<String>.from(_data['favoritedBy'] ?? []);
         _isFavorited = _favoritedBy.contains(_uid);
-        try {
-          final favController =
-              Provider.of<FavoritesController>(context, listen: false);
-          if (favController.favorites != null) {
-            _isFavorited =
-                favController.isDestinoFavorito(_id, nome: _data['name'] ?? '');
-          }
-        } catch (_) {}
       });
+      // Confirma com o FavoritesController
+      try {
+        final fc = Provider.of<FavoritesController>(context, listen: false);
+        if (fc.favorites != null && mounted) {
+          setState(() {
+            _isFavorited =
+                fc.isDestinoFavorito(_id, nome: _data['name'] ?? '');
+          });
+        }
+      } catch (_) {}
     }
   }
 
@@ -409,69 +402,21 @@ class _DestinationDetailState extends State<DestinationDetail> {
                                 ),
                                 elevation: 4,
                               ),
-                              onPressed: () async {
-                                // 1. Feedback visual de carregamento
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (context) => const Center(
-                                    child: CircularProgressIndicator(
-                                      color: Colors.blue,
+                              onPressed: () {
+                                DestinationModel destinoModel =
+                                    DestinationModel.fromMap(
+                                  _data,
+                                  id: _id,
+                                );
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TelaMapa.destino(
+                                      destino: destinoModel,
                                     ),
                                   ),
                                 );
-
-                                // 2. Busca a posição do GPS
-                                LocationService locationService =
-                                    LocationService();
-                                var posicao =
-                                    await locationService.obterPosicaoAtual();
-
-                                // 3. Fecha o dialog de carregamento
-                                if (context.mounted) Navigator.pop(context);
-
-                                LatLng localizacaoFinal;
-
-                                if (posicao != null) {
-                                  localizacaoFinal = LatLng(
-                                    posicao.latitude,
-                                    posicao.longitude,
-                                  );
-                                } else {
-                                  // Backup: coordenada padrão de Garanhuns
-                                  localizacaoFinal =
-                                      const LatLng(-8.8908, -36.4969);
-
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Não foi possível obter sua localização. Usando localização padrão.',
-                                        ),
-                                        duration: Duration(seconds: 3),
-                                      ),
-                                    );
-                                  }
-                                }
-
-                            DestinationModel destinoModel =
-                                DestinationModel.fromMap(
-                              _data,
-                              id: _id,
-                            );
-
-                                // 4. Navega para a Tela do Mapa
-                                if (context.mounted) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => TelaMapa(
-                                        destino: destinoModel,
-                                        userLocation: localizacaoFinal,
-                                      ),
-                                    ),
-                                  );
-                                }
                               },
                               child: const Text(
                                 'Ver no mapa',

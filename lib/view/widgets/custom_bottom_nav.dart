@@ -3,7 +3,6 @@ import 'package:boranemobile/view/pages/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:boranemobile/view/pages/favorites_page.dart';
-import 'package:boranemobile/view/pages/mapa_page.dart';
 import 'package:boranemobile/view/pages/new_route_page.dart';
 import 'package:boranemobile/view/pages/new_destination_page.dart';
 

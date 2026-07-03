@@ -83,7 +83,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
   void _iniciarAutoPlay() {
     _timer?.cancel();
     if (_rotas.length <= 1) return;
-    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 7), (_) {
       if (!_pageController.hasClients || _rotas.isEmpty) return;
       _currentIndex = (_currentIndex + 1) % _rotas.length;
       _pageController.animateToPage(

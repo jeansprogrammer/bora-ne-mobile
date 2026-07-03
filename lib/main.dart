@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'controllers/route_creation_controller.dart';
 import 'controllers/auth_controller.dart';
 import 'view/pages/splash.dart';
-import 'view/pages/home_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'controllers/destination_creation_controller.dart';
