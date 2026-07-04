@@ -10,6 +10,7 @@ import 'package:boranemobile/view/widgets/photo_carousel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:boranemobile/view/widgets/comments_bottom_sheet.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
@@ -25,6 +26,20 @@ class DestinationDetail extends StatefulWidget {
 
 class _DestinationDetailState extends State<DestinationDetail> {
   bool _isFavorited = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final String nome = widget.data['name'] ?? 'Sem título';
+    final String descricao =
+        widget.data['description'] ?? 'Sem descrição disponível.';
+    final String coverPhoto = widget.data['coverPhoto'] ?? '';
+    final List<String> photos = List<String>.from(widget.data['photos'] ?? []);
+    final List<String> categories = List<String>.from(
+      widget.data['categories'] ?? [],
+    );
+    final String neighborhood = widget.data['neighborhood'] ?? '';
+    final String city = widget.data['city'] ?? '';
+    final String state = widget.data['state'] ?? '';
 
   // Estado mutável: permite atualizar a tela após uma edição
   late Map<String, dynamic> _data;
@@ -263,6 +278,44 @@ class _DestinationDetailState extends State<DestinationDetail> {
                           ),
                         ),
 
+                        const SizedBox(height: 4),
+
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                local,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        if (categories.isNotEmpty)
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: categories.map((c) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F3F5),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                         const SizedBox(height: 20),
 
                     // ── Descrição ────────────────────────────────────────────
@@ -354,6 +407,54 @@ class _DestinationDetailState extends State<DestinationDetail> {
                                 var posicao =
                                     await locationService.obterPosicaoAtual();
 
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.comment_outlined),
+                            label: const Text(
+                              'Comentários',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onPressed: () {
+                              print("BOTÃO COMENTÁRIOS PRESSIONADO");
+                              print("ID DO DESTINO: ${widget.id}");
+
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (_) => CommentsBottomSheet(
+                                  destinationId: widget.id,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // ── Botão Ver no mapa dentro do scroll ─────────────
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF1B81A),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 4,
+                            ),
+                            onPressed: () {},
+                            child: const Text(
+                              'Ver no mapa',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                                 // 3. Fecha o dialog de carregamento
                                 if (context.mounted) Navigator.pop(context);
 
@@ -440,6 +541,15 @@ class _DestinationDetailState extends State<DestinationDetail> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: const Color(0xFFFFF9E7),
+      child: const Center(
+        child: Icon(Icons.image_outlined, color: Color(0xFFF1B81A), size: 48),
       ),
     );
   }

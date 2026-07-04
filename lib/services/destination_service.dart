@@ -1,54 +1,61 @@
 import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+
 import '../models/destination_model.dart';
 
 class DestinationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // ── Stream de todos os Destinos ──────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────
+  // Destinos
+  // ───────────────────────────────────────────────────────────────
+
   Stream<List<DestinationModel>> getDestinations() {
-    return _firestore.collection('destinations').snapshots().map((snap) =>
-        snap.docs
-            .map((doc) => DestinationModel.fromMap(doc.data(), id: doc.id))
-            .toList());
-  }
-
-Future<List<DestinationModel>> getAllDestinations() async {
-  try {
-    final snapshot = await FirebaseFirestore.instance
+    return _firestore
         .collection('destinations')
-        .get();
-
-    return snapshot.docs.map((doc) {
-      return DestinationModel.fromMap(doc.data());
-    }).toList();
-  } catch (e) {
-    print('Erro ao buscar destinos: $e');
-    return [];
+        .snapshots()
+        .map(
+          (snap) => snap.docs
+              .map((doc) => DestinationModel.fromMap(doc.data(), id: doc.id))
+              .toList(),
+        );
   }
-}
-  // ── Busca por nome + cidade (para criação de rota) ───────────────────────
+
+  Future<List<DestinationModel>> getAllDestinations() async {
+    try {
+      final snapshot = await _firestore.collection('destinations').get();
+
+      return snapshot.docs
+          .map((doc) => DestinationModel.fromMap(doc.data(), id: doc.id))
+          .toList();
+    } catch (e) {
+      print('Erro ao buscar destinos: $e');
+      return [];
+    }
+  }
+
   Future<List<DestinationModel>> buscarDestinationsPorNomeECidade(
-      String query, String city) async {
+    String query,
+    String city,
+  ) async {
     final queryLower = query.toLowerCase();
 
-    // Busca pelo campo cidade primeiro (Firestore suporta where + where)
     final snapshot = await _firestore
         .collection('destinations')
         .where('city', isEqualTo: city)
         .get();
 
-    // Filtra localmente pelo nome
     return snapshot.docs
-        .where((doc) =>
-            (doc['name'] as String).toLowerCase().contains(queryLower))
+        .where(
+          (doc) => (doc['name'] as String).toLowerCase().contains(queryLower),
+        )
         .map((doc) => DestinationModel.fromMap(doc.data(), id: doc.id))
         .toList();
   }
 
-  // ── Busca por nome (genérica, sem filtro de cidade) ───────────────────────
   Future<List<DestinationModel>> buscarDestinationsPorNome(String query) async {
     final queryLower = query.toLowerCase();
 
@@ -61,9 +68,11 @@ Future<List<DestinationModel>> getAllDestinations() async {
 
     if (snapshot.docs.isEmpty) {
       final all = await _firestore.collection('destinations').get();
+
       return all.docs
-          .where((doc) =>
-              (doc['name'] as String).toLowerCase().contains(queryLower))
+          .where(
+            (doc) => (doc['name'] as String).toLowerCase().contains(queryLower),
+          )
           .map((doc) => DestinationModel.fromMap(doc.data(), id: doc.id))
           .toList();
     }
@@ -73,7 +82,6 @@ Future<List<DestinationModel>> getAllDestinations() async {
         .toList();
   }
 
-  // ── Upload idêntico ao new_route_service.dart ─────────────────────────────
   Future<List<String>> uploadFotos(List<File> fotos) async {
     List<String> downloadUrls = [];
 
@@ -81,21 +89,28 @@ Future<List<DestinationModel>> getAllDestinations() async {
       try {
         String fileName =
             'destination_${DateTime.now().millisecondsSinceEpoch}_${fotos.indexOf(foto)}.jpg';
-        Reference ref =
-            _storage.ref().child('destinations_photos').child(fileName);
+
+        Reference ref = _storage
+            .ref()
+            .child('destinations_photos')
+            .child(fileName);
 
         UploadTask uploadTask = ref.putFile(foto);
+
         TaskSnapshot snapshot = await uploadTask;
 
         String url = await snapshot.ref.getDownloadURL();
+
         downloadUrls.add(url);
       } catch (e) {
-        print("Erro ao fazer upload de imagem: $e");
+        print("Erro ao fazer upload: $e");
       }
     }
+
     return downloadUrls;
   }
 
+  Future<String?> salvarDestination(DestinationModel destination) async {
   // ── Buscar um destino específico por id ───────────────────────────────────
   Future<DestinationModel?> getDestinationById(String id) async {
     try {
@@ -112,14 +127,27 @@ Future<List<DestinationModel>> getAllDestinations() async {
   // ── Salvar novo Destino ───────────────────────────────────────────────────
   Future<String?> salvarDestination(DestinationModel Destination) async {
     try {
-      final doc =
-          await _firestore.collection('destinations').add(Destination.toMap());
+      final doc = await _firestore
+          .collection('destinations')
+          .add(destination.toMap());
+
       return doc.id;
     } catch (e) {
-      print('Erro ao salvar destination: $e');
+      print(e);
       return null;
     }
   }
+
+  Future<void> addDestination(DestinationModel destination) async {
+    await _firestore.collection('destinations').add(destination.toMap());
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Favoritos
+  // ───────────────────────────────────────────────────────────────
+
+  Future<void> toggleFavorito(String destinationId, String uid) async {
+    final ref = _firestore.collection('destinations').doc(destinationId);
 
   // ── Atualizar Destino existente (edição) ──────────────────────────────────
   Future<bool> atualizarDestination(
@@ -149,21 +177,53 @@ Future<List<DestinationModel>> getAllDestinations() async {
   Future<void> toggleFavorito(String DestinationId, String uid) async {
     final ref = _firestore.collection('destinations').doc(DestinationId);
     final doc = await ref.get();
+
     if (!doc.exists) return;
 
-    final favoritadoPor = List<String>.from(doc['favoritedBy'] ?? []);
+    final favoritedBy = List<String>.from(doc['favoritedBy'] ?? []);
 
-    if (favoritadoPor.contains(uid)) {
-      favoritadoPor.remove(uid);
+    if (favoritedBy.contains(uid)) {
+      favoritedBy.remove(uid);
     } else {
-      favoritadoPor.add(uid);
+      favoritedBy.add(uid);
     }
 
-    await ref.update({'favoritedBy': favoritadoPor});
+    await ref.update({'favoritedBy': favoritedBy});
   }
 
-  // ── Compatibilidade ───────────────────────────────────────────────────────
-  Future<void> addDestination(DestinationModel Destination) async {
-    await _firestore.collection('destinations').add(Destination.toMap());
+  // ───────────────────────────────────────────────────────────────
+  // Comentários
+  // ───────────────────────────────────────────────────────────────
+
+  Stream<QuerySnapshot> getComments(String destinationId) {
+    return _firestore
+        .collection('destinations')
+        .doc(destinationId)
+        .collection('comments')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
   }
+
+  Future<void> addComment({
+    required String destinationId,
+    required String userId,
+    required String userName,
+    required String message,
+  }) async {
+    print("Entrou no DestinationService");
+
+    await _firestore
+        .collection('destinations')
+        .doc(destinationId)
+        .collection('comments')
+        .add({
+          'userId': userId,
+          'userName': userName,
+          'message': message,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+    print("Comentário salvo no Firestore");
+  }
+}
 }

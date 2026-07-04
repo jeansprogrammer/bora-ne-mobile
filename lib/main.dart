@@ -1,3 +1,4 @@
+import 'package:boranemobile/controllers/comments_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'controllers/route_creation_controller.dart';
@@ -15,10 +16,8 @@ import 'controllers/favorites_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // EXECUTE APENAS UMA VEZ E DEPOIS COMENTE A LINHA ABAIXO
   //await CargaDadosService().executarCarga();
@@ -31,6 +30,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => CategoryController()),
         ChangeNotifierProvider(create: (_) => DestinationCreationController()),
         ChangeNotifierProvider(create: (_) => FavoritesController()),
+        ChangeNotifierProvider(create: (_) => CommentsController()),
       ],
       child: const BoraNE(),
     ),
