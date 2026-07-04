@@ -8,7 +8,15 @@ import '../../data/category_data.dart';
 import '../../data/nordeste_data.dart';
 
 class NewDestinationPage extends StatefulWidget {
-  const NewDestinationPage({super.key});
+  // Quando != null, a página abre em modo EDIÇÃO (só título, categorias e descrição).
+  final Map<String, dynamic>? destinoParaEditar;
+  final String? destinoId;
+
+  const NewDestinationPage({
+    super.key,
+    this.destinoParaEditar,
+    this.destinoId,
+  });
 
   @override
   State<NewDestinationPage> createState() => _NewDestinationPageState();
@@ -18,15 +26,34 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
   // Controller criado no State para ter acesso direto sem depender do Consumer
   late final DestinationCreationController _controller;
 
+  // Controllers de texto dos campos editáveis (permitem pré-preencher na edição)
+  final TextEditingController _nomeController = TextEditingController();
+  final TextEditingController _descricaoController = TextEditingController();
+
+  bool get _editando => widget.destinoParaEditar != null;
+
   @override
   void initState() {
     super.initState();
     _controller = DestinationCreationController();
+
+    // Modo edição: carrega os dados salvos e pré-preenche os campos
+    if (_editando) {
+      _controller.carregarParaEdicao(
+        widget.destinoParaEditar!,
+        id: widget.destinoId,
+      );
+      _nomeController.text = _controller.nome;
+      _descricaoController.text = _controller.descricao;
+    }
   }
 
   @override
   void dispose() {
+    _nomeController.dispose();
+    _descricaoController.dispose();
     _controller.dispose();
+    _cepController.dispose();
     super.dispose();
   }
 
@@ -188,8 +215,28 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 12),
-                    _buildFotos(controller),
-                    const SizedBox(height: 24),
+                    if (!_editando) ...[
+                      _buildFotos(controller),
+                      const SizedBox(height: 24),
+                    ] else ...[
+                      const Text(
+                        'Editar destino',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Você pode alterar as fotos, o título, as categorias e a descrição.',
+                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 20),
+                      _buildFotosExistentes(controller),
+                      _buildFotos(controller),
+                      const SizedBox(height: 24),
+                    ],
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -210,6 +257,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                       ],
                     ),
                     TextField(
+                      controller: _nomeController,
                       onChanged: controller.setNome,
                       decoration: _inputStyle(
                         "Ex: Restaurante Lua Cheia",
@@ -219,6 +267,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                     const SizedBox(height: 20),
                     _sectionTitle("Descrição"),
                     TextField(
+                      controller: _descricaoController,
                       onChanged: controller.setDescricao,
                       maxLines: 3,
                       maxLength: 300,
@@ -249,35 +298,38 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                     ),
                     _buildCategoriasField(controller),
                     const SizedBox(height: 20),
-                    const Divider(height: 32),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _sectionTitle(
-                            "Endereço",
-                            subtitle: "Digite o CEP para preencher automaticamente",
-                          ),
-                        ),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 220),
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: [
-                                if (controller.city.isEmpty) _chip("Cidade obrigatória"),
-                                if (controller.uf.isEmpty) _chip("UF obrigatória"),
-                                if (controller.latitude == 0.0) _chip("Localização obrigatória"),
-                              ],
+                    if (!_editando) ...[
+                      const Divider(height: 32),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _sectionTitle(
+                              "Endereço",
+                              subtitle: "Digite o CEP para preencher automaticamente",
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    _buildEndereco(controller),
-                    const SizedBox(height: 30),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 220),
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: [
+                                  if (controller.city.isEmpty) _chip("Cidade obrigatória"),
+                                  if (controller.uf.isEmpty) _chip("UF obrigatória"),
+                                  if (controller.latitude == 0.0) _chip("Localização obrigatória"),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      _buildEndereco(controller),
+                      const SizedBox(height: 30),
+                    ] else
+                      const SizedBox(height: 10),
                     _buildActionButtons(context, controller),
                     const SizedBox(height: 60),
                   ],
@@ -287,6 +339,107 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
           );
         },
       ),
+    );
+  }
+
+  // ── FOTOS EXISTENTES (modo edição) ───────────────────────────────────────
+
+  Widget _buildFotosExistentes(DestinationCreationController controller) {
+    final fotosUrls = controller.photosExistentes;
+    if (fotosUrls.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(
+          "Fotos atuais",
+          subtitle: "Toque para definir como capa",
+        ),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: fotosUrls.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemBuilder: (_, index) {
+            final url = fotosUrls[index];
+            final isCapa = !controller.capaEhNova && url == controller.coverExistente;
+            return GestureDetector(
+              onTap: () => controller.definirCapaExistente(index),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: const Color(0xFFFFF9E7),
+                        child: const Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.orangeAccent,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (isCapa)
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.orangeAccent, width: 3),
+                        color: Colors.orangeAccent.withOpacity(0.15),
+                      ),
+                      alignment: Alignment.topLeft,
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orangeAccent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          "CAPA",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () => controller.removerFotoExistente(index),
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -343,7 +496,8 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
               mainAxisSpacing: 8,
             ),
             itemBuilder: (_, index) {
-              final isCapa = index == controller.indiceFotoCapa;
+              final isCapa = (!_editando || controller.capaEhNova) &&
+                  index == controller.indiceFotoCapa;
               return GestureDetector(
                 onTap: () => controller.definirFotoCapa(index),
                 child: Stack(
@@ -784,22 +938,6 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
             ),
           ),
 
-        if (!controller.isValid)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                if (controller.nome.isEmpty) _chip("Nome obrigatório"),
-                if (controller.categoriasSelecionadas.isEmpty)
-                  _chip("Categoria obrigatória"),
-                if (controller.uf.isEmpty) _chip("Estado obrigatório"),
-                if (controller.city.isEmpty) _chip("Cidade obrigatória"),
-              ],
-            ),
-          ),
-
         Row(
           children: [
             Expanded(
@@ -836,7 +974,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                       ? 'Verificando endereço...'
                       : controller.isSaving
                           ? 'Salvando...'
-                          : 'Criar Destino',
+                          : (_editando ? 'Salvar alterações' : 'Criar Destino'),
                   style: const TextStyle(
                       color: Colors.black, fontWeight: FontWeight.bold),
                 ),
@@ -845,6 +983,31 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                         !controller.isValid)
                     ? null
                     : () async {
+                        // ── MODO EDIÇÃO: salva direto (sem reverificar endereço) ──
+                        if (_editando) {
+                          final sucesso = await controller.salvarEdicao();
+                          if (!mounted) return;
+                          if (sucesso) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content:
+                                    Text('✅ Destino atualizado com sucesso!'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            Navigator.pop(context, true);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(controller.erroMensagem ??
+                                    '⚠️ Erro ao atualizar destino.'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                          return;
+                        }
+
                         // 1. Verifica o endereço primeiro
                         await controller.buscarCoordenadas();
                         if (!mounted) return;

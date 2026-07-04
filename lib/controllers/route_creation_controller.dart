@@ -28,6 +28,17 @@ class RouteCreationController extends ChangeNotifier {
   int indiceFotoCapa = 0;
   String urlFotoCapaManual = '';
 
+  // ── Modo edição ─────────────────────────────────────────────────────────────
+  // Quando != null, estamos editando uma rota existente (id do documento Firestore).
+  String? editingRouteId;
+  // Fotos que JÁ estavam salvas na rota (URLs). Preservadas ao editar.
+  List<String> _urlsFotosExistentes = [];
+  // Lista de favoritos já existente — preservada para não zerar ao editar.
+  List<String> _favoritedByExistente = [];
+
+  bool get isEditing => editingRouteId != null;
+  List<String> get urlsFotosExistentes => _urlsFotosExistentes;
+
   // ── Múltiplas categorias ──────────────────────────────────────────────────
   List<String> _categoriasSelecionadas = [];
 
@@ -84,6 +95,75 @@ class RouteCreationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Carregar rota existente para EDIÇÃO ───────────────────────────────────
+  // Recebe o Map vindo da route_detail (já contém o 'id' do documento Firestore)
+  // e pré-preenche todos os campos do formulário.
+  void carregarParaEdicao(Map<String, dynamic> rota) {
+    // Identificador do documento — essencial para o update/delete
+    editingRouteId = rota['id']?.toString();
+
+    // Campos de texto
+    newRoute = RouteCreationModel.fromMap(rota, id: editingRouteId);
+    newRoute.name = rota['name'] ?? '';
+    newRoute.description = rota['description'] ?? '';
+
+    // Categorias
+    final rawCats = rota['categories'];
+    _categoriasSelecionadas = rawCats == null
+        ? []
+        : rawCats is List
+            ? List<String>.from(rawCats)
+            : [rawCats.toString()];
+
+    // Cidade / UF (setados diretamente para NÃO disparar a limpeza de destinos)
+    _cidadeSelecionada = rota['city'] ?? '';
+    _ufSelecionado = rota['state'] ?? '';
+
+    // Destinos já existentes na rota
+    final rawDest = rota['destinations'];
+    final List<DestinationModel> destinos = rawDest is List
+        ? rawDest
+            .map((d) => DestinationModel.fromMap(
+                  Map<String, dynamic>.from(d as Map),
+                ))
+            .toList()
+        : <DestinationModel>[];
+    _DestinationsSelecionados = List<DestinationModel>.from(destinos);
+    newRoute.destinations = List<DestinationModel>.from(destinos);
+
+    // Fotos já salvas (URLs) — preservadas
+    final rawPhotos = rota['photos'];
+    _urlsFotosExistentes = rawPhotos == null
+        ? []
+        : rawPhotos is List
+            ? List<String>.from(rawPhotos)
+            : (rawPhotos.toString().isNotEmpty ? [rawPhotos.toString()] : []);
+
+    // Foto de capa atual (mostrada como preview via URL)
+    urlFotoCapaManual = rota['coverPhoto'] ?? '';
+
+    // Favoritos atuais — preservados ao salvar
+    _favoritedByExistente = List<String>.from(rota['favoritedBy'] ?? []);
+
+    // Limpa seleção de fotos NOVAS (locais)
+    fotos = [];
+    indiceFotoCapa = 0;
+
+    notifyListeners();
+  }
+
+  // Remove uma foto que já estava salva (apenas da lista local; só persiste ao salvar)
+  void removerFotoExistente(int index) {
+    if (index < 0 || index >= _urlsFotosExistentes.length) return;
+    final removida = _urlsFotosExistentes.removeAt(index);
+    // Se a removida era a capa, escolhe outra capa válida
+    if (urlFotoCapaManual == removida) {
+      urlFotoCapaManual =
+          _urlsFotosExistentes.isNotEmpty ? _urlsFotosExistentes.first : '';
+    }
+    notifyListeners();
+  }
+
   Future<void> carregarRotas() async {
     _isSearching = true;
     notifyListeners();
@@ -91,7 +171,7 @@ class RouteCreationController extends ChangeNotifier {
     try {
       _rotas = await _routeService.getAllRoutes();
     } catch (e) {
-      print('Erro ao carregar rotas: $e');
+      debugPrint('Erro ao carregar rotas: $e');
     }
 
     _isSearching = false;
@@ -159,6 +239,7 @@ class RouteCreationController extends ChangeNotifier {
     if (_DestinationsSelecionados.any((d) => d.name == Destination.name)) return;
     _DestinationsSelecionados.add(Destination);
     newRoute.destinations.add(DestinationModel(
+      id: Destination.id, // ← preserva o id do documento para permitir edição depois
       name: Destination.name,
       description: Destination.description,
       photos: Destination.photos,
@@ -200,38 +281,57 @@ class RouteCreationController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Fotos: upload de todas via Cloudinary
-      List<String> urlsFotos = [];
-      String urlCapa = '';
+      // ── Monta a lista final de fotos ──────────────────────────────────────
+      // Começa com as fotos que já estavam salvas (modo edição; vazio no modo criação).
+      List<String> urlsFotos = List<String>.from(_urlsFotosExistentes);
+      // Capa atual (URL). No modo criação pode ser uma URL manual; no modo edição
+      // é a capa já existente.
+      String urlCapa = urlFotoCapaManual;
 
+      // Faz upload das NOVAS fotos locais selecionadas pelo usuário (se houver)
       if (fotos.isNotEmpty) {
-        urlsFotos = await _imageService.uploadImagens(fotos);
-        urlCapa = urlsFotos.isNotEmpty
-            ? urlsFotos[indiceFotoCapa.clamp(0, urlsFotos.length - 1)]
-            : urlFotoCapaManual;
-      } else {
-        urlCapa = urlFotoCapaManual;
-        if (urlCapa.isNotEmpty) urlsFotos = [urlCapa];
+        final novasUrls = await _imageService.uploadImagens(fotos);
+        if (novasUrls.isNotEmpty) {
+          // A capa escolhida no grid refere-se às fotos novas
+          urlCapa = novasUrls[indiceFotoCapa.clamp(0, novasUrls.length - 1)];
+        }
+        urlsFotos.addAll(novasUrls);
       }
 
+      // Garante que a capa esteja presente na lista de fotos
+      if (urlCapa.isNotEmpty && !urlsFotos.contains(urlCapa)) {
+        urlsFotos.insert(0, urlCapa);
+      }
+      // Se ainda não há capa definida mas há fotos, usa a primeira
+      if (urlCapa.isEmpty && urlsFotos.isNotEmpty) {
+        urlCapa = urlsFotos.first;
+      }
+
+      // ── Monta o payload ───────────────────────────────────────────────────
       final Map<String, dynamic> dadosParaSalvar = newRoute.toMap();
-      dadosParaSalvar['photos'] = urlsFotos;        // ← todas as fotos
-      dadosParaSalvar['coverPhoto'] = urlCapa;       // ← foto capa
+      dadosParaSalvar['photos'] = urlsFotos;
+      dadosParaSalvar['coverPhoto'] = urlCapa;
       dadosParaSalvar['categories'] = _categoriasSelecionadas;
       dadosParaSalvar['city'] = _cidadeSelecionada;
       dadosParaSalvar['state'] = _ufSelecionado;
-      dadosParaSalvar['favoritedBy'] = [];
+      // Preserva favoritos no modo edição; zera apenas na criação
+      dadosParaSalvar['favoritedBy'] =
+          isEditing ? _favoritedByExistente : <String>[];
 
-      final success = await _routeService.saveRouteToFirestore(dadosParaSalvar);
+      // ── Cria ou atualiza no Firestore ─────────────────────────────────────
+      final bool success;
+      if (isEditing) {
+        success = await _routeService.updateRouteInFirestore(
+          editingRouteId!,
+          dadosParaSalvar,
+        );
+      } else {
+        success = await _routeService.saveRouteToFirestore(dadosParaSalvar);
+      }
 
       if (success) {
-        newRoute = RouteCreationModel();
-        fotos = [];
-        indiceFotoCapa = 0;
-        urlFotoCapaManual = '';
-        _categoriasSelecionadas = [];
-        _cidadeSelecionada = '';
-        _DestinationsSelecionados = [];
+        resetar();
+        await carregarRotas();
       }
 
       _isSaving = false;
@@ -240,7 +340,32 @@ class RouteCreationController extends ChangeNotifier {
     } catch (e) {
       _isSaving = false;
       notifyListeners();
-      print("Erro ao salvar rota: $e");
+      debugPrint("Erro ao salvar rota: $e");
+      return false;
+    }
+  }
+
+  // ── Excluir rota (apenas no modo edição) ──────────────────────────────────
+  Future<bool> deleteRoute() async {
+    if (editingRouteId == null) return false;
+
+    _isSaving = true;
+    notifyListeners();
+
+    try {
+      final success =
+          await _routeService.deleteRouteFromFirestore(editingRouteId!);
+      if (success) {
+        resetar();
+        await carregarRotas();
+      }
+      _isSaving = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _isSaving = false;
+      notifyListeners();
+      print("Erro ao excluir rota: $e");
       return false;
     }
   }
@@ -256,6 +381,10 @@ class RouteCreationController extends ChangeNotifier {
     _cidadeSelecionada = '';
     _ufSelecionado = '';
     _DestinationsSelecionados = [];
+    // Limpa o estado de edição
+    editingRouteId = null;
+    _urlsFotosExistentes = [];
+    _favoritedByExistente = [];
     notifyListeners();
   }
 }

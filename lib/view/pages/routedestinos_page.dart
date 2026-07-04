@@ -9,10 +9,15 @@ import 'package:provider/provider.dart';
 const Color kPrimaryGold = Color(0xFFEDA200);
 
 class RouteDestinosPage extends StatefulWidget {
-  /// Categoria vinda da home — se nula, mostra todas (sem filtro)
   final String? categoriaInicial;
 
-  const RouteDestinosPage({super.key, this.categoriaInicial});
+  final String? cidadeInicial;
+
+  const RouteDestinosPage({
+    super.key,
+    this.categoriaInicial,
+    this.cidadeInicial,
+  });
 
   @override
   State<RouteDestinosPage> createState() => _RouteDestinosPageState();
@@ -24,7 +29,7 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
   @override
   Widget build(BuildContext context) {
     final categoria = widget.categoriaInicial;
-
+    final cidade = widget.cidadeInicial;
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
@@ -32,10 +37,7 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
           children: [
             // ── Header ────────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   IconButton(
@@ -44,11 +46,14 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
                   ),
                   Expanded(
                     child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Image.asset('assets/images/LOGO_V2_1.png', height: 44),
-                ),
-              ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Image.asset(
+                          'assets/images/LOGO_V2_1.png',
+                          height: 44,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 48),
                 ],
@@ -88,7 +93,9 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 4),
+                    horizontal: 14,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: kPrimaryGold.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(16),
@@ -116,10 +123,12 @@ class _RouteDestinosPageState extends State<RouteDestinosPage> {
                     ? RotasWidget(
                         key: const ValueKey('rotas'),
                         categoriaFiltro: categoria,
+                        cidadeFiltro: cidade,
                       )
                     : DestinosWidget(
                         key: const ValueKey('destinos'),
                         categoriaFiltro: categoria,
+                        cidadeFiltro: cidade,
                       ),
               ),
             ),
@@ -177,7 +186,8 @@ bool _passaFiltro(List<String> categoriasItem, String? categoria) {
 
 class RotasWidget extends StatefulWidget {
   final String? categoriaFiltro;
-  const RotasWidget({super.key, this.categoriaFiltro});
+  final String? cidadeFiltro;
+  const RotasWidget({super.key, this.categoriaFiltro, this.cidadeFiltro});
 
   @override
   State<RotasWidget> createState() => _RotasWidgetState();
@@ -206,7 +216,7 @@ class _RotasWidgetState extends State<RotasWidget> {
 
         final rotasFiltradas = controller.rotas.where((rota) {
           final cats = _parseCats(rota['categories']);
-          return _passaFiltro(cats, widget.categoriaFiltro);
+          return _passaFiltro(cats, widget.categoriaFiltro) && (widget.cidadeFiltro == null || rota['city'] == widget.cidadeFiltro);
         }).toList();
 
         if (rotasFiltradas.isEmpty) {
@@ -218,11 +228,7 @@ class _RotasWidgetState extends State<RotasWidget> {
           itemCount: rotasFiltradas.length,
           itemBuilder: (context, index) {
             final rota = rotasFiltradas[index];
-            return RouteCard(
-              id: rota['id'] ?? '',
-              data: rota,
-              currentUid: uid,
-            );
+            return RouteCard(id: rota['id'] ?? '', data: rota, currentUid: uid);
           },
         );
       },
@@ -234,7 +240,8 @@ class _RotasWidgetState extends State<RotasWidget> {
 
 class DestinosWidget extends StatefulWidget {
   final String? categoriaFiltro;
-  const DestinosWidget({super.key, this.categoriaFiltro});
+  final String? cidadeFiltro;
+  const DestinosWidget({super.key, this.categoriaFiltro, this.cidadeFiltro});
 
   @override
   State<DestinosWidget> createState() => _DestinosWidgetState();
@@ -262,7 +269,8 @@ class _DestinosWidgetState extends State<DestinosWidget> {
         }
 
         final destinosFiltrados = controller.destinos.where((destino) {
-          return _passaFiltro(destino.categories, widget.categoriaFiltro);
+          final cats = _parseCats(destino.categories);
+          return _passaFiltro(cats, widget.categoriaFiltro) && (widget.cidadeFiltro == null || destino.city == widget.cidadeFiltro);
         }).toList();
 
         if (destinosFiltrados.isEmpty) {

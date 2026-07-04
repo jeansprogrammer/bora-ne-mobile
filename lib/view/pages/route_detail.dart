@@ -1,5 +1,8 @@
 import 'package:readmore/readmore.dart';
+import 'package:provider/provider.dart';
+import 'package:boranemobile/controllers/route_creation_controller.dart';
 import 'package:boranemobile/view/pages/destination_detail.dart';
+import 'package:boranemobile/view/pages/new_route_page.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/view/widgets/photo_carousel.dart';
 import 'package:flutter/material.dart';
@@ -14,8 +17,6 @@ class RouteDetailPage extends StatefulWidget {
 }
 
 class _RouteDetailPageState extends State<RouteDetailPage> {
-  int _currentIndex = 0; 
-
   @override
   Widget build(BuildContext context) {
     // ── 1. VERIFICAÇÃO DE SEGURANÇA: Se a rota for nula ─────────────────
@@ -40,6 +41,14 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     final String descricaoRota = widget.rota!['description'] ?? 'Sem descrição disponível.';
     final List<dynamic> destinosRaw = widget.rota!['destinations'] ?? [];
 
+    // Categorias (suporta List ou String antiga)
+    final rawCats = widget.rota!['categories'];
+    final List<String> categoriasRota = rawCats == null
+        ? []
+        : rawCats is List
+            ? List<String>.from(rawCats)
+            : (rawCats.toString().isNotEmpty ? [rawCats.toString()] : []);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA), // Fundo levemente cinza do mockup
       body: SafeArea(
@@ -61,7 +70,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                       height: 32),
                     ),
                   ),
-                  const SizedBox(width: 48), 
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -73,20 +82,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Título Principal
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-                      child: Text(
-                        nomeRota,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-
-                    // Card Principal (Imagem + Descrição)
+                    // Card Principal (Imagem + Título + Descrição + Categorias)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                       child: Container(
@@ -113,35 +109,80 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                                 topRight: Radius.circular(24),
                               ),
                             ),
-                            
-                            // ── ALTERAÇÃO FEITA AQUI ─────────────────────────
+
                             Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: ReadMoreText(
-                                descricaoRota,
-                                trimLines: 3, // Mostra 3 linhas e depois corta
-                                trimMode: TrimMode.Line,
-                                trimCollapsedText: ' ver mais',
-                                trimExpandedText: ' ver menos',
-                                textAlign: TextAlign.justify,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black87,
-                                  height: 1.4,
-                                ),
-                                moreStyle: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFF1B81A), // Usando o amarelo da sua identidade visual
-                                ),
-                                lessStyle: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFF1B81A),
-                                ),
+                              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // ── Título dentro do card ──────────────────
+                                  Text(
+                                    nomeRota,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // ── Descrição ──────────────────────────────
+                                  ReadMoreText(
+                                    descricaoRota,
+                                    trimLines: 3, // Mostra 3 linhas e depois corta
+                                    trimMode: TrimMode.Line,
+                                    trimCollapsedText: ' ver mais',
+                                    trimExpandedText: ' ver menos',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black87,
+                                      height: 1.4,
+                                    ),
+                                    moreStyle: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFF1B81A), // Amarelo da identidade visual
+                                    ),
+                                    lessStyle: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFF1B81A),
+                                    ),
+                                  ),
+
+                                  // ── Chips de categoria ─────────────────────
+                                  if (categoriasRota.isNotEmpty) ...[
+                                    const SizedBox(height: 14),
+                                    Wrap(
+                                      alignment: WrapAlignment.center,
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: categoriasRota
+                                          .map((cat) => Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 14, vertical: 6),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFEDEDED),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: Text(
+                                                  cat,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black87,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ))
+                                          .toList(),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
-                            // ────────────────────────────────────────────────
                           ],
                         ),
                       ),
@@ -149,15 +190,40 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
 
                     const SizedBox(height: 20),
 
-                    // Título do Itinerário
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Text(
-                        'Roteiro da experiência',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    // Título do Itinerário + Botão Editar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Roteiro da experiência',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          // ── BOTÃO EDITAR (preto, ao lado do título) ─────────
+                          TextButton.icon(
+                            onPressed: () => _editarRota(context),
+                            icon: const Icon(Icons.edit_outlined,
+                                color: Colors.black, size: 18),
+                            label: const Text(
+                              'Editar',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              minimumSize: const Size(0, 0),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
@@ -300,6 +366,43 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
       // ── BARRA DE MENU INFERIOR ─────────────────────────────────────────────
       bottomNavigationBar: const CustomBottomNav(),
     );
+  }
+
+  // ── Abre a tela de edição levando os dados salvos da rota ──────────────────
+  Future<void> _editarRota(BuildContext context) async {
+    final String? id = widget.rota!['id']?.toString();
+
+    // Sem id não há como atualizar/excluir no Firestore
+    if (id == null || id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível identificar esta rota para edição.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Garante que o Map levado tenha o id (necessário no controller)
+    final rotaComId = {...widget.rota!, 'id': id};
+
+    // Pré-carrega os dados no controller antes de navegar (modo edição)
+    Provider.of<RouteCreationController>(context, listen: false)
+        .carregarParaEdicao(rotaComId);
+
+    // Navega para a NewRoutePage passando os dados; aguarda o retorno.
+    final alterado = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NewRoutePage(rotaParaEditar: rotaComId),
+      ),
+    );
+
+    // Se a rota foi editada ou excluída, volta para a tela anterior
+    // (lista/home), que recarrega os dados atualizados do Firestore.
+    if (alterado == true && mounted) {
+      Navigator.pop(context);
+    }
   }
 
   Widget _buildTimeline(int index, int totalItems) {

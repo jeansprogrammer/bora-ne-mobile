@@ -35,6 +35,19 @@ class DestinationCreationController extends ChangeNotifier {
   double latitude = 0.0;
   double longitude = 0.0;
 
+  // ── Modo edição ──────────────────────────────────────────────────────────
+  // Quando != null, estamos editando um destino existente (id do Firestore).
+  // Na edição, só título, categorias e descrição mudam; os demais campos
+  // (fotos, endereço, coordenadas, favoritos) são preservados.
+  String? editingId;
+  List<String> _photosExistentes = [];
+  String _coverExistente = '';
+  List<String> _favoritedByExistente = [];
+  // true quando a capa escolhida está entre as fotos novas (locais)
+  bool _capaEhNova = false;
+
+  bool get isEditing => editingId != null;
+
   // ── Estados ──────────────────────────────────────────────────────────────
   bool isSaving = false;
   bool isBuscandoCoordenadas = false;
@@ -147,6 +160,31 @@ class DestinationCreationController extends ChangeNotifier {
 
   void definirFotoCapa(int index) {
     indiceFotoCapa = index;
+    _capaEhNova = true; // capa escolhida entre as fotos novas (locais)
+    notifyListeners();
+  }
+
+  // ── Fotos existentes (modo edição) ────────────────────────────────────────
+  List<String> get photosExistentes => _photosExistentes;
+  String get coverExistente => _coverExistente;
+  bool get capaEhNova => _capaEhNova;
+
+  // Define a capa entre as fotos que já estavam salvas (URLs)
+  void definirCapaExistente(int index) {
+    if (index < 0 || index >= _photosExistentes.length) return;
+    _coverExistente = _photosExistentes[index];
+    _capaEhNova = false;
+    notifyListeners();
+  }
+
+  // Remove uma foto já salva (apenas localmente; persiste ao salvar)
+  void removerFotoExistente(int index) {
+    if (index < 0 || index >= _photosExistentes.length) return;
+    final removida = _photosExistentes.removeAt(index);
+    if (_coverExistente == removida) {
+      _coverExistente =
+          _photosExistentes.isNotEmpty ? _photosExistentes.first : '';
+    }
     notifyListeners();
   }
 
@@ -237,6 +275,111 @@ class DestinationCreationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Carregar destino para EDIÇÃO ──────────────────────────────────────────
+  // Preenche o formulário com os dados existentes. Apenas título, categorias e
+  // descrição serão editáveis na tela; o restante é preservado para o update.
+  void carregarParaEdicao(Map<String, dynamic> data, {String? id}) {
+    editingId = id ?? data['id']?.toString();
+
+    // Campos editáveis
+    nome = data['name'] ?? '';
+    descricao = data['description'] ?? '';
+    categoriasSelecionadas = List<String>.from(data['categories'] ?? []);
+
+    // Campos preservados (não editáveis na tela de edição)
+    rua = data['street'] ?? '';
+    numero = data['number'] ?? '';
+    bairro = data['neighborhood'] ?? '';
+    cep = data['cep'] ?? '';
+    city = data['city'] ?? '';
+    uf = data['state'] ?? '';
+    latitude = (data['latitude'] ?? 0.0).toDouble();
+    longitude = (data['longitude'] ?? 0.0).toDouble();
+    enderecoVerificado = true; // já tinha endereço válido salvo
+
+    _photosExistentes = List<String>.from(data['photos'] ?? []);
+    _coverExistente = data['coverPhoto'] ?? data['image'] ?? '';
+    _favoritedByExistente = List<String>.from(data['favoritedBy'] ?? []);
+    _capaEhNova = false;
+    fotos = [];
+    indiceFotoCapa = 0;
+
+    // Sincroniza os controllers de texto auxiliares
+    ruaController.text = rua;
+    bairroController.text = bairro;
+    cidadeController.text = city;
+
+    notifyListeners();
+  }
+
+  // ── Salvar alterações (edição) ────────────────────────────────────────────
+  // Atualiza somente os campos editáveis, preservando fotos, endereço,
+  // coordenadas e favoritos já existentes.
+  Future<bool> salvarEdicao() async {
+    if (editingId == null) return false;
+    // Na edição exige apenas nome e categoria (endereço já está salvo)
+    if (nome.isEmpty || categoriasSelecionadas.isEmpty) return false;
+
+    isSaving = true;
+    erroMensagem = null;
+    notifyListeners();
+
+    try {
+      // ── Fotos: combina as existentes (URLs) com as novas (upload) ──────────
+      List<String> fotosFinais = List<String>.from(_photosExistentes);
+      String capaFinal = _coverExistente;
+
+      if (fotos.isNotEmpty) {
+        final novasUrls = await _imageService.uploadImagens(fotos);
+        // Capa entre as novas, OU capa inicial quando o destino não tinha foto
+        if ((_capaEhNova || capaFinal.isEmpty) && novasUrls.isNotEmpty) {
+          capaFinal = novasUrls[indiceFotoCapa.clamp(0, novasUrls.length - 1)];
+        }
+        fotosFinais.addAll(novasUrls);
+      }
+
+      // Garante uma capa válida
+      if (capaFinal.isEmpty && fotosFinais.isNotEmpty) {
+        capaFinal = fotosFinais.first;
+      }
+
+      final destinoAtualizado = DestinationModel(
+        id: editingId,
+        name: nome,
+        description: descricao,
+        photos: fotosFinais,
+        coverPhoto: capaFinal,
+        categories: List.from(categoriasSelecionadas),
+        street: rua,
+        number: numero,
+        neighborhood: bairro,
+        cep: cep,
+        city: city,
+        state: uf,
+        latitude: latitude,
+        longitude: longitude,
+        favoritedBy: _favoritedByExistente,
+      );
+
+      final sucesso =
+          await _service.atualizarDestination(editingId!, destinoAtualizado);
+
+      if (sucesso) {
+        _resetar();
+        await carregarDestinos();
+      }
+
+      isSaving = false;
+      notifyListeners();
+      return sucesso;
+    } catch (e) {
+      erroMensagem = e.toString();
+      isSaving = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   // ── Salvar ───────────────────────────────────────────────────────────────
 
   Future<bool> salvar() async {
@@ -283,7 +426,10 @@ class DestinationCreationController extends ChangeNotifier {
       print('📋 ID retornado: $id'); // null = falhou no Firestore
       final sucesso = id != null;
 
-      if (sucesso) _resetar();
+      if (sucesso) {
+        _resetar();
+        await carregarDestinos();
+      }
 
       isSaving = false;
       notifyListeners();
@@ -316,6 +462,12 @@ class DestinationCreationController extends ChangeNotifier {
     erroMensagem = null;
     erroCep = null;
     erroEndereco = null;
+    // Limpa estado de edição
+    editingId = null;
+    _photosExistentes = [];
+    _coverExistente = '';
+    _favoritedByExistente = [];
+    _capaEhNova = false;
     ruaController.clear();
     bairroController.clear();
     cidadeController.clear();

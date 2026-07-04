@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/route_creation_controller.dart';
@@ -9,7 +8,10 @@ import '../../data/category_data.dart';
 import '../../data/nordeste_data.dart';
 
 class NewRoutePage extends StatefulWidget {
-  const NewRoutePage({super.key});
+  // Quando != null, a página abre em modo EDIÇÃO com os dados desta rota.
+  final Map<String, dynamic>? rotaParaEditar;
+
+  const NewRoutePage({super.key, this.rotaParaEditar});
 
   @override
   State<NewRoutePage> createState() => _NewRoutePageState();
@@ -17,7 +19,44 @@ class NewRoutePage extends StatefulWidget {
 
 class _NewRoutePageState extends State<NewRoutePage> {
   final TextEditingController _searchController = TextEditingController();
+  // Controllers dos campos de texto — permitem pré-preencher no modo edição.
+  final TextEditingController _nomeController = TextEditingController();
+  final TextEditingController _descricaoController = TextEditingController();
   List<DestinationModel> _searchResults = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Executa após o primeiro frame para poder usar o Provider com segurança.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final controller =
+          Provider.of<RouteCreationController>(context, listen: false);
+
+      if (widget.rotaParaEditar != null) {
+        // MODO EDIÇÃO: carrega os dados salvos da rota no controller
+        // (só recarrega se ainda não estiver editando exatamente esta rota).
+        final id = widget.rotaParaEditar!['id']?.toString();
+        if (controller.editingRouteId != id) {
+          controller.carregarParaEdicao(widget.rotaParaEditar!);
+        }
+      } else if (controller.isEditing) {
+        // MODO CRIAÇÃO: garante que não sobrou estado de uma edição anterior.
+        controller.resetar();
+      }
+
+      // Pré-preenche os campos de texto com o que estiver no controller.
+      _nomeController.text = controller.newRoute.name;
+      _descricaoController.text = controller.newRoute.description;
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _nomeController.dispose();
+    _descricaoController.dispose();
+    super.dispose();
+  }
 
   bool _temDados(RouteCreationController c) =>
       c.newRoute.name.isNotEmpty ||
@@ -119,6 +158,15 @@ class _NewRoutePageState extends State<NewRoutePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 10),
+            Text(
+              controller.isEditing ? "Editar rota" : "Nova rota",
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
             _buildFotoCapa(controller),
             const SizedBox(height: 24),
             Row(
@@ -142,12 +190,14 @@ class _NewRoutePageState extends State<NewRoutePage> {
               ],
             ),
             TextField(
+              controller: _nomeController,
               onChanged: controller.setName,
               decoration: _inputStyle("Ex: Rota Gastronômica de Caruaru", Icons.route_outlined),
             ),
             const SizedBox(height: 20),
             _buildSectionTitle("Descrição"),
             TextField(
+              controller: _descricaoController,
               onChanged: controller.setDescription,
               maxLines: 4,
               maxLength: 500,
@@ -1055,6 +1105,7 @@ class _NewRoutePageState extends State<NewRoutePage> {
   // ── BOTÕES DE AÇÃO ────────────────────────────────────────────────────────
 
   Widget _buildActionButtons(BuildContext context, RouteCreationController controller) {
+    final bool editando = controller.isEditing;
     return Column(
       children: [
         Row(
@@ -1079,23 +1130,31 @@ class _NewRoutePageState extends State<NewRoutePage> {
                     ? const SizedBox(
                         width: 20, height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                    : const Icon(Icons.map_outlined, color: Colors.black),
+                    : Icon(editando ? Icons.save_outlined : Icons.map_outlined,
+                        color: Colors.black),
                 label: Text(
-                  controller.isSaving ? "Salvando..." : "Criar rota",
+                  controller.isSaving
+                      ? "Salvando..."
+                      : (editando ? "Salvar alterações" : "Criar rota"),
                   style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                 ),
                 onPressed: (controller.isSaving || !controller.isValid)
                     ? null
                     : () async {
                         if (await controller.saveRoute()) {
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("✅ Rota criada com sucesso!"),
+                            SnackBar(
+                              content: Text(editando
+                                  ? "✅ Rota atualizada com sucesso!"
+                                  : "✅ Rota criada com sucesso!"),
                               backgroundColor: Colors.green,
                             ),
                           );
-                          Navigator.pop(context);
+                          // Retorna true para a tela anterior saber que houve alteração
+                          Navigator.pop(context, true);
                         } else {
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text("⚠️ Verifique os campos obrigatórios."),
@@ -1113,7 +1172,87 @@ class _NewRoutePageState extends State<NewRoutePage> {
             ),
           ],
         ),
+
+        // ── Botão EXCLUIR — visível apenas no modo edição ──────────────────────
+        if (editando) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              label: const Text("Excluir rota",
+                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: controller.isSaving
+                  ? null
+                  : () => _confirmarExclusao(context, controller),
+            ),
+          ),
+        ],
       ],
+    );
+  }
+
+  // ── Confirmação de exclusão ──────────────────────────────────────────────
+  void _confirmarExclusao(
+      BuildContext context, RouteCreationController controller) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+            SizedBox(width: 8),
+            Text('Excluir rota',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Tem certeza que deseja excluir esta rota? '
+          'Esta ação não pode ser desfeita.',
+          style: TextStyle(color: Colors.black54, fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.black54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () async {
+              Navigator.pop(context); // fecha o diálogo
+              final ok = await controller.deleteRoute();
+              if (!context.mounted) return;
+              if (ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("🗑️ Rota excluída com sucesso!"),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                Navigator.pop(context, true); // volta sinalizando alteração
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("⚠️ Não foi possível excluir a rota."),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Excluir',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 

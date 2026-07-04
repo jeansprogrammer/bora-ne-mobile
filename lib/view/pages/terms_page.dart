@@ -1,6 +1,5 @@
 import 'package:boranemobile/view/pages/user_profile_page.dart';
 import 'package:flutter/material.dart';
-import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 
 class TermsPage extends StatelessWidget {
   const TermsPage({super.key});
@@ -38,7 +37,6 @@ class TermsPage extends StatelessWidget {
               'Termos de Uso',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
-            Align(alignment: AlignmentGeometry.center),
           ],
         ),
       ),

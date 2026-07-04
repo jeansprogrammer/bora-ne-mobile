@@ -111,6 +111,21 @@ class DestinationService {
   }
 
   Future<String?> salvarDestination(DestinationModel destination) async {
+  // ── Buscar um destino específico por id ───────────────────────────────────
+  Future<DestinationModel?> getDestinationById(String id) async {
+    try {
+      final doc =
+          await _firestore.collection('destinations').doc(id).get();
+      if (!doc.exists) return null;
+      return DestinationModel.fromMap(doc.data()!, id: doc.id);
+    } catch (e) {
+      print('Erro ao buscar destino por id: $e');
+      return null;
+    }
+  }
+
+  // ── Salvar novo Destino ───────────────────────────────────────────────────
+  Future<String?> salvarDestination(DestinationModel Destination) async {
     try {
       final doc = await _firestore
           .collection('destinations')
@@ -134,6 +149,33 @@ class DestinationService {
   Future<void> toggleFavorito(String destinationId, String uid) async {
     final ref = _firestore.collection('destinations').doc(destinationId);
 
+  // ── Atualizar Destino existente (edição) ──────────────────────────────────
+  Future<bool> atualizarDestination(
+      String id, DestinationModel destination) async {
+    try {
+      final Map<String, dynamic> dados = destination.toMap()..remove('id');
+      await _firestore.collection('destinations').doc(id).update(dados);
+      return true;
+    } catch (e) {
+      print('Erro ao atualizar destination: $e');
+      return false;
+    }
+  }
+
+  // ── Excluir Destino ───────────────────────────────────────────────────────
+  Future<bool> excluirDestination(String id) async {
+    try {
+      await _firestore.collection('destinations').doc(id).delete();
+      return true;
+    } catch (e) {
+      print('Erro ao excluir destination: $e');
+      return false;
+    }
+  }
+
+  // ── Toggle favorito ───────────────────────────────────────────────────────
+  Future<void> toggleFavorito(String DestinationId, String uid) async {
+    final ref = _firestore.collection('destinations').doc(DestinationId);
     final doc = await ref.get();
 
     if (!doc.exists) return;
@@ -183,4 +225,5 @@ class DestinationService {
 
     print("Comentário salvo no Firestore");
   }
+}
 }
