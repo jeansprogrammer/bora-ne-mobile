@@ -6,10 +6,10 @@ import 'package:boranemobile/controllers/favorites_controller.dart';
 import 'package:boranemobile/services/favorites_service.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/view/widgets/photo_carousel.dart';
+import 'package:boranemobile/view/widgets/destination_comments_bottom_sheet.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:boranemobile/view/widgets/comments_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 
 class DestinationDetail extends StatefulWidget {
@@ -26,21 +26,6 @@ class _DestinationDetailState extends State<DestinationDetail> {
   late bool _isFavorited;
   late List<String> _favoritedBy;
 
-  @override
-  Widget build(BuildContext context) {
-    final String nome = widget.data['name'] ?? 'Sem título';
-    final String descricao =
-        widget.data['description'] ?? 'Sem descrição disponível.';
-    final String coverPhoto = widget.data['coverPhoto'] ?? '';
-    final List<String> photos = List<String>.from(widget.data['photos'] ?? []);
-    final List<String> categories = List<String>.from(
-      widget.data['categories'] ?? [],
-    );
-    final String neighborhood = widget.data['neighborhood'] ?? '';
-    final String city = widget.data['city'] ?? '';
-    final String state = widget.data['state'] ?? '';
-
-  // Estado mutável: permite atualizar a tela após uma edição
   late Map<String, dynamic> _data;
   late String _id;
 
@@ -196,6 +181,14 @@ class _DestinationDetailState extends State<DestinationDetail> {
     }
   }
 
+  void _abrirComentarios(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => CommentsBottomSheet(destinationId: _id),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final String nome = _data['name'] ?? 'Sem título';
@@ -345,234 +338,147 @@ class _DestinationDetailState extends State<DestinationDetail> {
                           ),
                         ),
 
-                        const SizedBox(height: 4),
-
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on_outlined,
-                              size: 16,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                local,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        if (categories.isNotEmpty)
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: categories.map((c) {
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F3F5),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
                         const SizedBox(height: 20),
 
-                    // ── Descrição ────────────────────────────────────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                        // ── Descrição ────────────────────────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Expanded(
-                                child: Text(
-                                  'Descrição',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Descrição',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  // ── BOTÃO EDITAR (preto, ao lado de "Descrição") ──
+                                  TextButton.icon(
+                                    onPressed: () => _editarDestino(context),
+                                    icon: const Icon(Icons.edit_outlined,
+                                        color: Colors.black, size: 18),
+                                    label: const Text(
+                                      'Editar',
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 4),
+                                      minimumSize: const Size(0, 0),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              // ── BOTÃO EDITAR (preto, ao lado de "Descrição") ──
-                              TextButton.icon(
-                                onPressed: () => _editarDestino(context),
-                                icon: const Icon(Icons.edit_outlined,
-                                    color: Colors.black, size: 18),
-                                label: const Text(
-                                  'Editar',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                style: TextButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 4),
-                                  minimumSize: const Size(0, 0),
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
+                              const SizedBox(height: 8),
+                              Text(
+                                descricao,
+                                textAlign: TextAlign.justify,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                  height: 1.5,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            descricao,
-                            textAlign: TextAlign.justify,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
 
                         const SizedBox(height: 24),
 
-                        // ── Botão "Ver no mapa" ───────────────────────────────
+                        // ── Botões "Comentários" e "Ver no mapa" ─────────────
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFF1B81A),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                elevation: 4,
-                              ),
-                              onPressed: () async {
-                                // 1. Feedback visual de carregamento
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (context) => const Center(
-                                    child: CircularProgressIndicator(
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                );
-
-                                // 2. Busca a posição do GPS
-                                LocationService locationService =
-                                    LocationService();
-                                var posicao =
-                                    await locationService.obterPosicaoAtual();
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.comment_outlined),
-                            label: const Text(
-                              'Comentários',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            onPressed: () {
-                              print("BOTÃO COMENTÁRIOS PRESSIONADO");
-                              print("ID DO DESTINO: ${widget.id}");
-
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                builder: (_) => CommentsBottomSheet(
-                                  destinationId: widget.id,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // ── Botão Ver no mapa dentro do scroll ─────────────
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF1B81A),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              elevation: 4,
-                            ),
-                            onPressed: () {},
-                            child: const Text(
-                              'Ver no mapa',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                // 3. Fecha o dialog de carregamento
-                                if (context.mounted) Navigator.pop(context);
-
-                                LatLng localizacaoFinal;
-
-                                if (posicao != null) {
-                                  localizacaoFinal = LatLng(
-                                    posicao.latitude,
-                                    posicao.longitude,
-                                  );
-                                } else {
-                                  // Backup: coordenada padrão de Garanhuns
-                                  localizacaoFinal =
-                                      const LatLng(-8.8908, -36.4969);
-
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Não foi possível obter sua localização. Usando localização padrão.',
-                                        ),
-                                        duration: Duration(seconds: 3),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 52,
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(
+                                        color: Color(0xFFF1B81A),
+                                        width: 2,
                                       ),
-                                    );
-                                  }
-                                }
-
-                            DestinationModel destinoModel =
-                                DestinationModel.fromMap(
-                              _data,
-                              id: _id,
-                            );
-
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => TelaMapa.destino(
-                                      destino: destinoModel,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
                                     ),
+                                    icon: const Icon(
+                                      Icons.comment_outlined,
+                                      color: Color(0xFFF1B81A),
+                                      size: 20,
+                                    ),
+                                    label: const Text(
+                                      'Comentários',
+                                      overflow: TextOverflow.ellipsis,
+                                      style:  TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFF1B81A),
+                                      ),
+                                    ),
+                                    onPressed: () => _abrirComentarios(context),
                                   ),
-                                );
-                              },
-                              child: const Text(
-                                'Ver no mapa',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 52,
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFF1B81A),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      elevation: 4,
+                                    ),
+                                    onPressed: () {
+                                      DestinationModel destinoModel =
+                                          DestinationModel.fromMap(
+                                        _data,
+                                        id: _id,
+                                      );
+
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => TelaMapa.destino(
+                                            destino: destinoModel,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      Icons.map_outlined,
+                                      color: Colors.black,
+                                      size: 20,
+                                    ),
+                                    label: const Text(
+                                      'Ver no mapa',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
 
@@ -604,15 +510,6 @@ class _DestinationDetailState extends State<DestinationDetail> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPlaceholder() {
-    return Container(
-      color: const Color(0xFFFFF9E7),
-      child: const Center(
-        child: Icon(Icons.image_outlined, color: Color(0xFFF1B81A), size: 48),
       ),
     );
   }

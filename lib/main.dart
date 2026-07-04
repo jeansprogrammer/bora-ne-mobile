@@ -1,4 +1,5 @@
-import 'package:boranemobile/controllers/comments_controller.dart';
+import 'controllers/destination_comments_controller.dart';
+import 'controllers/route_comments_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'controllers/route_creation_controller.dart';
@@ -30,6 +31,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => DestinationCreationController()),
         ChangeNotifierProvider(create: (_) => FavoritesController()),
         ChangeNotifierProvider(create: (_) => CommentsController()),
+        ChangeNotifierProvider(create: (_) => RouteCommentsController()),
       ],
       child: const BoraNE(),
     ),

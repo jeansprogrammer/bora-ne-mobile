@@ -1,27 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class DestinationComment {
+class RouteComment {
   final String? id;
-  final String destinationId;
+  final String routeId;
   final String userId;
   final String userName;
   final String message;
   final DateTime? createdAt;
 
-  DestinationComment({
+  RouteComment({
     this.id,
-    required this.destinationId,
+    required this.routeId,
     required this.userId,
     required this.userName,
     required this.message,
     this.createdAt,
   });
 
-  factory DestinationComment.fromMap(Map<String, dynamic> map, {String? id}) {
+  factory RouteComment.fromMap(Map<String, dynamic> map, {String? id}) {
     final createdAtRaw = map['createdAt'];
-    return DestinationComment(
+    return RouteComment(
       id: id,
-      destinationId: map['destinationId'] ?? '',
+      routeId: map['routeId'] ?? '',
       userId: map['userId'] ?? '',
       userName: map['userName'] ?? '',
       message: map['message'] ?? '',
@@ -30,7 +30,7 @@ class DestinationComment {
   }
 
   Map<String, dynamic> toMap() => {
-    'destinationId': destinationId,
+    'routeId': routeId,
     'userId': userId,
     'userName': userName,
     'message': message,

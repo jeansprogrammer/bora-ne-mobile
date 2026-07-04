@@ -11,6 +11,7 @@ import 'package:boranemobile/view/pages/mapa_page.dart';
 import 'package:boranemobile/view/pages/new_route_page.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/view/widgets/photo_carousel.dart';
+import 'package:boranemobile/view/widgets/route_comments_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 
 class RouteDetailPage extends StatefulWidget {
@@ -464,48 +465,98 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  final destinos =
-                      (widget.rota!['destinations'] as List? ?? [])
-                          .map((d) => Map<String, dynamic>.from(d as Map))
-                          .toList();
-                  if (destinos.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text(
-                            'Esta rota não possui destinos cadastrados.')));
-                    return;
-                  }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => TelaMapa.rota(
-                        nomeRota: widget.rota!['name'] ?? 'Rota',
-                        destinosRota: destinos,
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                          color: Color(0xFFF1B81A),
+                          width: 2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () => _abrirComentarios(context),
+                      icon: const Icon(
+                        Icons.comment_outlined,
+                        color: Color(0xFFF1B81A),
+                        size: 20,
+                      ),
+                      label: const Text(
+                        'Comentários',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFF1B81A),
+                        ),
                       ),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.map_outlined,
-                    color: Colors.black, size: 20),
-                label: const Text('Ver no mapa',
-                    style: TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF1B81A),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  elevation: 2,
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final destinos =
+                            (widget.rota!['destinations'] as List? ?? [])
+                                .map((d) => Map<String, dynamic>.from(d as Map))
+                                .toList();
+                        if (destinos.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Esta rota não possui destinos cadastrados.')));
+                          return;
+                        }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TelaMapa.rota(
+                              nomeRota: widget.rota!['name'] ?? 'Rota',
+                              destinosRota: destinos,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.map_outlined,
+                          color: Colors.black, size: 20),
+                      label: const Text('Ver no mapa',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF1B81A),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        elevation: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const CustomBottomNav(),
         ],
       ),
+    );
+  }
+
+  void _abrirComentarios(BuildContext context) {
+    final String rotaId = (widget.rota?['id'] ?? '').toString();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => RouteCommentsBottomSheet(routeId: rotaId),
     );
   }
 
