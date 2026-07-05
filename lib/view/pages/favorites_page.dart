@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:provider/provider.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
@@ -76,42 +75,20 @@ class _FavoritesPageState extends State<FavoritesPage> {
               top: MediaQuery.of(context).padding.top + 8,
               bottom: 12,
             ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned(
-                  left: 8,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.black87,
-                      size: 28,
-                    ),
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const HomePage(),
-                          settings: const RouteSettings(name: '/home'),
-                        ),
-                      );
-                    },
+            child: Center(
+              child: Image.asset(
+                'assets/images/LOGO_V2_1.png',
+                height: 44,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Text(
+                  'Bora NE',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Image.asset(
-                  'assets/images/LOGO_V2_1.png',
-                  height: 44,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Text(
-                    'Bora NE',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
 

@@ -1,38 +1,48 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class NotificationModel {
-  String icon;
-  String title;
-  String description;
-  DateTime date;
+  final String? id;
+  final String userId;
+  final String title;
+  final String description;
+  final String type; // favorito, roteiro, destino, promocao, avaliacao, dica, sistema
+  final DateTime date;
+  final bool read;
 
   NotificationModel({
-    required this.icon,
+    this.id,
+    required this.userId,
     required this.title,
     required this.description,
+    required this.type,
     required this.date,
+    this.read = false,
   });
 
-  factory NotificationModel.fromMap(Map<String, dynamic> map) {
+  factory NotificationModel.fromMap(Map<String, dynamic> map, {String? id}) {
     final rawDate = map['date'];
-    final DateTime date = rawDate is Timestamp ? rawDate.toDate() : DateTime.now();
+    final DateTime date =
+        rawDate is Timestamp ? rawDate.toDate() : DateTime.now();
 
     return NotificationModel(
-      icon: map['icon'] ?? '',
+      id: id,
+      userId: map['userId'] ?? '',
       title: map['title'] ?? '',
       description: map['description'] ?? '',
-
+      type: map['type'] ?? 'sistema',
       date: date,
+      read: map['read'] ?? false,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'icon': icon,
+      'userId': userId,
       'title': title,
       'description': description,
-
-      'date': date.toUtc(),
+      'type': type,
+      'date': date,
+      'read': read,
     };
   }
 }

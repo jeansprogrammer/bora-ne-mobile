@@ -105,11 +105,28 @@ class _TelaMapaState extends State<TelaMapa> {
     final destinos = (rota['destinations'] as List? ?? [])
         .map((d) => Map<String, dynamic>.from(d as Map))
         .toList();
+
+    // Localiza o destino de origem dentro da nova rota, para manter seus
+    // dados exibidos no painel enquanto o mapa mostra todos os pins da rota.
+    int? indexDestino;
+    if (_destinoOriginal != null) {
+      final destinosValidos = destinos
+          .where((d) =>
+              (d['latitude'] ?? 0.0) != 0.0 || (d['longitude'] ?? 0.0) != 0.0)
+          .map((d) => DestinationModel.fromMap(d))
+          .toList();
+      final nome = _destinoOriginal!.name.toLowerCase();
+      final id = _destinoOriginal!.id ?? '';
+      final idx = destinosValidos.indexWhere((d) =>
+          d.name.toLowerCase() == nome || (id.isNotEmpty && d.id == id));
+      indexDestino = idx == -1 ? null : idx;
+    }
+
     setState(() {
       _modoAtual = MapaMode.rota;
       _nomeRotaAtual = rota['name'] ?? 'Rota';
       _destinosRotaAtual = destinos;
-      _indexSelecionado = null;
+      _indexSelecionado = indexDestino;
       _rotaPontos = [];
       _distanciaTexto = '';
       _tempoTexto = '';
@@ -477,12 +494,16 @@ class _TelaMapaState extends State<TelaMapa> {
                 const Icon(Icons.chevron_left,
                     color: Color(0xFFF1B81A), size: 18),
                 const SizedBox(width: 2),
-                Text(
-                  'Voltar para ${_destinoOriginal!.name}',
-                  style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFFF1B81A),
-                      fontWeight: FontWeight.w600),
+                Expanded(
+                  child: Text(
+                    'Voltar para ${_destinoOriginal!.name}',
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFFF1B81A),
+                        fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ]),
             ),
@@ -552,12 +573,16 @@ class _TelaMapaState extends State<TelaMapa> {
             const Icon(Icons.chevron_left,
                 color: Color(0xFFF1B81A), size: 18),
             const SizedBox(width: 2),
-            Text(
-              'Voltar para $_nomeRotaAtual',
-              style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFFF1B81A),
-                  fontWeight: FontWeight.w600),
+            Expanded(
+              child: Text(
+                'Voltar para $_nomeRotaAtual',
+                style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFFF1B81A),
+                    fontWeight: FontWeight.w600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ]),
         ),
