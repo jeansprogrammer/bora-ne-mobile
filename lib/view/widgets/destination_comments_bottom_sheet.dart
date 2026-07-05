@@ -18,6 +18,7 @@ class CommentsBottomSheet extends StatefulWidget {
 
 class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   final TextEditingController _controller = TextEditingController();
+  final Map<String, String> _nomeAtualCache = {};
 
   String get _uidUsuarioAtual => FirebaseAuth.instance.currentUser?.uid ?? '';
 
@@ -37,6 +38,26 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     return FirebaseAuth.instance.currentUser?.displayName ??
         FirebaseAuth.instance.currentUser?.email ??
         'Usuário';
+  }
+
+  // Busca o nome atual do autor do comentário na coleção "users", em vez de
+  // confiar apenas no "userName" salvo no comentário (que é só uma cópia do
+  // nome no momento em que ele foi escrito e não é atualizada depois).
+  Future<String> _resolverNomeAutor(String userId, String userNameSalvo) async {
+    final fallback = userNameSalvo.isNotEmpty ? userNameSalvo : 'Usuário';
+    if (userId.isEmpty) return fallback;
+    if (_nomeAtualCache.containsKey(userId)) return _nomeAtualCache[userId]!;
+
+    try {
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      final nome = doc.data()?['name'] as String?;
+      final resultado = (nome != null && nome.isNotEmpty) ? nome : fallback;
+      _nomeAtualCache[userId] = resultado;
+      return resultado;
+    } catch (_) {
+      return fallback;
+    }
   }
 
   @override
@@ -183,11 +204,21 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                         backgroundColor: Colors.black12,
                         child: Icon(Icons.person, color: Colors.black),
                       ),
-                      title: Text(
-                        comentario.userName.isNotEmpty
-                            ? comentario.userName
-                            : "Usuário",
-                        style: const TextStyle(color: Colors.black),
+                      title: FutureBuilder<String>(
+                        future: _resolverNomeAutor(
+                          comentario.userId,
+                          comentario.userName,
+                        ),
+                        builder: (context, nomeSnapshot) {
+                          final nome = nomeSnapshot.data ??
+                              (comentario.userName.isNotEmpty
+                                  ? comentario.userName
+                                  : "Usuário");
+                          return Text(
+                            nome,
+                            style: const TextStyle(color: Colors.black),
+                          );
+                        },
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
