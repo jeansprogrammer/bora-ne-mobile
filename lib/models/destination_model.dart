@@ -22,6 +22,8 @@ class DestinationModel {
   List<String> favoritedBy;
   // Comentários do destino
   List<String> comments;
+  // UID do usuário que criou o destino (só ele pode editar)
+  String createdBy;
 
   DestinationModel({
     this.id,
@@ -40,6 +42,7 @@ class DestinationModel {
     this.longitude = 0.0,
     this.favoritedBy = const [],
     this.comments = const [],
+    this.createdBy = '',
   });
 
   // Getter: campo "local" usado para exibição (compatível com código existente)
@@ -70,6 +73,7 @@ class DestinationModel {
       longitude: (data['longitude'] ?? 0.0).toDouble(),
       favoritedBy: List<String>.from(data['favoritedBy'] ?? []),
       comments: List<String>.from(data['comments'] ?? []),
+      createdBy: data['createdBy'] ?? '',
     );
   }
 
@@ -92,6 +96,7 @@ class DestinationModel {
       'longitude': longitude,
       'favoritedBy': favoritedBy,
       'comments': comments,
+      'createdBy': createdBy,
     };
   }
 
@@ -113,6 +118,7 @@ class DestinationModel {
     double? longitude,
     List<String>? favoritedBy,
     List<String>? comments,
+    String? createdBy,
   }) {
     return DestinationModel(
       id: id ?? this.id,
@@ -131,6 +137,7 @@ class DestinationModel {
       longitude: longitude ?? this.longitude,
       favoritedBy: favoritedBy ?? this.favoritedBy,
       comments: comments ?? this.comments,
+      createdBy: createdBy ?? this.createdBy,
     );
   }
 }

@@ -10,6 +10,7 @@ import 'package:boranemobile/view/pages/destination_detail.dart';
 import 'package:boranemobile/view/pages/mapa_page.dart';
 import 'package:boranemobile/view/pages/new_route_page.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
+import 'package:boranemobile/view/widgets/login_required_view.dart';
 import 'package:boranemobile/view/widgets/photo_carousel.dart';
 import 'package:boranemobile/view/widgets/route_comments_bottom_sheet.dart';
 import 'package:flutter/material.dart';
@@ -27,8 +28,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
   late bool _isFavorito;
   late List<String> _favoritedBy;
 
-  String get _uid =>
-      FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste';
+  String get _uid => FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
   void initState() {
@@ -48,6 +48,16 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
   }
 
   Future<void> _toggleFavorito() async {
+    if (_uid.isEmpty) {
+      showLoginRequiredSheet(
+        context,
+        icon: Icons.favorite_border,
+        title: 'Faça login para favoritar',
+        message: 'Entre na sua conta para salvar rotas e destinos favoritos.',
+      );
+      return;
+    }
+
     final isAdd = !_isFavorito;
     setState(() {
       _isFavorito = isAdd;
@@ -113,7 +123,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
         : rawPhotos is List
             ? List<String>.from(rawPhotos)
             : (rawPhotos as String).isNotEmpty
-                ? [rawPhotos as String]
+                ? [rawPhotos]
                 : [];
     final String descricaoRota = widget.rota!['description'] ?? 'Sem descrição disponível.';
     final List<dynamic> destinosRaw = widget.rota!['destinations'] ?? [];
@@ -125,6 +135,10 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
         : rawCats is List
             ? List<String>.from(rawCats)
             : (rawCats.toString().isNotEmpty ? [rawCats.toString()] : []);
+
+    // Só quem criou a rota pode editá-la
+    final bool podeEditar =
+        _uid.isNotEmpty && (widget.rota!['createdBy'] ?? '') == _uid;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA), // Fundo levemente cinza do mockup
@@ -301,24 +315,26 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                             ),
                           ),
                           // ── BOTÃO EDITAR (preto, ao lado do título) ─────────
-                          TextButton.icon(
-                            onPressed: () => _editarRota(context),
-                            icon: const Icon(Icons.edit_outlined,
-                                color: Colors.black, size: 18),
-                            label: const Text(
-                              'Editar',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                          // Só aparece para quem criou a rota
+                          if (podeEditar)
+                            TextButton.icon(
+                              onPressed: () => _editarRota(context),
+                              icon: const Icon(Icons.edit_outlined,
+                                  color: Colors.black, size: 18),
+                              label: const Text(
+                                'Editar',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                minimumSize: const Size(0, 0),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                             ),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              minimumSize: const Size(0, 0),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                          ),
                         ],
                       ),
                     ),

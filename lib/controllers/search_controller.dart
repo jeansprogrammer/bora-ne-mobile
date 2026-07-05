@@ -312,7 +312,6 @@ class SearchController extends ChangeNotifier {
     final queryNorm = _normalizar(queryLower);
     try {
       final snap = await _firestore.collection('routes').get();
-      debugPrint('🔍 Total de rotas: ${snap.docs.length}');
 
       final lista = snap.docs.where((doc) {
         final data = doc.data();
@@ -321,8 +320,6 @@ class SearchController extends ChangeNotifier {
         final cats = _parseCategorias(data['categories'])
             .map((c) => _normalizar(c)).toList();
         final city = _normalizar(data['city'] as String? ?? '');
-
-        debugPrint('  → rota: "${data['name']}"');
 
         if (_filter.cidadeFiltro != null &&
             _filter.cidadeFiltro!.isNotEmpty &&
@@ -342,10 +339,8 @@ class SearchController extends ChangeNotifier {
         return data;
       }).toList();
 
-      debugPrint('✅ Rotas encontradas: ${lista.length}');
       return _ordenar(lista, queryNorm);
     } catch (e) {
-      debugPrint('❌ Erro ao buscar rotas: $e');
       return [];
     }
   }

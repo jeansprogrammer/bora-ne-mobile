@@ -33,9 +33,25 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  Future<UserCredential?> signInWithEmailAndPassword(
+      String email, String password) async {
+    try {
+      final result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      notifyListeners();
+      return result;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     await _auth.signOut();
-    await _googleSignIn.signOut();
+    if (defaultTargetPlatform != TargetPlatform.windows) {
+      await _googleSignIn.signOut();
+    }
     notifyListeners();
   }
 }

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/route_creation_model.dart';
 import '../models/destination_model.dart';
@@ -35,6 +36,8 @@ class RouteCreationController extends ChangeNotifier {
   List<String> _urlsFotosExistentes = [];
   // Lista de favoritos já existente — preservada para não zerar ao editar.
   List<String> _favoritedByExistente = [];
+  // UID de quem criou a rota — preservado ao editar.
+  String _createdByExistente = '';
 
   bool get isEditing => editingRouteId != null;
   List<String> get urlsFotosExistentes => _urlsFotosExistentes;
@@ -144,6 +147,8 @@ class RouteCreationController extends ChangeNotifier {
 
     // Favoritos atuais — preservados ao salvar
     _favoritedByExistente = List<String>.from(rota['favoritedBy'] ?? []);
+    // Criador original — preservado ao salvar
+    _createdByExistente = rota['createdBy'] ?? '';
 
     // Limpa seleção de fotos NOVAS (locais)
     fotos = [];
@@ -317,6 +322,10 @@ class RouteCreationController extends ChangeNotifier {
       // Preserva favoritos no modo edição; zera apenas na criação
       dadosParaSalvar['favoritedBy'] =
           isEditing ? _favoritedByExistente : <String>[];
+      // Preserva o criador original na edição; grava o autor na criação
+      dadosParaSalvar['createdBy'] = isEditing
+          ? _createdByExistente
+          : (FirebaseAuth.instance.currentUser?.uid ?? '');
 
       // ── Cria ou atualiza no Firestore ─────────────────────────────────────
       final bool success;
@@ -385,6 +394,7 @@ class RouteCreationController extends ChangeNotifier {
     editingRouteId = null;
     _urlsFotosExistentes = [];
     _favoritedByExistente = [];
+    _createdByExistente = '';
     notifyListeners();
   }
 }

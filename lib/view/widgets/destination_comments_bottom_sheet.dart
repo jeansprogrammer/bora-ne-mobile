@@ -1,11 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/destination_comments_controller.dart';
 import '../../models/destination_comment.dart';
 import 'confirm_delete_comment_dialog.dart';
-
-const String _uidUsuarioAtual = "usuario_teste";
-const String _nomeUsuarioAtual = "Usuário Teste";
+import 'login_required_view.dart';
 
 class CommentsBottomSheet extends StatefulWidget {
   final String destinationId;
@@ -19,6 +19,26 @@ class CommentsBottomSheet extends StatefulWidget {
 class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   final TextEditingController _controller = TextEditingController();
 
+  String get _uidUsuarioAtual => FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  // Busca o nome cadastrado na coleção "users" do Firestore (perfil do app),
+  // que pode ser diferente do displayName do FirebaseAuth.
+  Future<String> _obterNomeUsuario() async {
+    final uid = _uidUsuarioAtual;
+    if (uid.isEmpty) return 'Usuário';
+
+    try {
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final nome = doc.data()?['name'] as String?;
+      if (nome != null && nome.isNotEmpty) return nome;
+    } catch (_) {}
+
+    return FirebaseAuth.instance.currentUser?.displayName ??
+        FirebaseAuth.instance.currentUser?.email ??
+        'Usuário';
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -26,6 +46,16 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   }
 
   Future<void> _sendComment() async {
+    if (_uidUsuarioAtual.isEmpty) {
+      showLoginRequiredSheet(
+        context,
+        icon: Icons.comment_outlined,
+        title: 'Faça login para comentar',
+        message: 'Entre na sua conta para deixar seu comentário.',
+      );
+      return;
+    }
+
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
@@ -33,11 +63,12 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         Provider.of<CommentsController>(context, listen: false);
 
     _controller.clear();
+    final nomeUsuario = await _obterNomeUsuario();
 
     await commentsController.addComment(
       destinationId: widget.destinationId,
       userId: _uidUsuarioAtual,
-      userName: _nomeUsuarioAtual,
+      userName: nomeUsuario,
       message: text,
     );
 

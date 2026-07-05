@@ -5,6 +5,7 @@ import 'package:boranemobile/view/pages/new_destination_page.dart';
 import 'package:boranemobile/controllers/favorites_controller.dart';
 import 'package:boranemobile/services/favorites_service.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
+import 'package:boranemobile/view/widgets/login_required_view.dart';
 import 'package:boranemobile/view/widgets/photo_carousel.dart';
 import 'package:boranemobile/view/widgets/destination_comments_bottom_sheet.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -29,8 +30,7 @@ class _DestinationDetailState extends State<DestinationDetail> {
   late Map<String, dynamic> _data;
   late String _id;
 
-  String get _uid =>
-      FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste';
+  String get _uid => FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
   void initState() {
@@ -54,6 +54,16 @@ class _DestinationDetailState extends State<DestinationDetail> {
   }
 
   Future<void> _toggleFavorito() async {
+    if (_uid.isEmpty) {
+      showLoginRequiredSheet(
+        context,
+        icon: Icons.favorite_border,
+        title: 'Faça login para favoritar',
+        message: 'Entre na sua conta para salvar rotas e destinos favoritos.',
+      );
+      return;
+    }
+
     final isAdd = !_isFavorited;
     setState(() {
       _isFavorited = isAdd;
@@ -205,6 +215,10 @@ class _DestinationDetailState extends State<DestinationDetail> {
 
     final String local =
         '${neighborhood.isNotEmpty ? '$neighborhood, ' : ''}$city - $state';
+
+    // Só quem criou o destino pode editá-lo
+    final bool podeEditar =
+        _uid.isNotEmpty && (_data['createdBy'] ?? '') == _uid;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -359,26 +373,28 @@ class _DestinationDetailState extends State<DestinationDetail> {
                                     ),
                                   ),
                                   // ── BOTÃO EDITAR (preto, ao lado de "Descrição") ──
-                                  TextButton.icon(
-                                    onPressed: () => _editarDestino(context),
-                                    icon: const Icon(Icons.edit_outlined,
-                                        color: Colors.black, size: 18),
-                                    label: const Text(
-                                      'Editar',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
+                                  // Só aparece para quem criou o destino
+                                  if (podeEditar)
+                                    TextButton.icon(
+                                      onPressed: () => _editarDestino(context),
+                                      icon: const Icon(Icons.edit_outlined,
+                                          color: Colors.black, size: 18),
+                                      label: const Text(
+                                        'Editar',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        minimumSize: const Size(0, 0),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
                                       ),
                                     ),
-                                    style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 4),
-                                      minimumSize: const Size(0, 0),
-                                      tapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                  ),
                                 ],
                               ),
                               const SizedBox(height: 8),

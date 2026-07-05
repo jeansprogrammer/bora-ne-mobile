@@ -318,7 +318,7 @@ class _SearchPageState extends State<SearchPage> {
     final totalRotas = ctrl.resultadosRotas.length;
     final total = totalDestinos + totalRotas;
     final authController = Provider.of<AuthController>(context, listen: false);
-    final currentUid = authController.user?.uid ?? 'usuario_teste';
+    final currentUid = authController.user?.uid ?? '';
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

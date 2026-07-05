@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:boranemobile/controllers/profile_controller.dart';
 import 'package:boranemobile/view/pages/edit_profile_page.dart';
 import 'package:boranemobile/view/pages/login_page.dart';
+import 'package:boranemobile/view/pages/my_routes_destinations_page.dart';
+import 'package:boranemobile/view/pages/privacy_policy_page.dart';
 import 'package:boranemobile/view/pages/terms_page.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 
@@ -129,8 +131,24 @@ class _UserProfilePageState extends State<UserProfilePage> {
         const SizedBox(height: 24),
 
         _buildSectionTitle('Preferências'),
-        _buildTile(icon: Icons.route_outlined, label: 'Minhas rotas', onTap: () {}),
-        _buildTile(icon: Icons.place_outlined, label: 'Meus destinos', onTap: () {}),
+        _buildTile(
+          icon: Icons.route_outlined,
+          label: 'Minhas rotas',
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) =>
+                      const MyRoutesDestinationsPage(initialTab: 0))),
+        ),
+        _buildTile(
+          icon: Icons.place_outlined,
+          label: 'Meus destinos',
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) =>
+                      const MyRoutesDestinationsPage(initialTab: 1))),
+        ),
 
         const SizedBox(height: 8),
 
@@ -144,7 +162,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
         _buildTile(
           icon: Icons.privacy_tip_outlined,
           label: 'Política de privacidade',
-          onTap: () {},
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const PrivacyPolicyPage())),
         ),
 
         const SizedBox(height: 8),
@@ -246,7 +265,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
         _buildTile(
           icon: Icons.privacy_tip_outlined,
           label: 'Política de privacidade',
-          onTap: () {},
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const PrivacyPolicyPage())),
         ),
 
         _buildSectionTitle('Suporte'),

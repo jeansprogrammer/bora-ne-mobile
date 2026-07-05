@@ -555,7 +555,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildDestinosList(List<QueryDocumentSnapshot> docs) {
     final authController = Provider.of<AuthController>(context, listen: false);
-    final currentUid = authController.user?.uid ?? 'usuario_teste';
+    final currentUid = authController.user?.uid ?? '';
 
     return Column(
       children: [

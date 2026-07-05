@@ -6,6 +6,7 @@ import 'package:boranemobile/controllers/auth_controller.dart';
 import 'package:boranemobile/controllers/favorites_controller.dart';
 import 'package:boranemobile/services/favorites_service.dart';
 import 'package:boranemobile/models/route_creation_model.dart';
+import 'package:boranemobile/view/widgets/login_required_view.dart';
 
 class RouteCarousel extends StatefulWidget {
   final String? city;
@@ -163,7 +164,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
 
     // Favoritos
     final authController = Provider.of<AuthController>(context);
-    final String uidAtual = authController.user?.uid ?? 'usuario_teste';
+    final String uidAtual = authController.user?.uid ?? '';
     final favoritadoPor = List<String>.from(rota['favoritedBy'] ?? []);
     final isFavorito = favoritadoPor.contains(uidAtual);
 
@@ -254,6 +255,17 @@ class _RouteCarouselState extends State<RouteCarousel> {
                   // Botão favorito
                   GestureDetector(
                     onTap: () async {
+                      if (uidAtual.isEmpty) {
+                        showLoginRequiredSheet(
+                          context,
+                          icon: Icons.favorite_border,
+                          title: 'Faça login para favoritar',
+                          message:
+                              'Entre na sua conta para salvar rotas e destinos favoritos.',
+                        );
+                        return;
+                      }
+
                       final ref = FirebaseFirestore.instance
                           .collection('routes')
                           .doc(rota['id']);

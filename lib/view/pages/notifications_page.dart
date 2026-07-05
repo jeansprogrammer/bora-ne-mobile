@@ -4,6 +4,7 @@ import 'package:boranemobile/controllers/auth_controller.dart';
 import 'package:boranemobile/controllers/notifications_controller.dart';
 import 'package:boranemobile/models/notification_model.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
+import 'package:boranemobile/view/widgets/login_required_view.dart';
 import 'package:boranemobile/view/widgets/notification_card.dart';
 
 class NotificationsPage extends StatelessWidget {
@@ -53,7 +54,7 @@ class NotificationsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
     final notificationsController = context.watch<NotificationsController>();
-    final String currentUid = auth.user?.uid ?? 'usuario_teste';
+    final String currentUid = auth.user?.uid ?? '';
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(245, 245, 245, 1),
@@ -104,8 +105,18 @@ class NotificationsPage extends StatelessWidget {
             ),
           ),
 
-          Expanded(
-            child: StreamBuilder<List<NotificationModel>>(
+          if (currentUid.isEmpty)
+            const Expanded(
+              child: LoginRequiredView(
+                icon: Icons.notifications_none,
+                title: 'Faça login para ver suas notificações',
+                message:
+                    'Acompanhe atualizações sobre suas rotas e destinos favoritos.',
+              ),
+            )
+          else
+            Expanded(
+              child: StreamBuilder<List<NotificationModel>>(
               stream: notificationsController.getNotifications(currentUid),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {

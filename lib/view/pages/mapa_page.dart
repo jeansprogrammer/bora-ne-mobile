@@ -467,8 +467,7 @@ class _TelaMapaState extends State<TelaMapa> {
           ...(_rotasComDestino.map((rota) => RouteCard(
                 id: rota['id'] ?? '',
                 data: rota,
-                currentUid:
-                    FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste',
+                currentUid: FirebaseAuth.instance.currentUser?.uid ?? '',
                 // Ao tocar, muda o mapa para mostrar a rota (sem navegar)
                 onTap: () => _abrirRotaNoMapa(rota),
               ))),

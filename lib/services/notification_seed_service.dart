@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../data/notification_seeds.dart';
 import '../models/notification_model.dart';
 import 'notification_service.dart';
@@ -7,14 +9,15 @@ import 'notification_service.dart';
 class NotificationSeedService {
   final NotificationService _notificationService = NotificationService();
 
-  Future<void> executarCarga({String userId = 'usuario_teste'}) async {
+  Future<void> executarCarga({String? userId}) async {
+    final uid = userId ?? FirebaseAuth.instance.currentUser?.uid ?? '';
     final notificacoes = gerarNotificacoesIniciais();
     print("🚀 Iniciando importação de ${notificacoes.length} notificações...");
 
     for (var item in notificacoes) {
       try {
         final notificacao = NotificationModel(
-          userId: userId,
+          userId: uid,
           title: item['title'],
           description: item['description'],
           type: item['type'],
