@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/destination_creation_controller.dart';
 import '../widgets/confirm_exit_dialog.dart';
+import '../widgets/confirm_delete_destination_dialog.dart';
 import '../../data/category_data.dart';
 import '../../data/nordeste_data.dart';
 
@@ -1083,68 +1084,28 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
   }
 
   void _confirmarExclusao(
-      BuildContext context, DestinationCreationController controller) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
-            SizedBox(width: 8),
-            Text('Excluir destino',
-                style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
+      BuildContext context, DestinationCreationController controller) async {
+    final confirmar = await ConfirmDeleteDestinationDialog.show(context);
+    if (!confirmar || !context.mounted) return;
+
+    final ok = await controller.deleteDestination();
+    if (!context.mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🗑️ Destino excluído com sucesso!'),
+          backgroundColor: Colors.green,
         ),
-        content: const Text(
-          'Tem certeza que deseja excluir este destino? '
-          'Esta ação não pode ser desfeita.',
-          style: TextStyle(
-              color: Colors.black54, fontSize: 14, height: 1.5),
+      );
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ Não foi possível excluir o destino.'),
+          backgroundColor: Colors.red,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar',
-                style: TextStyle(color: Colors.black54)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () async {
-              Navigator.pop(context); // fecha o diálogo
-              final ok = await controller.deleteDestination();
-              if (!context.mounted) return;
-              if (ok) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('🗑️ Destino excluído com sucesso!'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                Navigator.pop(context, true);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content:
-                        Text('⚠️ Não foi possível excluir o destino.'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            child: const Text('Excluir',
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+      );
+    }
   }
 
   Widget _chip(String label) {

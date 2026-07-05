@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/route_creation_controller.dart';
 import '../../models/destination_model.dart';
 import '../widgets/confirm_exit_dialog.dart';
+import '../widgets/confirm_delete_route_dialog.dart';
 import 'new_destination_page.dart';
 import '../../data/category_data.dart';
 import '../../data/nordeste_data.dart';
@@ -1199,61 +1200,28 @@ class _NewRoutePageState extends State<NewRoutePage> {
 
   // ── Confirmação de exclusão ──────────────────────────────────────────────
   void _confirmarExclusao(
-      BuildContext context, RouteCreationController controller) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
-            SizedBox(width: 8),
-            Text('Excluir rota',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
+      BuildContext context, RouteCreationController controller) async {
+    final confirmar = await ConfirmDeleteRouteDialog.show(context);
+    if (!confirmar || !context.mounted) return;
+
+    final ok = await controller.deleteRoute();
+    if (!context.mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("🗑️ Rota excluída com sucesso!"),
+          backgroundColor: Colors.green,
         ),
-        content: const Text(
-          'Tem certeza que deseja excluir esta rota? '
-          'Esta ação não pode ser desfeita.',
-          style: TextStyle(color: Colors.black54, fontSize: 14, height: 1.5),
+      );
+      Navigator.pop(context, true); // volta sinalizando alteração
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("⚠️ Não foi possível excluir a rota."),
+          backgroundColor: Colors.red,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.black54)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () async {
-              Navigator.pop(context); // fecha o diálogo
-              final ok = await controller.deleteRoute();
-              if (!context.mounted) return;
-              if (ok) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("🗑️ Rota excluída com sucesso!"),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                Navigator.pop(context, true); // volta sinalizando alteração
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("⚠️ Não foi possível excluir a rota."),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            child: const Text('Excluir',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+      );
+    }
   }
 
   Widget _chip(String label) {

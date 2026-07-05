@@ -8,6 +8,7 @@ import 'package:boranemobile/view/pages/my_routes_destinations_page.dart';
 import 'package:boranemobile/view/pages/privacy_policy_page.dart';
 import 'package:boranemobile/view/pages/terms_page.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
+import 'package:boranemobile/view/widgets/confirm_logout_dialog.dart';
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});
@@ -191,6 +192,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
           labelColor: Colors.red,
           showChevron: false,
           onTap: () async {
+            final confirmar = await ConfirmLogoutDialog.show(context);
+            if (!confirmar || !context.mounted) return;
+
             await _controller.executarLogout();
             if (context.mounted) {
               Navigator.of(context).pushAndRemoveUntil(
