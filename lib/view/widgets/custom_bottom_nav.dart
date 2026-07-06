@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:boranemobile/view/pages/notifications_page.dart';
 import 'package:boranemobile/view/pages/user_profile_page.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:boranemobile/view/pages/home_page.dart';
 import 'package:boranemobile/view/pages/favorites_page.dart';
 import 'package:boranemobile/view/pages/new_route_page.dart';
 import 'package:boranemobile/view/pages/new_destination_page.dart';
+import 'package:boranemobile/view/widgets/login_required_view.dart';
 
 enum BottomNavTab { home, favoritos, notificacoes, perfil }
 
@@ -21,7 +23,19 @@ class CustomBottomNav extends StatefulWidget {
 }
 
 class _CustomBottomNavState extends State<CustomBottomNav> {
+  bool get _isLoggedIn => FirebaseAuth.instance.currentUser != null;
+
   void _abrirMenuAdicionar() {
+    if (!_isLoggedIn) {
+      showLoginRequiredSheet(
+        context,
+        icon: Icons.add_circle_outline,
+        title: 'Faça login para criar',
+        message: 'Entre na sua conta para criar rotas e destinos.',
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(

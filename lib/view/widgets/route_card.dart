@@ -5,6 +5,7 @@ import 'package:boranemobile/services/favorites_service.dart';
 import 'package:boranemobile/controllers/favorites_controller.dart';
 import 'package:boranemobile/models/route_creation_model.dart';
 import 'package:boranemobile/view/pages/route_detail.dart';
+import 'package:boranemobile/view/widgets/login_required_view.dart';
 
 class RouteCard extends StatefulWidget {
   final String id;
@@ -16,7 +17,7 @@ class RouteCard extends StatefulWidget {
     super.key,
     required this.id,
     required this.data,
-    this.currentUid = 'usuario_teste',
+    this.currentUid = '',
     this.onTap,
   });
 
@@ -59,6 +60,16 @@ class _RouteCardState extends State<RouteCard> {
   }
 
   Future<void> _toggleFavorito(BuildContext context) async {
+    if (widget.currentUid.isEmpty) {
+      showLoginRequiredSheet(
+        context,
+        icon: Icons.favorite_border,
+        title: 'Faça login para favoritar',
+        message: 'Entre na sua conta para salvar rotas e destinos favoritos.',
+      );
+      return;
+    }
+
     final isAdd = !_isFavorito;
 
     // 1. Atualiza o estado visual local imediatamente

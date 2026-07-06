@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
+import 'package:boranemobile/view/widgets/login_required_view.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
 import 'package:boranemobile/controllers/favorites_controller.dart';
 import 'package:boranemobile/view/widgets/destination_card.dart';
@@ -14,15 +15,20 @@ class FavoritesPage extends StatefulWidget {
 }
 
 class _FavoritesPageState extends State<FavoritesPage> {
-  int _selectedTab = 0; // 0 = Rotas, 1 = Destinos
+  int _selectedTab = 0;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthController>(context, listen: false);
-      final String uid = auth.user?.uid ?? 'usuario_teste';
-      Provider.of<FavoritesController>(context, listen: false).fetchFavorites(uid);
+      final uid = auth.user?.uid ?? '';
+      final fc = Provider.of<FavoritesController>(context, listen: false);
+      if (uid.isNotEmpty) {
+        fc.fetchFavorites(uid);
+      } else {
+        fc.limparFavoritos();
+      }
     });
   }
 
@@ -38,10 +44,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFF7B119) : Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: const Color(0xFFF7B119),
-            width: 2,
-          ),
+          border: Border.all(color: const Color(0xFFF7B119), width: 2),
         ),
         child: Center(
           child: Text(
@@ -60,14 +63,15 @@ class _FavoritesPageState extends State<FavoritesPage> {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthController>(context);
-    final String currentUid = auth.user?.uid ?? 'usuario_teste';
+    final String currentUid = auth.user?.uid ?? '';
+    final bool isLoggedIn = currentUid.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9F9), // Very clean off-white background
+      backgroundColor: const Color(0xFFF9F9F9),
       bottomNavigationBar: const CustomBottomNav(activeTab: BottomNavTab.favoritos),
       body: Column(
         children: [
-          // Top clean bar
+          // Header
           Container(
             width: double.infinity,
             color: Colors.white,
@@ -80,121 +84,134 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 'assets/images/LOGO_V2_1.png',
                 height: 44,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Text(
-                  'Bora NE',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                errorBuilder: (_, __, ___) => const Text('Bora NE',
+                    style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold)),
               ),
             ),
           ),
 
-          // Title & Subtitle
-          Padding(
-            padding: const EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 12),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          // Convidado → tela de login
+          if (!isLoggedIn)
+            Expanded(
+              child: LoginRequiredView(
+                icon: Icons.favorite_border,
+                title: 'Faça login para ver seus favoritos',
+                message:
+                    'Salve rotas e destinos incríveis e acesse-os a qualquer momento.',
+                onLoggedIn: () {
+                  if (!context.mounted) return;
+                  final a =
+                      Provider.of<AuthController>(context, listen: false);
+                  final uid2 = a.user?.uid ?? '';
+                  if (uid2.isNotEmpty) {
+                    Provider.of<FavoritesController>(context, listen: false)
+                        .fetchFavorites(uid2);
+                  }
+                },
+              ),
+            )
+
+          // Logado → favoritos
+          else ...[
+            Padding(
+              padding: const EdgeInsets.only(
+                  left: 20, right: 20, top: 16, bottom: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Meus favoritos',
+                      style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Aqui estão os roteiros e locais que você salvou.',
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                          height: 1.3),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
                 children: [
-                  const Text(
-                    'Meus favoritos',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  Expanded(
+                    child: _buildTabButton(
+                      title: 'Rotas',
+                      isSelected: _selectedTab == 0,
+                      onTap: () => setState(() => _selectedTab = 0),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Aqui estão os roteiros e locais que você salvou para não perder depois.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                      height: 1.3,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTabButton(
+                      title: 'Destinos',
+                      isSelected: _selectedTab == 1,
+                      onTap: () => setState(() => _selectedTab = 1),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
 
-          // Custom Tab Selector (Rotas on left, Destinos on right)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildTabButton(
-                    title: 'Rotas',
-                    isSelected: _selectedTab == 0,
-                    onTap: () => setState(() => _selectedTab = 0),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildTabButton(
-                    title: 'Destinos',
-                    isSelected: _selectedTab == 1,
-                    onTap: () => setState(() => _selectedTab = 1),
-                  ),
-                ),
-              ],
-            ),
-          ),
+            const SizedBox(height: 8),
 
-          const SizedBox(height: 8),
-
-          // Tab View Body (Conditional Render)
-          Expanded(
-            child: Consumer<FavoritesController>(
-              builder: (context, controller, child) {
-                if (controller.isLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.orangeAccent,
-                    ),
-                  );
-                }
-
-                if (controller.errorMessage != null) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        controller.errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+            Expanded(
+              child: Consumer<FavoritesController>(
+                builder: (context, controller, child) {
+                  if (controller.isLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                          color: Colors.orangeAccent),
+                    );
+                  }
+                  if (controller.errorMessage != null) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(controller.errorMessage!,
+                            style: const TextStyle(color: Colors.red),
+                            textAlign: TextAlign.center),
                       ),
-                    ),
-                  );
-                }
-
-                return _selectedTab == 0
-                    ? _buildRoutesTab(controller, currentUid)
-                    : _buildDestinationsTab(controller, currentUid);
-              },
+                    );
+                  }
+                  return _selectedTab == 0
+                      ? _buildRoutesTab(controller, currentUid)
+                      : _buildDestinationsTab(controller, currentUid);
+                },
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildDestinationsTab(FavoritesController controller, String currentUid) {
+  Widget _buildDestinationsTab(
+      FavoritesController controller, String currentUid) {
     final destinations = controller.destinosFavoritos;
-
     if (destinations.isEmpty) {
       return _buildEmptyState(
         icon: Icons.favorite_border_outlined,
         title: 'Nenhum destino favoritado',
-        message: 'Explore locais no app e clique no coração para adicioná-los aqui.',
+        message:
+            'Explore locais no app e clique no coração para adicioná-los aqui.',
       );
     }
-
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: destinations.length,
@@ -209,17 +226,17 @@ class _FavoritesPageState extends State<FavoritesPage> {
     );
   }
 
-  Widget _buildRoutesTab(FavoritesController controller, String currentUid) {
+  Widget _buildRoutesTab(
+      FavoritesController controller, String currentUid) {
     final routes = controller.rotasFavoritas;
-
     if (routes.isEmpty) {
       return _buildEmptyState(
         icon: Icons.alt_route_outlined,
         title: 'Nenhuma rota favoritada',
-        message: 'Descubra rotas incríveis pelo Nordeste e salve as suas favoritas.',
+        message:
+            'Descubra rotas incríveis pelo Nordeste e salve as suas favoritas.',
       );
     }
-
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: routes.length,
@@ -252,32 +269,23 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 color: Colors.orangeAccent.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: Colors.orangeAccent,
-              ),
+              child:
+                  Icon(icon, size: 64, color: Colors.orangeAccent),
             ),
             const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87),
+                textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            Text(
-              message,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade600,
-                height: 1.4,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Text(message,
+                style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                    height: 1.4),
+                textAlign: TextAlign.center),
           ],
         ),
       ),

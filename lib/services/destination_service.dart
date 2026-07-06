@@ -29,6 +29,23 @@ class DestinationService {
     }
   }
 
+  // ── Destinos criados por um usuário específico ("Meus destinos") ─────────
+  Future<List<DestinationModel>> getDestinationsByCreator(String uid) async {
+    try {
+      final snapshot = await _firestore
+          .collection('destinations')
+          .where('createdBy', isEqualTo: uid)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => DestinationModel.fromMap(doc.data(), id: doc.id))
+          .toList();
+    } catch (e) {
+      print('Erro ao buscar destinos do usuário: $e');
+      return [];
+    }
+  }
+
   // ── Busca por nome + cidade (para criação de rota) ───────────────────────
   Future<List<DestinationModel>> buscarDestinationsPorNomeECidade(
       String query, String city) async {

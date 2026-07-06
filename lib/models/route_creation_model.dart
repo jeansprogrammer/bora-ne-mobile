@@ -5,20 +5,27 @@ class RouteCreationModel {
   String name;
   List<String> categories;
   String description;
-  List<String> photos;      // ← corrigido: era String, agora List<String>
+  List<String> photos;
   String state;
+  String city;
+  String coverPhoto;
   List<DestinationModel> destinations;
   List<String> favoritedBy;
+  // UID do usuário que criou a rota (só ele pode editar)
+  String createdBy;
 
   RouteCreationModel({
     this.id,
     this.name = '',
     this.categories = const [],
     this.description = '',
-    this.photos = const [],  // ← default vazio
+    this.photos = const [],
     this.state = '',
+    this.city = '',
+    this.coverPhoto = '',
     List<DestinationModel>? destinations,
     this.favoritedBy = const [],
+    this.createdBy = '',
   }) : destinations = destinations ?? [];
 
   Map<String, dynamic> toMap() => {
@@ -26,10 +33,13 @@ class RouteCreationModel {
     'name': name,
     'categories': categories,
     'description': description,
-    'photos': photos,         // ← salva como List
+    'photos': photos,
     'state': state,
+    'city': city,
+    'coverPhoto': coverPhoto,
     'destinations': destinations.map((p) => p.toMap()).toList(),
     'favoritedBy': favoritedBy,
+    'createdBy': createdBy,
   };
 
   factory RouteCreationModel.fromMap(Map<String, dynamic> map, {String? id}) {
@@ -57,7 +67,10 @@ class RouteCreationModel {
       description: map['description'] ?? '',
       photos: photos,
       state: map['state'] ?? '',
+      city: map['city'] ?? '',
+      coverPhoto: map['coverPhoto'] ?? '',
       favoritedBy: List<String>.from(map['favoritedBy'] ?? []),
+      createdBy: map['createdBy'] ?? '',
       destinations: map['destinations'] != null
           ? (map['destinations'] as List)
               .map((p) => DestinationModel.fromMap(p as Map<String, dynamic>))

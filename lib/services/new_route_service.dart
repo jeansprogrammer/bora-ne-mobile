@@ -64,4 +64,24 @@ class NewRouteService {
       return [];
     }
   }
+
+  // ── Rotas criadas por um usuário específico ("Minhas rotas") ─────────────
+  Future<List<Map<String, dynamic>>> getRoutesByCreator(String uid) async {
+    try {
+      final snapshot = await _firestore
+          .collection('routes')
+          .where('createdBy', isEqualTo: uid)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          ...doc.data(),
+        };
+      }).toList();
+    } catch (e) {
+      print('Erro ao buscar rotas do usuário: $e');
+      return [];
+    }
+  }
 }

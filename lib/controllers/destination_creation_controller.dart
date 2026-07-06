@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -43,6 +44,7 @@ class DestinationCreationController extends ChangeNotifier {
   List<String> _photosExistentes = [];
   String _coverExistente = '';
   List<String> _favoritedByExistente = [];
+  String _createdByExistente = '';
   // true quando a capa escolhida está entre as fotos novas (locais)
   bool _capaEhNova = false;
 
@@ -300,6 +302,7 @@ class DestinationCreationController extends ChangeNotifier {
     _photosExistentes = List<String>.from(data['photos'] ?? []);
     _coverExistente = data['coverPhoto'] ?? data['image'] ?? '';
     _favoritedByExistente = List<String>.from(data['favoritedBy'] ?? []);
+    _createdByExistente = data['createdBy'] ?? '';
     _capaEhNova = false;
     fotos = [];
     indiceFotoCapa = 0;
@@ -359,6 +362,7 @@ class DestinationCreationController extends ChangeNotifier {
         latitude: latitude,
         longitude: longitude,
         favoritedBy: _favoritedByExistente,
+        createdBy: _createdByExistente,
       );
 
       final sucesso =
@@ -420,6 +424,7 @@ class DestinationCreationController extends ChangeNotifier {
         latitude: latitude,
         longitude: longitude,
         favoritedBy: [],
+        createdBy: FirebaseAuth.instance.currentUser?.uid ?? '',
       );
 
       final id = await _service.salvarDestination(Destination);
@@ -488,6 +493,7 @@ class DestinationCreationController extends ChangeNotifier {
     _photosExistentes = [];
     _coverExistente = '';
     _favoritedByExistente = [];
+    _createdByExistente = '';
     _capaEhNova = false;
     ruaController.clear();
     bairroController.clear();
