@@ -19,7 +19,7 @@ class TermsPage extends StatelessWidget {
               child: IconButton(
                 icon: const Icon(
                   Icons.arrow_back,
-                  color: Colors.orangeAccent,
+                  color: Color(0xFF1A1A1A),
                   size: 28,
                 ),
                 onPressed: () {

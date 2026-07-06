@@ -1,10 +1,17 @@
 import 'package:readmore/readmore.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:boranemobile/controllers/favorites_controller.dart';
 import 'package:boranemobile/controllers/route_creation_controller.dart';
+import 'package:boranemobile/models/route_creation_model.dart';
+import 'package:boranemobile/services/favorites_service.dart';
 import 'package:boranemobile/view/pages/destination_detail.dart';
+import 'package:boranemobile/view/pages/mapa_page.dart';
 import 'package:boranemobile/view/pages/new_route_page.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/view/widgets/photo_carousel.dart';
+import 'package:boranemobile/view/widgets/route_comments_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 
 class RouteDetailPage extends StatefulWidget {
@@ -17,6 +24,76 @@ class RouteDetailPage extends StatefulWidget {
 }
 
 class _RouteDetailPageState extends State<RouteDetailPage> {
+  late bool _isFavorito;
+  late List<String> _favoritedBy;
+
+  String get _uid =>
+      FirebaseAuth.instance.currentUser?.uid ?? 'usuario_teste';
+
+  @override
+  void initState() {
+    super.initState();
+    _favoritedBy =
+        List<String>.from(widget.rota?['favoritedBy'] ?? []);
+    _isFavorito = _favoritedBy.contains(_uid);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final fc = Provider.of<FavoritesController>(context, listen: false);
+        if (fc.favorites != null && mounted) {
+          final nome = (widget.rota?['name'] ?? '').toString();
+          setState(() => _isFavorito = fc.isRotaFavorita(nome));
+        }
+      } catch (_) {}
+    });
+  }
+
+  Future<void> _toggleFavorito() async {
+    final isAdd = !_isFavorito;
+    setState(() {
+      _isFavorito = isAdd;
+      if (isAdd) {
+        _favoritedBy.add(_uid);
+      } else {
+        _favoritedBy.remove(_uid);
+      }
+      widget.rota?['favoritedBy'] = List<String>.from(_favoritedBy);
+    });
+
+    final id = (widget.rota?['id'] ?? '').toString();
+    final model = RouteCreationModel.fromMap(
+        Map<String, dynamic>.from(widget.rota ?? {}), id: id);
+
+    try {
+      final fc = Provider.of<FavoritesController>(context, listen: false);
+      if (fc.favorites != null) {
+        if (isAdd) {
+          fc.favorites!.routes.add(model);
+        } else {
+          fc.favorites!.routes
+              .removeWhere((r) => r.name == model.name);
+        }
+        fc.forceNotifyListeners();
+      }
+    } catch (_) {}
+
+    try {
+      if (id.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('routes')
+            .doc(id)
+            .update({'favoritedBy': _favoritedBy});
+      }
+      final fs = FavoritesService();
+      if (isAdd) {
+        await fs.favoritarRota(_uid, model);
+      } else {
+        await fs.desfavoritarRota(_uid, model.name);
+      }
+    } catch (e) {
+      debugPrint('Erro ao sincronizar favorito de rota: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // ── 1. VERIFICAÇÃO DE SEGURANÇA: Se a rota for nula ─────────────────
@@ -115,15 +192,34 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  // ── Título dentro do card ──────────────────
-                                  Text(
-                                    nomeRota,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
+                                  // ── Título + coração ──────────────────────
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          nomeRota,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: _toggleFavorito,
+                                        child: Icon(
+                                          _isFavorito
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: _isFavorito
+                                              ? const Color(0xFFF7B119)
+                                              : Colors.grey,
+                                          size: 26,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 10),
 
@@ -364,7 +460,103 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
       ),
 
       // ── BARRA DE MENU INFERIOR ─────────────────────────────────────────────
-      bottomNavigationBar: const CustomBottomNav(),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                          color: Color(0xFFF1B81A),
+                          width: 2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () => _abrirComentarios(context),
+                      icon: const Icon(
+                        Icons.comment_outlined,
+                        color: Color(0xFFF1B81A),
+                        size: 20,
+                      ),
+                      label: const Text(
+                        'Comentários',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFF1B81A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final destinos =
+                            (widget.rota!['destinations'] as List? ?? [])
+                                .map((d) => Map<String, dynamic>.from(d as Map))
+                                .toList();
+                        if (destinos.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Esta rota não possui destinos cadastrados.')));
+                          return;
+                        }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TelaMapa.rota(
+                              nomeRota: widget.rota!['name'] ?? 'Rota',
+                              destinosRota: destinos,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.map_outlined,
+                          color: Colors.black, size: 20),
+                      label: const Text('Ver no mapa',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF1B81A),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        elevation: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const CustomBottomNav(),
+        ],
+      ),
+    );
+  }
+
+  void _abrirComentarios(BuildContext context) {
+    final String rotaId = (widget.rota?['id'] ?? '').toString();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => RouteCommentsBottomSheet(routeId: rotaId),
     );
   }
 

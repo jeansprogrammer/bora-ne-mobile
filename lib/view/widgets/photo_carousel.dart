@@ -88,7 +88,7 @@ class PhotoCarousel extends StatelessWidget {
       PageRouteBuilder(
         opaque: false,
         barrierColor: Colors.transparent,
-        pageBuilder: (_, __, ___) => _PhotoViewer(fotos: fotos),
+        pageBuilder: (_, __, ___) => PhotoViewer(fotos: fotos),
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
@@ -108,16 +108,25 @@ class PhotoCarousel extends StatelessWidget {
 
 // ── Visualizador fullscreen ───────────────────────────────────────────────────
 
-class _PhotoViewer extends StatefulWidget {
+// ── Visualizador fullscreen (público para uso externo) ───────────────────────
+
+class PhotoViewer extends StatefulWidget {
   final List<String> fotos;
-  const _PhotoViewer({required this.fotos});
+  final int indiceInicial;
+  const PhotoViewer({super.key, required this.fotos, this.indiceInicial = 0});
 
   @override
-  State<_PhotoViewer> createState() => _PhotoViewerState();
+  State<PhotoViewer> createState() => _PhotoViewerState();
 }
 
-class _PhotoViewerState extends State<_PhotoViewer> {
-  int _index = 0;
+class _PhotoViewerState extends State<PhotoViewer> {
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.indiceInicial;
+  }
 
   void _anterior() {
     if (_index > 0) setState(() => _index--);
@@ -164,7 +173,7 @@ class _PhotoViewerState extends State<_PhotoViewer> {
               top: 0,
               bottom: 0,
               child: Center(
-                child: _CircleBtn(
+                child: CircleBtn(
                   icon: Icons.chevron_left,
                   onTap: _anterior,
                 ),
@@ -178,7 +187,7 @@ class _PhotoViewerState extends State<_PhotoViewer> {
               top: 0,
               bottom: 0,
               child: Center(
-                child: _CircleBtn(
+                child: CircleBtn(
                   icon: Icons.chevron_right,
                   onTap: _proximo,
                 ),
@@ -189,7 +198,7 @@ class _PhotoViewerState extends State<_PhotoViewer> {
           Positioned(
             top: MediaQuery.of(context).padding.top + 12,
             right: 16,
-            child: _CircleBtn(
+            child: CircleBtn(
               icon: Icons.close,
               onTap: () => Navigator.pop(context),
             ),
@@ -238,11 +247,11 @@ class _PhotoViewerState extends State<_PhotoViewer> {
   }
 }
 
-class _CircleBtn extends StatelessWidget {
+class CircleBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _CircleBtn({required this.icon, required this.onTap});
+  const CircleBtn({super.key, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

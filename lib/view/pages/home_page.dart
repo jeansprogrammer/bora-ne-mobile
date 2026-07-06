@@ -1,4 +1,3 @@
-import 'package:boranemobile/view/pages/destination_detail.dart';
 import 'package:boranemobile/view/pages/route_detail.dart';
 import 'package:boranemobile/view/pages/routedestinos_page.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +11,6 @@ import 'package:boranemobile/services/geoapify_service.dart';
 import 'package:boranemobile/data/category_data.dart';
 import 'package:provider/provider.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
-import 'package:boranemobile/view/pages/notifications_page.dart';
 
 class HomePage extends StatefulWidget {
   final String? cidadeInicial;

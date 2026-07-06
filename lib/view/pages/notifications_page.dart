@@ -1,110 +1,176 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:boranemobile/controllers/auth_controller.dart';
+import 'package:boranemobile/controllers/notifications_controller.dart';
+import 'package:boranemobile/models/notification_model.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
+import 'package:boranemobile/view/widgets/notification_card.dart';
 
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});
 
+  static const List<String> _meses = [
+    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+  ];
+
+  String _tituloSecao(DateTime data) {
+    final agora = DateTime.now();
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+    final ontem = hoje.subtract(const Duration(days: 1));
+    final dia = DateTime(data.year, data.month, data.day);
+
+    if (dia == hoje) return 'Hoje';
+    if (dia == ontem) return 'Ontem';
+    return '${data.day} de ${_meses[data.month - 1]}';
+  }
+
+  List<Widget> _buildLista(
+    List<NotificationModel> notificacoes,
+    NotificationsController controller,
+  ) {
+    final grupos = <String, List<NotificationModel>>{};
+    for (final n in notificacoes) {
+      grupos.putIfAbsent(_tituloSecao(n.date), () => []).add(n);
+    }
+
+    final widgets = <Widget>[];
+    grupos.forEach((titulo, itens) {
+      widgets.add(_SectionHeader(title: titulo));
+      widgets.add(const SizedBox(height: 12));
+      for (final n in itens) {
+        widgets.add(NotificationCard(
+          notificacao: n,
+          onTap: () => controller.marcarComoLida(n),
+        ));
+      }
+      widgets.add(const SizedBox(height: 10));
+    });
+    return widgets;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      
-      backgroundColor: const Color.fromRGBO(245, 245, 245, 1),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        
-        centerTitle: true,
-      ),
-      
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          children: [
-            
-            const Text(
-              "Notificações",
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 10),
-            
-            const Text(
-              "Fique por dentro de tudo o que acontece na sua conta e nos seus roteiros.",
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.black54,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 25),
+    final auth = context.watch<AuthController>();
+    final notificationsController = context.watch<NotificationsController>();
+    final String currentUid = auth.user?.uid ?? 'usuario_teste';
 
-            const _SectionHeader(title: "Hoje"),
-            const SizedBox(height: 12),
-            const _NotificationCard(
-              title: "Roteiro salvo",
-              subtitle: "Praia de Maracaípe foi adicionado aos seus favoritos.",
-              time: "19:45",
-              icon: Icons.favorite,
+    return Scaffold(
+      backgroundColor: const Color.fromRGBO(245, 245, 245, 1),
+      body: Column(
+        children: [
+          // Top clean bar
+          Container(
+            width: double.infinity,
+            color: Colors.white,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 8,
+              bottom: 12,
             ),
-            _NotificationCard(
-              title: "Novidade no destino",
-              subtitle: "Novas dicas de passeios em Porto de Galinhas para você!",
-              time: "17:30",
-              icon: Icons.notifications_active,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/LOGO_V2_1.png',
+                  height: 44,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Text(
+                    'Bora NE',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 4,
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Colors.black87),
+                    onSelected: (value) {
+                      if (value == 'marcar_tudo_lido') {
+                        notificationsController.marcarTodasComoLidas(currentUid);
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'marcar_tudo_lido',
+                        child: Text('MARCAR TUDO COMO LIDO'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const _NotificationCard(
-              title: "Roteiro atualizado",
-              subtitle: 'Seu roteiro \"Fim de semana em Olinda\" foi atualizado com novas atrações.',
-              time: "15:10",
-              icon: Icons.map,
+          ),
+
+          Expanded(
+            child: StreamBuilder<List<NotificationModel>>(
+              stream: notificationsController.getNotifications(currentUid),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Não foi possível carregar as notificações.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.red.shade700),
+                      ),
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFF1B81A)),
+                  );
+                }
+
+                final notificacoes = snapshot.data!;
+
+                return ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  children: [
+                    const Text(
+                      "Notificações",
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Fique por dentro de tudo o que acontece na sua conta e nos seus roteiros.",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.black54,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+                    if (notificacoes.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 30),
+                        child: Center(
+                          child: Text(
+                            'Você ainda não tem notificações.',
+                            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                          ),
+                        ),
+                      )
+                    else
+                      ..._buildLista(notificacoes, notificationsController),
+                  ],
+                );
+              },
             ),
-            
-            const SizedBox(height: 10),
-            const _SectionHeader(title: "Ontem"),
-            const SizedBox(height: 12),
-            const _NotificationCard(
-              title: "Promoção especial",
-              subtitle: "Descontos exclusivos em passeios selecionados. Aproveite!",
-              time: "20:20",
-              icon: Icons.local_offer,
-            ),
-      
-            const SizedBox(height: 10),
-            const _SectionHeader(title: "10 de maio"),
-            const SizedBox(height: 12),
-            const _NotificationCard(
-              title: "Avalie sua experiência",
-              subtitle: "Como foi seu passeio na Cachoeira de Bonito? Conte pra gente!",
-              time: "18:05",
-              icon: Icons.star,
-            ),
-            
-            const SizedBox(height: 10),
-            const _SectionHeader(title: "8 de maio"),
-            const SizedBox(height: 12),
-            const _NotificationCard(
-              title: "Dica boraNE",
-              subtitle: "Não esqueça de levar protetor solar e água para curtir o melhor do dia!",
-              time: "10:15",
-              icon: Icons.campaign, // Ícone de megafone/dica
-            ),
-            
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
       ),
-       bottomNavigationBar: const CustomBottomNav(activeTab: BottomNavTab.notificacoes)
+      bottomNavigationBar: const CustomBottomNav(activeTab: BottomNavTab.notificacoes),
     );
-    
-      
   }
 }
 
@@ -120,107 +186,6 @@ class _SectionHeader extends StatelessWidget {
         fontSize: 15,
         fontWeight: FontWeight.bold,
         color: Colors.black87,
-      ),
-    );
-  }
-}
-
-class _NotificationCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String time;
-  final IconData icon;
-
-  const _NotificationCard({
-    required this.title,
-    required this.subtitle,
-    required this.time,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: Colors.orange.shade600,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-          
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      time,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black38,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                    height: 1.25,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 4),
-          
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(
-              Icons.chevron_right,
-              color: Colors.orange,
-              size: 20,
-            ),
-          ),
-        ],
       ),
     );
   }

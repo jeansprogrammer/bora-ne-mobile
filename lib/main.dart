@@ -1,18 +1,20 @@
-import 'package:boranemobile/controllers/comments_controller.dart';
+import 'controllers/destination_comments_controller.dart';
+import 'controllers/route_comments_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'controllers/route_creation_controller.dart';
 import 'controllers/auth_controller.dart';
 import 'view/pages/splash.dart';
-import 'view/pages/home_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'controllers/destination_creation_controller.dart';
 import 'controllers/category_controller.dart';
 import 'controllers/favorites_controller.dart';
+import 'controllers/notifications_controller.dart';
 //import 'view/pages/onboard1.dart';
 //import 'view/pages/onboarding.dart';
 //import 'services/carga_dados_service.dart';
+//import 'services/notification_seed_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +23,8 @@ Future<void> main() async {
 
   // EXECUTE APENAS UMA VEZ E DEPOIS COMENTE A LINHA ABAIXO
   //await CargaDadosService().executarCarga();
+  // EXECUTE APENAS UMA VEZ E DEPOIS COMENTE A LINHA ABAIXO
+  //await NotificationSeedService().executarCarga();
 
   runApp(
     MultiProvider(
@@ -31,6 +35,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => DestinationCreationController()),
         ChangeNotifierProvider(create: (_) => FavoritesController()),
         ChangeNotifierProvider(create: (_) => CommentsController()),
+        ChangeNotifierProvider(create: (_) => RouteCommentsController()),
+        ChangeNotifierProvider(create: (_) => NotificationsController()),
       ],
       child: const BoraNE(),
     ),

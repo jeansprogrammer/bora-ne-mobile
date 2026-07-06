@@ -83,7 +83,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
   void _iniciarAutoPlay() {
     _timer?.cancel();
     if (_rotas.length <= 1) return;
-    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 7), (_) {
       if (!_pageController.hasClients || _rotas.isEmpty) return;
       _currentIndex = (_currentIndex + 1) % _rotas.length;
       _pageController.animateToPage(
@@ -306,7 +306,7 @@ class _RouteCarouselState extends State<RouteCarousel> {
                       ),
                       child: Icon(
                         isFavorito ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorito ? Colors.red : Colors.white,
+                        color: isFavorito ? Color(0xFFF7B119) : const Color.fromARGB(255, 199, 198, 198),
                         size: 22,
                       ),
                     ),
