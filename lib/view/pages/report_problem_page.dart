@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 
 class ReportProblemPage extends StatefulWidget {
   const ReportProblemPage({super.key});
@@ -93,7 +92,6 @@ class _ReportProblemPageState extends State<ReportProblemPage> {
         ),
         centerTitle: true,
       ),
-      bottomNavigationBar: const CustomBottomNav(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Column(

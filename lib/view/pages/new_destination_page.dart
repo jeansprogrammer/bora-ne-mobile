@@ -974,7 +974,7 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
                       ? 'Verificando endereço...'
                       : controller.isSaving
                           ? 'Salvando...'
-                          : (_editando ? 'Salvar alterações' : 'Criar Destino'),
+                          : (_editando ? 'Salvar' : 'Criar Destino'),
                   style: const TextStyle(
                       color: Colors.black, fontWeight: FontWeight.bold),
                 ),

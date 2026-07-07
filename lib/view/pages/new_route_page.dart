@@ -1136,7 +1136,7 @@ class _NewRoutePageState extends State<NewRoutePage> {
                 label: Text(
                   controller.isSaving
                       ? "Salvando..."
-                      : (editando ? "Salvar alterações" : "Criar rota"),
+                      : (editando ? "Salvar" : "Criar rota"),
                   style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                 ),
                 onPressed: (controller.isSaving || !controller.isValid)

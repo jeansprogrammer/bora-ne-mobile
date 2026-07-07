@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 
 class FaqPage extends StatelessWidget {
   const FaqPage({super.key});
@@ -56,7 +55,6 @@ class FaqPage extends StatelessWidget {
         title: Image.asset('assets/images/LOGO_V2_1.png', height: 32),
         centerTitle: true,
       ),
-      bottomNavigationBar: const CustomBottomNav(),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
