@@ -11,6 +11,7 @@ import 'package:boranemobile/services/geoapify_service.dart';
 import 'package:boranemobile/data/category_data.dart';
 import 'package:provider/provider.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   final String? cidadeInicial;
@@ -22,6 +23,18 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // Chaves de persistência: uma vez definida, a cidade fica salva no
+  // dispositivo e é reaproveitada em qualquer recriação da HomePage (troca de
+  // aba, reabertura do app etc.), sem repetir GPS + geocodificação.
+  static const _kCidadeDetectadaPref = 'home_cidade_detectada';
+  static const _kCidadeManualPref = 'home_cidade_manual';
+
+  // Cache em memória: evita até mesmo a leitura do SharedPreferences ao
+  // trocar de aba dentro da mesma sessão do app.
+  static String? _cidadeDetectadaCache;
+  static String? _cidadeManualCache;
+  static bool _cacheCarregado = false;
+
   String? _cidadeDetectada;
   String? _cidadeManual;
   bool _estaCarregandoLocalizacao = false;
@@ -33,11 +46,38 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     if (widget.cidadeInicial != null) {
       _cidadeDetectada = widget.cidadeInicial;
-    } else {
+      return;
+    }
+    if (_cacheCarregado) {
+      _cidadeDetectada = _cidadeDetectadaCache;
+      _cidadeManual = _cidadeManualCache;
+      return;
+    }
+    _carregarLocalizacaoSalva();
+  }
+
+  Future<void> _carregarLocalizacaoSalva() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cidadeSalva = prefs.getString(_kCidadeDetectadaPref);
+    final manualSalva = prefs.getString(_kCidadeManualPref);
+    _cacheCarregado = true;
+
+    if (cidadeSalva == null && manualSalva == null) {
       _detectarLocalizacao();
+      return;
+    }
+    _cidadeDetectadaCache = cidadeSalva;
+    _cidadeManualCache = manualSalva;
+    if (mounted) {
+      setState(() {
+        _cidadeDetectada = cidadeSalva;
+        _cidadeManual = manualSalva;
+      });
     }
   }
 
+  // Só é chamada na primeira vez (sem cidade salva) ou quando o usuário toca
+  // explicitamente em "Usar minha localização".
   Future<void> _detectarLocalizacao() async {
     setState(() => _estaCarregandoLocalizacao = true);
     try {
@@ -49,6 +89,9 @@ class _HomePageState extends State<HomePage> {
         );
         if (cidade != null && mounted) {
           setState(() => _cidadeDetectada = cidade);
+          _cidadeDetectadaCache = cidade;
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_kCidadeDetectadaPref, cidade);
         }
       }
     } catch (e) {
@@ -56,6 +99,24 @@ class _HomePageState extends State<HomePage> {
     } finally {
       if (mounted) setState(() => _estaCarregandoLocalizacao = false);
     }
+  }
+
+  // Usuário escolheu uma cidade manualmente na lista.
+  Future<void> _selecionarCidadeManual(String cidade) async {
+    setState(() => _cidadeManual = cidade);
+    _cidadeManualCache = cidade;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kCidadeManualPref, cidade);
+  }
+
+  // Usuário tocou em "Usar minha localização": limpa a escolha manual e
+  // força uma nova detecção por GPS.
+  Future<void> _usarMinhaLocalizacao() async {
+    setState(() => _cidadeManual = null);
+    _cidadeManualCache = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kCidadeManualPref);
+    await _detectarLocalizacao();
   }
 
   // ── Busca cidades únicas do Firestore (tempo real) ────────────────────────
@@ -140,8 +201,8 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.orangeAccent)
                       : null,
                   onTap: () {
-                    setState(() => _cidadeManual = null);
                     Navigator.pop(context);
+                    _usarMinhaLocalizacao();
                   },
                 ),
 
@@ -215,8 +276,8 @@ class _HomePageState extends State<HomePage> {
                                   color: Colors.orangeAccent)
                               : null,
                           onTap: () {
-                            setState(() => _cidadeManual = cidade);
                             Navigator.pop(context);
+                            _selecionarCidadeManual(cidade);
                           },
                         );
                       },

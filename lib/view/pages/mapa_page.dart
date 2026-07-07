@@ -202,8 +202,14 @@ class _TelaMapaState extends State<TelaMapa> {
     ));
   }
 
-  // ── Navegação GPS ─────────────────────────────────────────────────────────
-  Future<void> _iniciarNavegacao(DestinationModel alvo) async {
+  // ── Navegação GPS: até um único destino ───────────────────────────────────
+  Future<void> _iniciarNavegacao(DestinationModel alvo) =>
+      _iniciarNavegacaoParaLista([alvo]);
+
+  // ── Navegação GPS: percurso passando por vários destinos em sequência ────
+  Future<void> _iniciarNavegacaoParaLista(List<DestinationModel> alvos) async {
+    if (alvos.isEmpty) return;
+
     setState(() {
       _carregandoNav = true;
       _rotaPontos = [];
@@ -221,14 +227,21 @@ class _TelaMapaState extends State<TelaMapa> {
     }
 
     final origem = LatLng(pos.latitude, pos.longitude);
-    final dest = LatLng(alvo.latitude, alvo.longitude);
     setState(() => _userLocation = origem);
+
+    final alvosOrdenados = _otimizarOrdemVisita(origem, alvos);
+
+    final waypoints = [
+      origem,
+      ...alvosOrdenados.map((d) => LatLng(d.latitude, d.longitude)),
+    ];
+    final waypointsStr =
+        waypoints.map((p) => '${p.latitude},${p.longitude}').join('|');
 
     try {
       final url = Uri.parse(
         'https://api.geoapify.com/v1/routing'
-        '?waypoints=${origem.latitude},${origem.longitude}'
-        '|${dest.latitude},${dest.longitude}'
+        '?waypoints=$waypointsStr'
         '&mode=drive&apiKey=$_apiKey',
       );
       final response = await http.get(url);
@@ -239,10 +252,7 @@ class _TelaMapaState extends State<TelaMapa> {
           final feat = data['features'][0];
           final double dist = feat['properties']['distance'].toDouble();
           final double time = feat['properties']['time'].toDouble();
-          final List geom = feat['geometry']['coordinates'][0];
-          final pontos = geom
-              .map<LatLng>((c) => LatLng(c[1].toDouble(), c[0].toDouble()))
-              .toList();
+          final pontos = _extrairPontosRota(feat);
           setState(() {
             _rotaPontos = pontos;
             _distanciaTexto = '${(dist / 1000).toStringAsFixed(1)} km';
@@ -260,6 +270,129 @@ class _TelaMapaState extends State<TelaMapa> {
     } catch (_) {
       if (mounted) setState(() => _carregandoNav = false);
     }
+  }
+
+  // ── Extrai os pontos do trajeto de uma feature de rota da Geoapify ───────
+  // Quando há mais de dois waypoints, a API devolve uma "MultiLineString"
+  // com um trecho (perna) para cada par de waypoints consecutivos. Aqui
+  // concatenamos todas as pernas para formar um único trajeto contínuo que
+  // passa por todos os destinos, em vez de desenhar apenas o primeiro trecho.
+  List<LatLng> _extrairPontosRota(Map<String, dynamic> feat) {
+    final geometry = feat['geometry'] as Map<String, dynamic>;
+    final coordinates = geometry['coordinates'] as List;
+    final tipo = geometry['type'] as String?;
+
+    LatLng paraLatLng(dynamic c) =>
+        LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble());
+
+    if (tipo == 'LineString') {
+      return coordinates.map<LatLng>(paraLatLng).toList();
+    }
+
+    // MultiLineString (ou estrutura aninhada equivalente): uma lista de
+    // trechos, um por perna entre waypoints consecutivos.
+    final pontos = <LatLng>[];
+    for (final trecho in coordinates) {
+      pontos.addAll((trecho as List).map<LatLng>(paraLatLng));
+    }
+    return pontos;
+  }
+
+  // ── Setas de direção ao longo do trajeto ──────────────────────────────────
+  // Como o caminho pode se cruzar (ida e volta pela mesma via, por exemplo),
+  // desenhamos setas espaçadas ao longo da linha, apontando no sentido em que
+  // o trajeto deve ser percorrido, para deixar claro qual direção seguir em
+  // cada trecho.
+  List<Marker> _marcadoresDirecao() {
+    if (_rotaPontos.length < 2) return [];
+
+    const distancia = Distance();
+    const espacamentoMetros = 150.0;
+
+    final marcadores = <Marker>[];
+    var acumulado = espacamentoMetros; // já nasce "cheio" p/ 1ª seta cedo
+
+    for (var i = 0; i < _rotaPontos.length - 1; i++) {
+      final a = _rotaPontos[i];
+      final b = _rotaPontos[i + 1];
+      final segmento = distancia(a, b);
+      if (segmento == 0) continue;
+      acumulado += segmento;
+
+      if (acumulado >= espacamentoMetros) {
+        acumulado = 0;
+        final anguloGraus = distancia.bearing(a, b);
+        marcadores.add(Marker(
+          width: 22,
+          height: 22,
+          point: b,
+          child: Transform.rotate(
+            angle: anguloGraus * (pi / 180),
+            child: const Icon(Icons.navigation,
+                size: 20, color: Color(0xFF0277BD)),
+          ),
+        ));
+      }
+    }
+    return marcadores;
+  }
+
+  // ── Otimiza a ordem de visita dos destinos ────────────────────────────────
+  // Usa vizinho-mais-próximo (a partir da localização atual) seguido de um
+  // refinamento 2-opt, com base na distância em linha reta entre os pontos,
+  // para que o trajeto real (traçado depois pela API de rotas) passe por
+  // todos os destinos no caminho mais curto possível, em vez de seguir a
+  // ordem em que foram cadastrados na rota.
+  List<DestinationModel> _otimizarOrdemVisita(
+      LatLng origem, List<DestinationModel> alvos) {
+    if (alvos.length <= 1) return alvos;
+
+    const distancia = Distance();
+    LatLng pontoDe(DestinationModel d) => LatLng(d.latitude, d.longitude);
+
+    // Vizinho mais próximo: parte da origem e sempre vai ao destino não
+    // visitado mais próximo do ponto atual.
+    final restantes = List<DestinationModel>.from(alvos);
+    final ordem = <DestinationModel>[];
+    var atual = origem;
+    while (restantes.isNotEmpty) {
+      restantes.sort((a, b) => distancia(atual, pontoDe(a))
+          .compareTo(distancia(atual, pontoDe(b))));
+      final proximo = restantes.removeAt(0);
+      ordem.add(proximo);
+      atual = pontoDe(proximo);
+    }
+
+    if (ordem.length <= 2) return ordem;
+
+    double distanciaTotal(List<DestinationModel> seq) {
+      var total = distancia(origem, pontoDe(seq.first));
+      for (var i = 0; i < seq.length - 1; i++) {
+        total += distancia(pontoDe(seq[i]), pontoDe(seq[i + 1]));
+      }
+      return total;
+    }
+
+    // 2-opt: tenta inverter trechos da rota enquanto houver melhora.
+    var melhorou = true;
+    while (melhorou) {
+      melhorou = false;
+      for (var i = 0; i < ordem.length - 1; i++) {
+        for (var j = i + 1; j < ordem.length; j++) {
+          final tentativa = List<DestinationModel>.from(ordem);
+          tentativa.replaceRange(
+              i, j + 1, tentativa.sublist(i, j + 1).reversed);
+          if (distanciaTotal(tentativa) < distanciaTotal(ordem) - 1) {
+            ordem
+              ..clear()
+              ..addAll(tentativa);
+            melhorou = true;
+          }
+        }
+      }
+    }
+
+    return ordem;
   }
 
   @override
@@ -369,9 +502,11 @@ class _TelaMapaState extends State<TelaMapa> {
           PolylineLayer(polylines: [
             Polyline(
               points: _rotaPontos, strokeWidth: 5.0,
-              color: const Color(0xFFF1B81A),
+              color: const Color(0xFF4FC3F7),
             ),
           ]),
+        if (_rotaPontos.isNotEmpty)
+          MarkerLayer(markers: _marcadoresDirecao()),
         MarkerLayer(markers: [
           // Modo destino: pin único
           if (isDestino)
@@ -508,13 +643,12 @@ class _TelaMapaState extends State<TelaMapa> {
             ),
             const SizedBox(height: 10),
           ],
-          Text(_nomeRotaAtual,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(
-            '${destinos.length} destino${destinos.length != 1 ? 's' : ''}',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          _headerComIr(
+            nome: _nomeRotaAtual,
+            endereco:
+                '${destinos.length} destino${destinos.length != 1 ? 's' : ''}',
+            enderecoIcon: Icons.route,
+            onIr: () => _iniciarNavegacaoParaLista(destinos),
           ),
           const SizedBox(height: 14),
           ...List.generate(destinos.length, (i) {
@@ -599,6 +733,7 @@ class _TelaMapaState extends State<TelaMapa> {
     required String nome,
     required String endereco,
     required VoidCallback onIr,
+    IconData enderecoIcon = Icons.location_on_outlined,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -616,8 +751,7 @@ class _TelaMapaState extends State<TelaMapa> {
                   overflow: TextOverflow.ellipsis),
               const SizedBox(height: 4),
               Row(children: [
-                const Icon(Icons.location_on_outlined,
-                    size: 13, color: Colors.grey),
+                Icon(enderecoIcon, size: 13, color: Colors.grey),
                 const SizedBox(width: 3),
                 Expanded(
                   child: Text(endereco,
