@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
 import 'package:boranemobile/view/pages/home_page.dart';
@@ -89,7 +90,20 @@ class _LoginPageState extends State<LoginPage> {
     final auth = Provider.of<AuthController>(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      appBar: Navigator.canPop(context)
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              automaticallyImplyLeading: false,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.black),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            )
+          : null,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -103,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 30),
@@ -191,17 +205,18 @@ class _LoginPageState extends State<LoginPage> {
                         ? const SizedBox(
                             width: 20, height: 20,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.black54))
-                        : const Icon(Icons.login, size: 20, color: Colors.black87),
+                                strokeWidth: 2, color: Colors.white))
+                        : const FaIcon(FontAwesomeIcons.google,
+                            size: 20, color: Colors.black),
                     label: Text(
                       _isLoading ? 'Carregando...' : 'Entrar com Google',
                       style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 16,
+                          color: Colors.white,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
+                      backgroundColor: const Color(0xFFEBB22F),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -221,7 +236,10 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     child: const Text(
                       'Entrar como convidado',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black),
                     ),
                   ),
                 ),

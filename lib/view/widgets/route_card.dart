@@ -160,8 +160,10 @@ class _RouteCardState extends State<RouteCard> {
         ),
         child: Stack(
           children: [
-            Row(
-              children: [
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 // ── Imagem ────────────────────────────────────────────────
                 ClipRRect(
                   borderRadius: const BorderRadius.only(
@@ -172,7 +174,6 @@ class _RouteCardState extends State<RouteCard> {
                       ? Image.network(
                           coverPhoto,
                           width: 100,
-                          height: 110,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => _placeholder(),
                         )
@@ -254,7 +255,8 @@ class _RouteCardState extends State<RouteCard> {
                     ),
                   ),
                 ),
-              ],
+                ],
+              ),
             ),
 
             // ── Coração no topo direito ────────────────────────────────────
@@ -279,7 +281,6 @@ class _RouteCardState extends State<RouteCard> {
   Widget _placeholder() {
     return Container(
       width: 100,
-      height: 110,
       color: const Color(0xFFFFF9E7),
       child: const Icon(Icons.image_outlined,
           color: Colors.orangeAccent, size: 32),

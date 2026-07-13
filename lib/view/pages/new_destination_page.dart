@@ -770,7 +770,12 @@ class _NewDestinationPageState extends State<NewDestinationPage> {
 
   Widget _buildEndereco(DestinationCreationController controller) {
     final cidades = controller.uf.isNotEmpty
-        ? cidadesDoEstado(controller.uf)
+        ? <String>{
+            ...cidadesDoEstado(controller.uf),
+            // Garante que a cidade preenchida via CEP apareça nas opções,
+            // mesmo quando não está na lista fixa de cidades principais.
+            if (controller.city.isNotEmpty) controller.city,
+          }.toList()
         : <String>[];
 
     return Column(

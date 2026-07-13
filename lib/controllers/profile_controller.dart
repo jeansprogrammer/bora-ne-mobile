@@ -45,6 +45,13 @@ class ProfileController extends ChangeNotifier {
     }
   }
 
+  // ── Salva alterações do perfil ────────────────────────────────────────────
+  Future<void> atualizarPerfil(UserModel usuarioAtualizado) async {
+    await _service.updateUser(usuarioAtualizado);
+    currentUser = usuarioAtualizado;
+    notifyListeners();
+  }
+
   // ── Logout ────────────────────────────────────────────────────────────────
   Future<void> executarLogout() async {
     await _service.signOut();

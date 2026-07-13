@@ -5,13 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:boranemobile/view/widgets/custom_bottom_nav.dart';
 import 'package:boranemobile/view/widgets/route_carousel.dart';
 import 'package:boranemobile/view/widgets/destination_card.dart';
+import 'package:boranemobile/view/widgets/city_selector_sheet.dart';
 import 'package:boranemobile/view/pages/search_page.dart';
 import 'package:boranemobile/services/location_service.dart';
-import 'package:boranemobile/services/geoapify_service.dart';
 import 'package:boranemobile/data/category_data.dart';
 import 'package:provider/provider.dart';
 import 'package:boranemobile/controllers/auth_controller.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   final String? cidadeInicial;
@@ -23,274 +22,36 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Chaves de persistência: uma vez definida, a cidade fica salva no
-  // dispositivo e é reaproveitada em qualquer recriação da HomePage (troca de
-  // aba, reabertura do app etc.), sem repetir GPS + geocodificação.
-  static const _kCidadeDetectadaPref = 'home_cidade_detectada';
-  static const _kCidadeManualPref = 'home_cidade_manual';
+  // Estado de localização compartilhado com o Editar Perfil: qualquer
+  // mudança feita lá (ou aqui) se reflete automaticamente nos dois lugares.
+  final LocationService _locationService = LocationService();
 
-  // Cache em memória: evita até mesmo a leitura do SharedPreferences ao
-  // trocar de aba dentro da mesma sessão do app.
-  static String? _cidadeDetectadaCache;
-  static String? _cidadeManualCache;
-  static bool _cacheCarregado = false;
-
-  String? _cidadeDetectada;
-  String? _cidadeManual;
-  bool _estaCarregandoLocalizacao = false;
-
-  String? get _cidadeAtiva => _cidadeManual ?? _cidadeDetectada;
+  String? get _cidadeAtiva =>
+      widget.cidadeInicial ?? _locationService.cidadeAtiva;
+  bool get _estaCarregandoLocalizacao => _locationService.estaCarregando;
 
   @override
   void initState() {
     super.initState();
-    if (widget.cidadeInicial != null) {
-      _cidadeDetectada = widget.cidadeInicial;
-      return;
-    }
-    if (_cacheCarregado) {
-      _cidadeDetectada = _cidadeDetectadaCache;
-      _cidadeManual = _cidadeManualCache;
-      return;
-    }
-    _carregarLocalizacaoSalva();
-  }
-
-  Future<void> _carregarLocalizacaoSalva() async {
-    final prefs = await SharedPreferences.getInstance();
-    final cidadeSalva = prefs.getString(_kCidadeDetectadaPref);
-    final manualSalva = prefs.getString(_kCidadeManualPref);
-    _cacheCarregado = true;
-
-    if (cidadeSalva == null && manualSalva == null) {
-      _detectarLocalizacao();
-      return;
-    }
-    _cidadeDetectadaCache = cidadeSalva;
-    _cidadeManualCache = manualSalva;
-    if (mounted) {
-      setState(() {
-        _cidadeDetectada = cidadeSalva;
-        _cidadeManual = manualSalva;
-      });
+    _locationService.addListener(_onLocationChanged);
+    if (widget.cidadeInicial == null) {
+      _locationService.init();
     }
   }
 
-  // Só é chamada na primeira vez (sem cidade salva) ou quando o usuário toca
-  // explicitamente em "Usar minha localização".
-  Future<void> _detectarLocalizacao() async {
-    setState(() => _estaCarregandoLocalizacao = true);
-    try {
-      final pos = await LocationService().obterPosicaoAtual();
-      if (pos != null) {
-        final cidade = await GeoapifyService().obterCidadePorCoordenadas(
-          pos.latitude,
-          pos.longitude,
-        );
-        if (cidade != null && mounted) {
-          setState(() => _cidadeDetectada = cidade);
-          _cidadeDetectadaCache = cidade;
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString(_kCidadeDetectadaPref, cidade);
-        }
-      }
-    } catch (e) {
-      debugPrint('Erro ao obter localização: $e');
-    } finally {
-      if (mounted) setState(() => _estaCarregandoLocalizacao = false);
-    }
+  @override
+  void dispose() {
+    _locationService.removeListener(_onLocationChanged);
+    super.dispose();
   }
 
-  // Usuário escolheu uma cidade manualmente na lista.
-  Future<void> _selecionarCidadeManual(String cidade) async {
-    setState(() => _cidadeManual = cidade);
-    _cidadeManualCache = cidade;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kCidadeManualPref, cidade);
+  void _onLocationChanged() {
+    if (mounted) setState(() {});
   }
 
-  // Usuário tocou em "Usar minha localização": limpa a escolha manual e
-  // força uma nova detecção por GPS.
-  Future<void> _usarMinhaLocalizacao() async {
-    setState(() => _cidadeManual = null);
-    _cidadeManualCache = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_kCidadeManualPref);
-    await _detectarLocalizacao();
-  }
+  // ── Popup de seleção de cidade (compartilhado com o Editar Perfil) ───────
 
-  // ── Busca cidades únicas do Firestore (tempo real) ────────────────────────
-
-  Stream<List<String>> _streamCidadesDoFirestore() {
-    return FirebaseFirestore.instance
-        .collection('routes')
-        .snapshots()
-        .map((snapshot) {
-      final cidades = snapshot.docs
-          .map((doc) {
-            final data = doc.data();
-            return (data['city'] as String? ?? '').trim();
-          })
-          .where((c) => c.isNotEmpty)
-          .toSet() // remove duplicatas
-          .toList()
-        ..sort(); // ordena alfabeticamente
-
-      return cidades;
-    });
-  }
-
-  // ── Popup de seleção de cidade ────────────────────────────────────────────
-
-  Future<void> _abrirSeletorCidade() async {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6,
-        maxChildSize: 0.85,
-        minChildSize: 0.4,
-        builder: (_, scrollController) => Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text('Selecionar cidade',
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              const Text(
-                'Escolha uma cidade para ver as rotas disponíveis.',
-                style: TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-
-              // Opção: usar localização atual
-              if (_cidadeDetectada != null)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.orangeAccent.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.my_location,
-                        color: Colors.orangeAccent, size: 20),
-                  ),
-                  title: Text('Usar minha localização ($_cidadeDetectada)',
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Detectada automaticamente'),
-                  trailing: _cidadeManual == null
-                      ? const Icon(Icons.check_circle,
-                          color: Colors.orangeAccent)
-                      : null,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _usarMinhaLocalizacao();
-                  },
-                ),
-
-              if (_cidadeDetectada != null)
-                const Divider(height: 8),
-
-              const SizedBox(height: 4),
-              const Text('Cidades disponíveis',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black54)),
-              const SizedBox(height: 8),
-
-              // Lista de cidades do Firestore
-              Expanded(
-                child: StreamBuilder<List<String>>(
-                  stream: _streamCidadesDoFirestore(),
-                  builder: (context, snap) {
-                    if (snap.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                            color: Colors.orangeAccent),
-                      );
-                    }
-                    if (!snap.hasData || snap.data!.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'Nenhuma cidade encontrada.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      );
-                    }
-
-                    final cidades = snap.data!;
-                    return ListView.separated(
-                      controller: scrollController,
-                      itemCount: cidades.length,
-                      separatorBuilder: (_, __) =>
-                          const Divider(height: 1),
-                      itemBuilder: (_, i) {
-                        final cidade = cidades[i];
-                        final selecionada = _cidadeAtiva == cidade;
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: selecionada
-                                  ? Colors.orangeAccent.withOpacity(0.15)
-                                  : Colors.grey.shade100,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(Icons.location_city,
-                                color: selecionada
-                                    ? Colors.orangeAccent
-                                    : Colors.grey,
-                                size: 20),
-                          ),
-                          title: Text(cidade,
-                              style: TextStyle(
-                                fontWeight: selecionada
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                color: selecionada
-                                    ? Colors.orangeAccent
-                                    : Colors.black87,
-                              )),
-                          trailing: selecionada
-                              ? const Icon(Icons.check_circle,
-                                  color: Colors.orangeAccent)
-                              : null,
-                          onTap: () {
-                            Navigator.pop(context);
-                            _selecionarCidadeManual(cidade);
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Future<void> _abrirSeletorCidade() => showCitySelectorSheet(context);
 
   @override
   Widget build(BuildContext context) {

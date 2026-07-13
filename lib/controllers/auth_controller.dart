@@ -18,6 +18,9 @@ class AuthController extends ChangeNotifier {
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      // Limpa a sessão em cache para que o seletor de contas do Google
+      // sempre seja exibido, em vez de logar direto com a última conta usada.
+      await _googleSignIn.signOut();
       final GoogleSignInAccount? account = await _googleSignIn.signIn();
       if (account == null) return null;
       final auth = await account.authentication;
