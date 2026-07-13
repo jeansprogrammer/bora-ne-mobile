@@ -391,7 +391,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                                       ),
                                       child: Container(
                                         margin: const EdgeInsets.only(bottom: 16),
-                                        height: 110, // Forçando tamanho fixo para evitar que suma
+                                        constraints: const BoxConstraints(minHeight: 110),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                           borderRadius: BorderRadius.circular(16),
@@ -405,17 +405,18 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                                           ],
                                         ),
                                         clipBehavior: Clip.antiAlias,
-                                        child: Row(
+                                        child: IntrinsicHeight(
+                                          child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
                                           children: [
                                             if (imagemDestino.isNotEmpty)
                                               Image.network(
                                                 imagemDestino,
                                                 width: 110,
-                                                height: double.infinity,
                                                 fit: BoxFit.cover,
                                                 errorBuilder: (c, e, s) => Container(width: 110, color: Colors.grey.shade200, child: const Icon(Icons.image_not_supported)),
                                               ),
-                                            
+
                                             Expanded(
                                               child: Padding(
                                                 padding: const EdgeInsets.all(12.0),
@@ -459,6 +460,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                                         ),
                                       ),
                                     ),
+                                  ),
                                   ),
                                 ],
                               ),
